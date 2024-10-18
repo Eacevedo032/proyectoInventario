@@ -1,0 +1,34 @@
+
+comandos para Django
+
+django-admin startproject nombre_de_proyecto (crear el proyecto)
+
+django-admin startapp nombre_de_App (crear aplicaciones dentro del proyecto)
+
+python manage.py runserver (para correr el proyecto)
+
+
+comandos de entorno virtual
+
+python -m venv nombre_entorno_virtual (crear entorno virtual)
+
+nombre_de_entorno\Scripts\activate (activar entorno virtual)
+
+pip install django (instalar paquete django)
+
+pip freeze (para ver paquetes instalados)
+
+deactivate (desactivar entorno virtual)
+
+comandos de migracion a la BD 
+python manage.py migrate
+
+python manage.py makemigrations
+
+comandos para crear superUsuario: 
+python manage.py createsuperuser
+
+cuenta creada: 
+Admin 
+Admin@gmail.com 
+Unp.123
