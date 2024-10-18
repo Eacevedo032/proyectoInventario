@@ -1,0 +1,28 @@
+{% extends "./base.html" %}
+
+{% block title %} Gestion de Categorias {% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-4 offset-md-4">
+        <h1>Edición de categorias</h1>
+        <div class="card py-2">
+            <div class="card-body">
+                <form action="/editarCategoria/" method="POST"> {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <input type="text" id="txtCodigo" name="txtCodigo" value="{{categoria.cod_categoria}}" class="form-control" placeholder="Código" minlength="5" maxlength="6" readonly required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <input type="text" id="txtNombre" name="txtNombre" value="{{categoria.nombre_categoria}}" class="form-control" placeholder="Nombre" maxlength="50" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <input type="text" id="txtDescripcion" name="txtDescripcion" value="{{categoria.descripcion}}" class="form-control" placeholder="Descripció" minlength="6" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-success btn-block text-white w-100">Guardar</button>
+                    </div>
+                </form>
+            </div>
+    </div>
+</div>
+{% endblock%}
