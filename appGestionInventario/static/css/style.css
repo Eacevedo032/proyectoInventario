@@ -1,0 +1,13 @@
+th, td{
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Estilos para el título */
+.Gris {
+    color: rgb(121, 119, 119);
+}
+
+.Verde {
+    color: greenyellow;
+}
