@@ -1,0 +1,83 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+
+    <!-- Bootstrap 5.3.3 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+    <!-- Archivo CSS personalizado -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+    {% if user.is_authenticated %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand tex-center" href="#">
+            <span class="Gris">Ingeniería En</span>
+            <span class="Verde">Biotecnología Industrial</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav ms-auto">
+                <a class="nav-item nav-link active" href="#">Home</a>
+                <a class="nav-item nav-link" href="#">Productos</a>
+
+                <!-- Submenú (Dropdown) -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Categorías
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                        <a class="dropdown-item" href="#">Reactivos</a>
+                        <a class="dropdown-item" href="#">Cristalería</a>
+                        <a class="dropdown-item" href="#">Equipos</a>
+                    </div>
+                </li>
+                
+                <!-- Botón de Cerrar Sesión -->
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button class="btn btn-danger ms-3" type="submit">
+                        <i class="bi bi-box-arrow-right"></i> <!-- Icono de salida -->
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <div class="container py-4">
+        {% block body %}
+        {% endblock %}
+    </div>
+
+    <!-- Bootstrap 5.3.3 JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-CgJkO8y3QaDMeOsF1b8gLqbSZjVfU9PEJZbHF48/ziPfZIN9g2k57vNp/CmXkdxB" crossorigin="anonymous"></script>
+
+    <!-- Archivo JavaScript personalizado -->
+    <script src="{% static 'js/gestionCategorias.js' %}"></script>
+
+    <!-- Script para ocultar mensajes automáticamente -->
+    <script>
+        $(document).ready(function () {
+            setTimeout(function () {
+                $(".alert").alert('close');
+            }, 3000); // 3000 milisegundos = 3 segundos
+        });
+    </script>
+</body>
+
+</html>
