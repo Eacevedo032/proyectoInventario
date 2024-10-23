@@ -31,7 +31,15 @@
         <div class="collapse navbar-collapse justify-content-end" id="navbarNavAltMarkup">
             <div class="navbar-nav">
                 <li class="nav-item"><a class="nav-link active" href="#">Inicio</a></li>
-                <li class="nav-item"><a class="nav-link active" href="{% url 'gestion_laboratorios' %}">Gestión Laboratorios</a></li>
+                {% if user.is_staff or user.is_superuser %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'administracion_laboratorios' %}">Administración de Laboratorios</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'gestion_laboratorios' %}">Gestión de Laboratorios</a>
+                    </li>
+                {% endif %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Gestión Categorías

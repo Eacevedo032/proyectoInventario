@@ -1,0 +1,60 @@
+{% extends "./base.html" %}
+{% block title %}Gestión de Reservaciones{% endblock %}
+{% block body %}
+<div class="container mt-4">
+    <h1>Gestión de Reservaciones</h1>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Usuario</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Fecha Solicitud</th>
+                    <th>Laboratorio</th>
+                    <th>Hora Entrada</th>
+                    <th>Hora Salida</th>
+                    <th>Fecha Uso</th>
+                    <th>Reactivos</th>
+                    <th>Estado</th>
+                    <th>Opciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reservaciones %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ r.usuario }}</td>
+                    <td>{{ r.nombre }}</td>
+                    <td>{{ r.email }}</td>
+                    <td>{{ r.rol }}</td>
+                    <td>{{ r.fecha_solicitud }}</td>
+                    <td>{{ r.laboratorio }}</td>
+                    <td>{{ r.hora_entrada }}</td>
+                    <td>{{ r.hora_salida }}</td>
+                    <td>{{ r.fecha_uso }}</td>
+                    <td>{{ r.reactivos }}</td>
+                    <td>
+                        <form action="/actualizarEstado/{{ r.id_reservacion }}" method="POST">
+                            {% csrf_token %}
+                            <select name="estado" class="form-control">
+                                <option value="pendiente" {% if r.estado == "pendiente" %}selected{% endif %}>Pendiente</option>
+                                <option value="aprobado" {% if r.estado == "aprobado" %}selected{% endif %}>Aprobado</option>
+                                <option value="rechazado" {% if r.estado == "rechazado" %}selected{% endif %}>Rechazado</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary mt-2">Actualizar</button>
+                        </form>
+                    </td>
+                    <td>
+                        <a href="editarReservacion/{{ r.id_reservacion }}" class="btn btn-info">Editar</a>
+                        <a href="eliminarReservacion/{{ r.id_reservacion }}" class="btn btn-danger btnEliminacion">Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
