@@ -1,0 +1,130 @@
+{% extends "./base.html" %}
+{% block title %} Reservación de Laboratorio {% endblock %}
+{% block body %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h1>Reservación de Laboratorio</h1>
+                <form action="/reservarLaboratorio/" method="POST"> {% csrf_token %}
+                    <div class="row">
+                        <div class="form-group col-md-4 mb-3">
+                            <label for="txtUsuario">Nombre:</label>
+                            <input type="text" id="txtUsuario" name="txtUsuario" class="form-control" value="{{ request.user.username }}" readonly>
+                        </div>
+                        <div class="form-group col-md-4 mb-3">
+                            <label for="txtEmail">Email:</label>
+                            <input type="email" id="txtEmail" name="txtEmail" class="form-control" value="{{ request.user.email }}" readonly>
+                        </div>
+                        <div class="form-group col-md-4 mb-3">
+                            <label for="txtRol">Rol:</label>
+                            <input type="text" id="txtRol" name="txtRol" class="form-control" value="{{ request.user.rol }}" readonly>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-4 mb-3">
+                            <label for="txtFechaSolicitud">Fecha de Solicitud:</label>
+                            <input type="date" id="txtFechaSolicitud" name="txtFechaSolicitud" class="form-control" required>
+                        </div>
+                        <div class="form-group col-md-4 mb-3">
+                            <label for="txtLaboratorio">Laboratorio:</label>
+                            <select id="txtLaboratorio" name="txtLaboratorio" class="form-control" required>
+                                <option value="lab1">lab1</option>
+                                <option value="lab2">lab2</option>
+                                <option value="lab3">lab3</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4 mb-3">
+                            <label for="txtEstado">Estado:</label>
+                            <select id="txtEstado" name="txtEstado" class="form-control" required>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="aprobado">Aprobado</option>
+                                <option value="rechazado">Rechazado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-4 mb-3">
+                            <label for="txtHoraEntrada">Hora de Entrada:</label>
+                            <input type="time" id="txtHoraEntrada" name="txtHoraEntrada" class="form-control" required>
+                        </div>
+                        <div class="form-group col-md-4 mb-3">
+                            <label for="txtHoraSalida">Hora de Salida:</label>
+                            <input type="time" id="txtHoraSalida" name="txtHoraSalida" class="form-control" required>
+                        </div>
+                        <div class="form-group col-md-4 mb-3">
+                            <label for="txtCantidadUtilizada">Cantidad Utilizada:</label>
+                            <input type="number" step="0.01" id="txtCantidadUtilizada" name="txtCantidadUtilizada" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-4 mb-3">
+                            <label for="txtFechaUso">Fecha de Uso:</label>
+                            <input type="date" id="txtFechaUso" name="txtFechaUso" class="form-control" required>
+                        </div>
+                        <div class="form-group col-md-4 mb-3">
+                            <label for="selectReactivos">Reactivos:</label>
+                            <select id="selectReactivos" name="selectReactivos" class="form-control" multiple required>
+                                {% for reactivo in reactivos %}
+                                    <option value="{{ reactivo.id_item }}">{{ reactivo.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-success btn-block text-white w-100">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card my-4" style="width: 340px;">
+            <div class="card-body">
+                <input type="text" id="search" name="search" class="form-control" style="width: 300px;" placeholder="Buscar...">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Usuario</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Fecha Solicitud</th>
+                        <th>Laboratorio</th>
+                        <th>Estado</th>
+                        <th>Hora Entrada</th>
+                        <th>Hora Salida</th>
+                        <th>Cantidad Utilizada</th>
+                        <th>Fecha Uso</th>
+                        <th>Reactivos</th>
+                        <th>Opciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reservaciones %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ r.usuario }}</td>
+                        <td>{{ r.nombre }}</td>
+                        <td>{{ r.email }}</td>
+                        <td>{{ r.rol }}</td>
+                        <td>{{ r.fecha_solicitud }}</td>
+                        <td>{{ r.laboratorio }}</td>
+                        <td>{{ r.estado }}</td>
+                        <td>{{ r.hora_entrada }}</td>
+                        <td>{{ r.hora_salida }}</td>
+                        <td>{{ r.cantidad_utilizada }}</td>
+                        <td>{{ r.fecha_uso }}</td>
+                        <td>{{ r.reactivos }}</td>
+                        <td><a href="editarReservacion/{{ r.id_reservacion }}" class="btn btn-info">Editar</a></td>
+                        <td><a href="eliminarReservacion/{{ r.id_reservacion }}" class="btn btn-danger btnEliminacion">Eliminar</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

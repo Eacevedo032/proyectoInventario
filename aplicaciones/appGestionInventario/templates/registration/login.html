@@ -9,24 +9,26 @@
         window.location.href = "{% url 'home' %}";  // Asegúrate de que 'home' sea el nombre de la URL correcta
     </script>
 {% else %}
-<div class="col-md-4 offset-md-4">
-    <h2 class="text-center">Registro de Usuario</h2>
-    <div class="card">
-        <div class="card-body">
-            <form action="" method="POST"> 
-                {% csrf_token %}
-                <div class="form-group mb-3 d-flex justify-content-center align-items-center" style="height: 5vh;">
-                    {{ form.username }}
-                </div>
-                <div class="form-group mb-3 d-flex justify-content-center align-items-center" style="height: 5vh;">
-                    {{ form.password }}
-                </div>
-                <div class="form-group mb-3 d-flex justify-content-center align-items-center" style="height: 5vh;">
-                    <button id="btn-Registrar" class="btn btn-success">Entrar</button>
-                </div>
-                <div class="clearfix"></div>
-                <a href="#" class="text-primary text-center d-block mt-2">Aviso de Privacidad</a>
-            </form>
+<div class="d-flex justify-content-center align-items-center vh-100">
+    <div class="col-md-4 text-center mb-3">
+        <h2 class="text-center">Registro de Usuario</h2>
+        <div class="card">
+            <div class="card-body">
+                <form action="" method="POST"> 
+                    {% csrf_token %}
+                    <div class="form-group mb-3 d-flex justify-content-center align-items-center" style="height: 5vh;">
+                        {{ form.username }}
+                    </div>
+                    <div class="form-group mb-3 d-flex justify-content-center align-items-center" style="height: 5vh;">
+                        {{ form.password }}
+                    </div>
+                    <div class="form-group mb-3 d-flex justify-content-center align-items-center" style="height: 5vh;">
+                        <button id="btn-Registrar" class="btn btn-success">Entrar</button>
+                    </div>
+                    <div class="clearfix"></div>
+                    <a href="#" class="text-primary text-center d-block mt-2">Aviso de Privacidad</a>
+                </form>
+            </div>
         </div>
     </div>
 </div>
