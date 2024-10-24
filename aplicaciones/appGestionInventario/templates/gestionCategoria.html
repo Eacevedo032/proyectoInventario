@@ -53,7 +53,7 @@
                         <td>{{c.cod_categoria}}</td>
                         <td>{{c.nombre_categoria}}</td>
                         <td>{{c.descripcion}}</td>
-                        <td><a href="edicionCategoria/{{c.cod_categoria}}" class="btn btn-info">Editar</a></td>
+                        <td><a href="{% url 'edicionCategoria' c.cod_categoria %}" class="btn btn-info">Editar</a></td>
                         <td><a href="{% url 'eliminarCategoria' c.cod_categoria %}" class="btn btn-danger btnEliminacion" onclick=return>Eliminar</a></td>
                                                                                                                                   <!-- Onclick=return confirm: mandaría doble confirmacion de eliminado -->
                                                                                                                                    <!-- Onclick=return: solo una confirmacion -->
