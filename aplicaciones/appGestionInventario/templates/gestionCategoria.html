@@ -6,13 +6,13 @@
 <div class="row">
     <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4">
         {% if messages %}
-        {% for message in messages %}
         <div class="alert alert-dismissible alert-success">
-            <button type="button" class="btn-close" data-dismiss="alert">&times;</button>
-            <strong class="text-dark">{{ message }}</strong>
+            {% for message in messages %}
+                <strong class="text-dark">{{ message }}</strong>
+            {% endfor %}
         </div>
-        {% endfor %}
-        {% endif %}
+    {% endif %}
+    
         <h1>Gestión de categorias</h1>
         <div class="card py-2">
             <div class="card-body">
@@ -24,7 +24,7 @@
                         <input type="text" id="txtNombre" name="txtNombre" class="form-control" placeholder="Nombre" maxlength="50" required>
                     </div>
                     <div class="form-group mb-3">
-                        <input type="text" id="txtDescripcion" name="txtDescripcion" class="form-control" placeholder="Descripció" minlength="6" maxlength="100" required>
+                        <input type="text" id="txtDescripcion" name="txtDescripcion" class="form-control" placeholder="Descripción" minlength="6" maxlength="100" required>
                     </div>
                     <div class="form-group">
                         <button type="submit" class="btn btn-success btn-block text-white w-100">Guardar</button>
@@ -54,7 +54,9 @@
                         <td>{{c.nombre_categoria}}</td>
                         <td>{{c.descripcion}}</td>
                         <td><a href="edicionCategoria/{{c.cod_categoria}}" class="btn btn-info">Editar</a></td>
-                        <td><a href="eliminarCategoria/{{c.cod_categoria}}" class="btn btn-danger btnEliminacion">Eliminar</a></td>
+                        <td><a href="{% url 'eliminarCategoria' c.cod_categoria %}" class="btn btn-danger btnEliminacion" onclick=return>Eliminar</a></td>
+                                                                                                                                  <!-- Onclick=return confirm: mandaría doble confirmacion de eliminado -->
+                                                                                                                                   <!-- Onclick=return: solo una confirmacion -->
                     </tr>
                     {% endfor %}
                 </tbody>

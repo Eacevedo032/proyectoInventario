@@ -2,10 +2,11 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
-    path('', views.home, name='home'), 
+    path('', views.inicio, name='inicio'),
+    path('gestionCategoria/', views.gestionCategorias, name='gestionCategoria'), #añadi nombre
     path('registrarCategoria/', views.registrarCategoria),
-    path('edicionCategoria/<int:cod_categoria>/', views.edicionCategoria),
-    path('editarCategoria/', views.editarCategoria),
-    path('eliminarCategoria/<cod_categoria>', views.eliminarCategoria),
+    path('edicionCategoria/<int:cod_categoria>/', views.edicionCategoria, name = 'edicionCategoria'), #añadi nombre
+    path('editarCategoria/', views.editarCategoria, name='editarCategoria'), #añadi nombre
+    path('eliminarCategoria/<cod_categoria>/', views.eliminarCategoria, name='eliminarCategoria'),
     path('accounts/', include('django.contrib.auth.urls'))
 ]

@@ -79,8 +79,12 @@ WSGI_APPLICATION = 'proyectoInventario.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'gestion_inventario.db',
+        'ENGINE': 'django.db.backends.mysql', #Se hizo uan migración a mysql, estaba en sqlite3
+        'NAME': 'Inventario_DB',
+        'USER': 'root',
+        'PASSWORD': 'unp.1234',
+        'HOST': 'localhost', 
+        'PORT': ''
     }
 }
 
@@ -125,6 +129,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# redireccion de login a home en settings.py
-LOGIN_REDIRECT_URL = 'home'
+# redireccion de login a inicio en settings.py
+LOGIN_REDIRECT_URL = 'inicio'
 LOGOUT_REDIRECT_URL = '/accounts/login'
+
