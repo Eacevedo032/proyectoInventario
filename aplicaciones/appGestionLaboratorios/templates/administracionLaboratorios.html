@@ -1,0 +1,48 @@
+{% extends "./base.html" %}
+{% block title %}Gestión de Reservaciones{% endblock %}
+{% block body %}
+    <div class="container">
+        <h1 class="my-4">Administración de Solicitudes</h1>
+        <button type="submit" class="btn btn-success">Exportar Excel</button>
+        <button type="submit" class="btn btn-danger">Exportar pdf</button>
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for solicitud in solicitudes %}
+                <tr>
+                    <td>{{ solicitud.id }}</td>
+                    <td>{{ solicitud.usuario.username }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if solicitud.estado == 'aprobada' %}
+                                bg-success
+                            {% elif solicitud.estado == 'rechazada' %}
+                                bg-danger
+                            {% elif solicitud.estado == 'pendiente' %}
+                                bg-warning
+                            {% endif %}">
+                            {{ solicitud.estado }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'aprobar_solicitud' solicitud.id %}" class="btn btn-success btn-sm">Aprobar</a>
+                        <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm">Rechazar</a>
+                        <a href="{% url 'solicitud_pendiente' solicitud.id %}" class="btn btn-warning btn-sm">Pendiente</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No hay solicitudes disponibles.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

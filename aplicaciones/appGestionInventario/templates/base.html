@@ -39,27 +39,36 @@
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
             <div class="navbar-nav ms-auto">
                 <a class="nav-item nav-link active" href="{% url 'inicio' %}">Inicio</a>
-                <a class="nav-item nav-link" href="#">Productos</a>
+                {% if user.is_staff or user.is_superuser %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'administracion_laboratorios' %}">Administración de Laboratorios</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'reservar_laboratorio' %}">Reservación de Laboratorios</a>
+                    </li>
+                {% endif %}
                 <a class="nav-item nav-link" href="{% url 'gestionCategoria' %}">Gestionar Categorías</a>
 
-                <!-- Submenú (Dropdown) -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-bs-toggle="dropdown"
-                        aria-haspopup="true" aria-expanded="false">
-                        Categorías
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Gestión Categorías
                     </a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                        <a class="dropdown-item" href="#">Reactivos</a>
-                        <a class="dropdown-item" href="#">Cristalería</a>
-                        <a class="dropdown-item" href="#">Equipos</a>
-                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li class="nav-item"><a class="dropdown-item" href="#">Reactivos</a></li>
+                        <li class="nav-item"><a class="dropdown-item" href="#">Cristalería</a></li>
+                        <li class="nav-item"><a class="dropdown-item" href="#">Equipos</a></li>
+                    </ul>
                 </li>
+
+                <li class="nav-item"><a class="nav-link" href="#">Generar Reportes</a></li>
 
                 <!-- Botón de Cerrar Sesión -->
                 <form action="{% url 'logout' %}" method="post" style="display:inline;">
                     {% csrf_token %}
                     <button class="btn btn-danger ms-3" type="submit">
                         <i class="bi bi-box-arrow-right"></i> <!-- Icono de salida -->
+                        Cerrar sesión
                     </button>
                 </form>
             </div>

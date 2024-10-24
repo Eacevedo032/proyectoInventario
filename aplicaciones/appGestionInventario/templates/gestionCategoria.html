@@ -18,9 +18,6 @@
             <div class="card-body">
                 <form action="/registrarCategoria/" method="POST"> {% csrf_token %}
                     <div class="form-group mb-3">
-                        <input type="text" id="txtCodigo" name="txtCodigo" class="form-control" placeholder="Código" minlength="5" maxlength="6" required>
-                    </div>
-                    <div class="form-group mb-3">
                         <input type="text" id="txtNombre" name="txtNombre" class="form-control" placeholder="Nombre" maxlength="50" required>
                     </div>
                     <div class="form-group mb-3">
