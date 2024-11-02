@@ -3,10 +3,9 @@ from . import views
 
 urlpatterns = [
     path('', views.inicio, name='inicio'),
-    path('gestionCategoria/', views.gestionCategorias, name='gestionCategoria'), #añadi nombre
+    path('gestionCategorias/', views.gestionCategorias, name='gestionCategoria'),
     path('registrarCategoria/', views.registrarCategoria),
-    path('edicionCategoria/<str:cod_categoria>/', views.edicionCategoria, name='edicionCategoria'),
-    path('editarCategoria/', views.editarCategoria, name='editarCategoria'), #añadi nombre
-    path('eliminarCategoria/<cod_categoria>/', views.eliminarCategoria, name='eliminarCategoria'),
+    path('edicionCategoria/<int:id_categoria>/', views.edicionCategoria, name='edicionCategoria'),
+    path('eliminarCategoria/<id_categoria>/', views.eliminarCategoria, name='eliminarCategoria'),
     path('accounts/', include('django.contrib.auth.urls'))
 ]

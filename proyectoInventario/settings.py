@@ -81,7 +81,7 @@ WSGI_APPLICATION = 'proyectoInventario.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', #Se hizo uan migración a mysql, estaba en sqlite3
-        'NAME': 'Inventario_DB',
+        'NAME': 'inventario_db',
         'USER': 'root',
         'PASSWORD': 'unp.1234',
         'HOST': 'localhost', 
