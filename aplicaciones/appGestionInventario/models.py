@@ -5,7 +5,7 @@ from django.forms import ValidationError
 # Tabla Categoria
 class Categoria(models.Model):
     id_categoria = models.AutoField(primary_key=True)
-    nombre_categoria = models.CharField(max_length=25)
+    nombre_categoria = models.CharField(max_length=100, unique=True)
     descripcion = models.CharField(max_length=255)
 
     def __str__(self):
@@ -14,7 +14,7 @@ class Categoria(models.Model):
 # Tabla Subcategoría
 class SubCategoria(models.Model):
     id_subcategoria = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=50)
+    nombre = models.CharField(max_length=100, unique=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
 
     def __str__(self):

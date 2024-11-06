@@ -3,28 +3,30 @@
 {% block title %} Gestion de Categorias {% endblock %}
 
 {% block body %}
+
 <div class="row">
-    <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4">
+    <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3">
         {% if messages %}
         <div class="alert alert-dismissible alert-success">
             {% for message in messages %}
-                <strong class="text-dark">{{ message }}</strong>
+            <strong class="text-dark">{{ message }}</strong>
             {% endfor %}
         </div>
-    {% endif %}
-    
-        <h1>Agregar Categoría</h1>
+        {% endif %}
+        <h2 class="text-center" style="padding: 0.7%; color: blue;">Agregar Categoría</h2>
         <div class="card py-2">
             <div class="card-body">
-                <form action="/registrarCategoria/" method="POST"> 
+                <form action="/registrarCategoria/" method="POST">
                     {% csrf_token %}
                     <input type="hidden" name="txtid_categoria" value="{{ categoria.id_categoria }}">
 
                     <div class="form-group mb-3">
-                        <input type="text" id="txtNombre" name="txtNombre" class="form-control" placeholder="Nombre" maxlength="50" required>
+                        <input type="text" id="txtNombre" name="txtNombre" class="form-control" placeholder="Nombre"
+                            maxlength="50" required>
                     </div>
                     <div class="form-group mb-3">
-                        <input type="text" id="txtDescripcion" name="txtDescripcion" class="form-control" placeholder="Descripción" maxlength="100">
+                        <input type="text" id="txtDescripcion" name="txtDescripcion" class="form-control"
+                            placeholder="Descripción" maxlength="100">
                     </div>
                     <div class="form-group">
                         <button type="submit" class="btn btn-success btn-block text-white w-100">Guardar</button>
@@ -33,7 +35,7 @@
             </div>
         </div>
     </div>
-    <div class="col-sm-12 col-md-6 col-lg-8 col-xl-8">
+    <div class="col-sm-12 col-md-6 col-lg-8 col-xl-9">
         <h1>Listado de Categorías</h1>
         <div class="table-responsive py-2">
             <table class="table table-striped">
@@ -52,19 +54,63 @@
                         <td>{{ c.nombre_categoria }}</td>
                         <td>
                             {% if c.descripcion and c.descripcion|length > 0 %}
-                                {{ c.descripcion }}
+                            {{ c.descripcion }}
                             {% else %}
-                                - <!-- Mostrar guion si la descripción está vacía o con espacios en blanco-->
+                            - <!-- Mostrar guion si la descripción está vacía o con espacios en-->
                             {% endif %}
-                        </td> 
-                        <td>
-                            <a href="{% url 'edicionCategoria' c.id_categoria %}" class="btn btn-info">Editar</a>
-                            <a href="{% url 'eliminarCategoria' c.id_categoria %}" class="btn btn-danger btnEliminacion">Eliminar</a>
                         </td>
+                        <td>
+                            <div class="d-flex justify-content-center align-items-center gap-2">
+                                <!--d-flex justify-content-center esto pone centrado si es center, final si es end y start inicio-->
+                                <a href="{% url 'edicionCategoria' c.id_categoria %}" class="btn btn-info btn-sm me-1"
+                                    title="Editar Categoría">
+                                    Editar
+                                </a>
+                                <a href="{% url 'eliminarCategoria' c.id_categoria %}"
+                                    class="btn btn-danger btn-sm me-1" onclick="return doubleConfirm();"
+                                    title="Eliminar Categoría">
+                                    Eliminar
+                                </a>
+                                <!-- El siguiente es un script usando JS para validar doblemente la eliminación-->
+                                <script>  
+                                    function doubleConfirm() {
+                                        // Primera confirmación
+                                        var firstConfirm = confirm("¿Estás seguro de que deseas eliminar esta categoría?");
+                                        if (firstConfirm) {
+                                            // Segunda confirmación
+                                            var secondConfirm = confirm("¡Esto es irreversible! ¿Estás seguro?");
+                                            if (secondConfirm) {
+                                                // Si ambos son confirmados, procedemos con la eliminación
+                                                return true;
+                                            } else {
+                                                // Si la segunda confirmación es cancelada, no hace nada
+                                                return false;
+                                            }
+                                        } else {
+                                            // Si la primera confirmación es cancelada, no hace nada
+                                            return false;
+                                        }
+                                    }
+                                </script>
+                                <a href="{% url 'agregarSubcategoria' c.id_categoria %}"
+                                    class="btn btn-primary btn-sm me-1" title="Opciones de Subcategorías">
+                                    Subcategorías
+                                </a>
+                                {% if c.subcategoria_set.exists %}
+                                <a href="{% url 'verSubcategorias' c.id_categoria %}" class="btn btn-sm"
+                                    style="background-color: orange; color: black" ; title="Ver Subcategorías">
+                                    Registros
+                                </a>
+                                {% else %}
+                                <span class="btn btn-secondary btn-sm disabled" style="color:black">Vacío</span>
+                                {% endif %}
+                            </div>
+                        </td>
+
                     </tr>
                     {% endfor %}
                 </tbody>
-                   
+
             </table>
         </div>
     </div>

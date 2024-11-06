@@ -1,11 +1,8 @@
-from django.http import Http404
 from django.shortcuts import render,redirect, get_object_or_404
 from .models import Categoria, SubCategoria
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_control
-from django.core.exceptions import ObjectDoesNotExist
-
 
 # Creación de vistas.
 
@@ -23,21 +20,27 @@ def gestionCategorias(request):
     categorias = Categoria.objects.all()
     return render(request, 'gestionCategoria.html', {'Categorias': categorias})
 
+@login_required
 def registrarCategoria(request):
     if request.method == "POST":
-        nombre_categoria = request.POST['txtNombre']
+        nombre_categoria = request.POST['txtNombre'].strip()
         descripcion = request.POST['txtDescripcion']
 
-        # Crear la categoría
-        categoria = Categoria.objects.create(
-            nombre_categoria=nombre_categoria,
-            descripcion=descripcion
-        )
+        # Verificar si la categoría ya existe
+        #filter(nombre_categoria=nombre_categoria).exists() comprueba si ya existe uno con ese nombre
+        #if not ... exists() crea la categoria si no existe
+        if not Categoria.objects.filter(nombre_categoria=nombre_categoria).exists():
+            # Crear la categoría si no existe una con el mismo nombre
+            Categoria.objects.create(
+                nombre_categoria=nombre_categoria,
+                descripcion=descripcion
+            )
+            messages.success(request, '¡Categoría Registrada!')
+        else:
+            # Mensaje de error si el nombre ya existe
+            messages.error(request, 'La categoría ya existe, por favor elige un nombre diferente.')
 
-        messages.success(request, '¡Categoría Registrada!')
-        return redirect('gestionCategoria')  # Redirige solo después de la creación
-
-    return render(request, 'registrarCategoria.html')  # Renderiza la plantilla si no es POST
+        return redirect('gestionCategoria')
 
 @login_required
 def edicionCategoria(request, id_categoria):
@@ -71,3 +74,66 @@ def eliminarCategoria(request, id_categoria):
 
     return redirect('gestionCategoria')
 
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def gestionSubcategorias(request, id_categoria):
+    categoria = get_object_or_404(Categoria, id_categoria=id_categoria)
+    subcategorias = SubCategoria.objects.filter(categoria=categoria)
+
+    return render(request, 'gestionSubcategorias.html', {
+        'categoria': categoria,
+        'subcategorias': subcategorias
+    })
+
+@login_required
+def agregarSubcategoria(request, id_categoria):
+    categoria = get_object_or_404(Categoria, id_categoria=id_categoria)
+
+    if request.method == "POST":
+        nombre = request.POST['txtNombreSubcategoria'].strip()
+
+        # Verificar si la subcategoría ya existe
+        if not SubCategoria.objects.filter(nombre=nombre, categoria=categoria).exists():
+            SubCategoria.objects.create(nombre=nombre, categoria=categoria)
+            messages.success(request, '¡Subcategoría Registrada!')
+        else:
+            messages.error(request, 'La subcategoría ya existe, ingrese otra.')
+
+    return redirect('gestionSubcategorias', id_categoria=id_categoria)
+
+def verSubcategorias(request, id_categoria):
+    categoria = get_object_or_404(Categoria, id_categoria=id_categoria)
+    subcategorias = SubCategoria.objects.filter(categoria=categoria)
+    
+    return render(request, 'verSubcategorias.html', {
+        'categoria': categoria,
+        'subcategorias': subcategorias,
+    })
+
+@login_required
+def editarSubcategoria(request, id_subcategoria):
+    # Obtener la subcategoría con el ID proporcionado
+    subcategoria = get_object_or_404(SubCategoria, id_subcategoria=id_subcategoria)
+
+    if request.method == "POST":
+        nombre = request.POST.get('txtNombre', '').strip()
+        if nombre:
+            subcategoria.nombre = nombre
+            subcategoria.save()
+            messages.success(request, '¡Subcategoría Actualizada!')
+            # Redirige a la vista de gestión de subcategorías de la categoría
+            return redirect('gestionSubcategorias', id_categoria=subcategoria.categoria.id_categoria)
+        else:
+            messages.error(request, 'El nombre no puede estar vacío.')
+
+    # Renderiza la plantilla de edición si no es POST
+    return render(request, 'edicionSubcategoria.html', {'subcategoria': subcategoria})
+
+@login_required
+def eliminarSubcategoria(request, id_subcategoria):
+    subcategoria = get_object_or_404(SubCategoria, id_subcategoria=id_subcategoria)
+    id_categoria = subcategoria.categoria.id_categoria
+    subcategoria.delete()
+
+    messages.success(request, '¡Subcategoría Eliminada!')
+    return redirect('gestionSubcategorias', id_categoria=id_categoria)

@@ -1,0 +1,88 @@
+{% extends "./base.html" %}
+
+{% block title %}Gestión de Subcategorías{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3">
+        {% if messages %}
+        <div class="alert alert-dismissible alert-success">
+            {% for message in messages %}
+            <strong class="text-dark">{{ message }}</strong>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <h2 class="text-center" style="padding: 0.7%; color: blue;">Agregar Subcategoría</h2>
+        <div class="card py-2">
+            <div class="card-body">
+                <form action="{% url 'agregarSubcategoria' categoria.id_categoria %}" method="POST">
+                    {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <input type="text" name="txtNombreSubcategoria" class="form-control"
+                            placeholder="Nombre de la Subcategoría" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-success btn-block text-white w-100">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-12 col-md-6 col-lg-8 col-xl-9">
+        <h2>Listado de Subcategorías para {{ categoria.nombre_categoria }}</h2>
+        <div class="table-responsive py-2">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Ítems</th>
+                        <th>Nombre</th>
+                        <th>Opciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subcategoria in subcategorias %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ subcategoria.nombre }}</td>
+                        <td>
+                            <div class="d-flex justify-content-center align-items-center gap-2">
+                                <a href="{% url 'editarSubcategoria' subcategoria.id_subcategoria %}"
+                                    class="btn btn-primary btn-sm">
+                                    Editar
+                                </a>
+                                <a href="{% url 'eliminarSubcategoria' subcategoria.id_subcategoria %}"
+                                    class="btn btn-danger btn-sm" onclick="return doubleConfirmSubcategoria();"
+                                    title="Eliminar Subcategoría">
+                                    Eliminar
+                                </a>
+                                <!-- El siguiente es un script usando JS para validar doblemente la eliminación-->
+                                <script>
+                                    function doubleConfirmSubcategoria() {
+                                        // Primera confirmación
+                                        var firstConfirm = confirm("¿Estás seguro de que deseas eliminar esta subcategoría?");
+                                        if (firstConfirm) {
+                                            // Segunda confirmación
+                                            var secondConfirm = confirm("¡Esto es irreversible! ¿Estás seguro?");
+                                            if (secondConfirm) {
+                                                // Si ambos son confirmados, procedemos con la eliminación
+                                                return true;
+                                            } else {
+                                                // Si la segunda confirmación es cancelada, no hace nada
+                                                return false;
+                                            }
+                                        } else {
+                                            // Si la primera confirmación es cancelada, no hace nada
+                                            return false;
+                                        }
+                                    }
+                                </script>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
