@@ -1,0 +1,31 @@
+
+{% extends "base.html" %}
+{% block title %}Ítems Solicitados{% endblock %}
+{% block body %}
+<div class="container my-5">
+    <h2>Ítems Solicitados para {{ solicitud.laboratorio }}</h2>
+    <table class="table table-striped mt-4">
+        <thead>
+            <tr>
+                <th>Ítem</th>
+                <th>Cantidad Solicitada</th>
+                <th>Fecha de Uso</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items_solicitados %}
+            <tr>
+                <td>{{ item.inventario.nombre}}</td>
+                <td>{{ item.cantidad_utilizada }}</td>
+                <td>{{ item.fecha_uso }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center">No hay ítems solicitados para esta solicitud.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'administracion_laboratorios' %}" class="btn btn-secondary mt-4">Volver</a>
+</div>
+{% endblock %}

@@ -9,17 +9,9 @@
     <title>{% block title %}{% endblock %}</title>
 
     <!-- Bootstrap 5.3.3 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
 
     <!-- Archivo CSS personalizado -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -40,16 +32,14 @@
             <div class="navbar-nav ms-auto">
                 <a class="nav-item nav-link active" href="{% url 'inicio' %}">Inicio</a>
                 {% if user.is_staff or user.is_superuser %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'administracion_laboratorios' %}">Administración de Laboratorios</a>
-                    </li>
-                {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'reservar_laboratorio' %}">Reservación de Laboratorios</a>
-                    </li>
-                {% endif %}
-                <a class="nav-item nav-link" href="{% url 'gestionCategoria' %}">Gestión Inventario</a>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'administracion_laboratorios' %}">Administración de Laboratorios</a>
+                </li>
 
+                <li class="nav-item">
+                <a class="nav-item nav-link" href="{% url 'gestionCategoria' %}">Gestión Inventario</a>
+                </li>
+                
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Gestión Categorías
@@ -62,6 +52,15 @@
                 </li>
 
                 <li class="nav-item"><a class="nav-link" href="#">Generar Reportes</a></li>
+
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'reservar_laboratorio' %}">Reservación de Laboratorios</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'solicitar_recursos' %}">Solicitud de recursos</a>
+                </li>
+                {% endif %}
 
                 <!-- Botón de Cerrar Sesión -->
                 <form action="{% url 'logout' %}" method="post" style="display:inline;">
@@ -81,15 +80,16 @@
         {% endblock %}
     </div>
 
-    <!-- Bootstrap 5.3.3 JavaScript -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-CgJkO8y3QaDMeOsF1b8gLqbSZjVfU9PEJZbHF48/ziPfZIN9g2k57vNp/CmXkdxB"
-        crossorigin="anonymous"></script>
+    <!-- Enlace a jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Enlace a Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
     <!-- Archivo JavaScript personalizado -->
     <script src="{% static 'js/gestionCategorias.js' %}"></script>
-
+    <script src="{% static 'js/appGestionLaboratorio.js' %}"></script>
+    
     <!-- Script para ocultar mensajes automáticamente -->
     <script>
         $(document).ready(function () {

@@ -11,3 +11,7 @@ th, td{
 .Verde {
     color: greenyellow;
 }
+
+.alert-success { color: green; }
+.alert-error { color: red; }
+.alert-info { color: blue; }

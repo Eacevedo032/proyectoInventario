@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.db import models
 from django.contrib.auth.models import User
 from django.forms import ValidationError
@@ -13,51 +14,71 @@ class Categoria(models.Model):
 
 # Tabla Subcategoría
 class SubCategoria(models.Model):
-    id_subcategoria = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=100, unique=True)
+    id_subcategoria = models.AutoField(primary_key=True, unique=True)
+    nombre = models.CharField(max_length=100)
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.nombre} - {self.categoria.nombre_categoria}"
 
-# Tabla Inventario
-class Inventario(models.Model):
-    id_inventario = models.AutoField(primary_key=True)
-    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
-    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE)
-    nombre = models.CharField(max_length=50, null=True, unique=True)
-    descripcion = models.TextField(null=True, blank=True)
-    presentacion = models.TextField(null=True, blank=True)
-    cantidad_disponible = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    codigo = models.CharField(max_length=50, null=True, blank=True, unique=True)
-    vencimiento = models.DateField(null=True, blank=True)
-    observaciones = models.TextField(null=True, blank=True)
-    lote = models.CharField(max_length=36, null=True, blank=True)  
-    marca_caracteristica = models.TextField(null=True, blank=True)
-    num_cat = models.CharField(max_length=50, null=True, blank=True)
-    num_serie = models.CharField(max_length=25, null=True, blank=True)
-    modelo = models.CharField(max_length=25, null=True, blank=True)
-    accesorios = models.TextField(null=True, blank=True)
-    medidas = models.CharField(max_length=50, null=True, blank=True)
-    articulo = models.CharField(max_length=50, null=True, blank=True)
-    colores = models.CharField(max_length=50, null=True, blank=True)
-    capacidad = models.CharField(max_length=25, null=True, blank=True)
+class DetalleTecnico(models.Model):
+    marca_caracteristica = models.TextField(blank=True)
+    num_cat = models.CharField(max_length=50, blank=True)
+    num_serie = models.CharField(max_length=25, blank=True)
+    modelo = models.CharField(max_length=25, blank=True)
+    accesorios = models.TextField(blank=True)
+    medidas = models.CharField(max_length=50, blank=True)
+    colores = models.CharField(max_length=50, blank=True)
+    capacidad = models.CharField(max_length=25, blank=True)
 
     def __str__(self):
-        return f"{self.nombre} - {self.cantidad_disponible} unidades"
+        return f"Detalle Técnico {self.id}"
+
+
+class Inventario(models.Model):
+    id_inventario = models.AutoField(primary_key=True)
+    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True)
+    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.SET_NULL, null=True)
+    nombre = models.CharField(max_length=50, unique=True, null=False)
+    descripcion = models.TextField(blank=True)
+    cantidad_disponible = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    codigo = models.CharField(max_length=50, unique=True, blank=True)
+    detalle_tecnico = models.ForeignKey(DetalleTecnico, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.nombre
+
+
+class Lote(models.Model):
+    inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE)
+    lote = models.CharField(max_length=36)
+    vencimiento = models.DateField()
+
+    def __str__(self):
+        return f"Lote {self.lote}"
+
+
+class InformacionAdicional(models.Model):
+    inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE)
+    observaciones = models.TextField(blank=True)
+    presentacion = models.TextField(blank=True)
+    articulo = models.CharField(max_length=50, blank=True)
+
+    def __str__(self):
+        return f"Información Adicional para {self.inventario.nombre}"
 
 # Tabla Solicitudes de Laboratorios
 class SolicitudLaboratorio(models.Model):
     PENDIENTE = 'pendiente'
     APROBADA = 'aprobada'
     RECHAZADA = 'rechazada'
-
+    
     ESTADOS = [
         (PENDIENTE, 'Pendiente'),
         (APROBADA, 'Aprobada'),
         (RECHAZADA, 'Rechazada'),
     ]
-
+    
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     fecha_solicitud = models.DateField(auto_now_add=True)
     laboratorio = models.CharField(max_length=255)
@@ -78,9 +99,34 @@ class SolicitudLaboratorio(models.Model):
         if self.hora_inicio >= self.hora_fin:
             raise ValidationError('La hora de inicio debe ser anterior a la hora de fin.')
 
+    def aprobar_solicitud(self):
+        if self.estado != SolicitudLaboratorio.PENDIENTE:
+            raise ValidationError("Solo se pueden aprobar solicitudes pendientes.")
+        
+        usos = UsoItemLaboratorio.objects.filter(solicitud=self)
+        for uso in usos:
+            inventario_item = uso.item
+            if inventario_item.cantidad_disponible >= uso.cantidad_utilizada:
+                inventario_item.cantidad_disponible -= uso.cantidad_utilizada
+                inventario_item.save()
+
+                # Registrar en el historial
+                HistorialInventario.objects.create(
+                    item=inventario_item,
+                    cantidad_cambiada=uso.cantidad_utilizada,
+                    fecha_cambio=timezone.now(),
+                    tipo_cambio='salida'
+                )
+            else:
+                raise ValidationError(f"No hay suficiente cantidad de {inventario_item.nombre} en inventario.")
+
+        self.estado = SolicitudLaboratorio.APROBADA
+        self.save()
+
 # Tabla Usos de Ítems en Laboratorios
 class UsoItemLaboratorio(models.Model):
-    item = models.ForeignKey(Inventario, on_delete=models.CASCADE)
+    solicitud = models.ForeignKey(SolicitudLaboratorio, on_delete=models.CASCADE)
+    inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE)
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     cantidad_utilizada = models.DecimalField(max_digits=10, decimal_places=2)
     fecha_uso = models.DateField()
@@ -95,7 +141,7 @@ class UsoItemLaboratorio(models.Model):
 
 # Tabla Historial de Inventario
 class HistorialInventario(models.Model):
-    item = models.ForeignKey(Inventario, on_delete=models.CASCADE)
+    inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE)
     cantidad_cambiada = models.DecimalField(max_digits=10, decimal_places=2)
     fecha_cambio = models.DateField()
     tipo_cambio = models.CharField(max_length=50)

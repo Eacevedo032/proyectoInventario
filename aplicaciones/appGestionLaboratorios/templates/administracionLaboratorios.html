@@ -1,48 +1,63 @@
 {% extends "./base.html" %}
 {% block title %}Gestión de Reservaciones{% endblock %}
 {% block body %}
-    <div class="container">
-        <h1 class="my-4">Administración de Solicitudes</h1>
-        <button type="submit" class="btn btn-success">Exportar Excel</button>
-        <button type="submit" class="btn btn-danger">Exportar pdf</button>
-        <table class="table table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Usuario</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for solicitud in solicitudes %}
-                <tr>
-                    <td>{{ solicitud.id }}</td>
-                    <td>{{ solicitud.usuario.username }}</td>
-                    <td>
-                        <span class="badge 
-                            {% if solicitud.estado == 'aprobada' %}
-                                bg-success
-                            {% elif solicitud.estado == 'rechazada' %}
-                                bg-danger
-                            {% elif solicitud.estado == 'pendiente' %}
-                                bg-warning
-                            {% endif %}">
-                            {{ solicitud.estado }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="{% url 'aprobar_solicitud' solicitud.id %}" class="btn btn-success btn-sm">Aprobar</a>
-                        <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm">Rechazar</a>
-                        <a href="{% url 'solicitud_pendiente' solicitud.id %}" class="btn btn-warning btn-sm">Pendiente</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center">No hay solicitudes disponibles.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="container my-5">
+    <h1 class="text-center mb-4">Administración de Solicitudes de Laboratorios</h1>
+
+    <div class="d-flex justify-content-start mb-4">
+        <button type="submit" class="btn btn-success me-2">Exportar Excel</button>
+        <button type="submit" class="btn btn-danger">Exportar PDF</button>
     </div>
+
+    {% for usuario, solicitudes in solicitudes_por_usuario.items %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Solicitudes de {{ usuario.username }}</h3>
+        </div>
+        <div class="card-body table-responsive">
+            {% if solicitudes %}
+            <table class="table table-bordered table-hover">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Usuario ID</th>
+                        <th scope="col">Fecha de Solicitud</th>
+                        <th scope="col">Laboratorio</th>
+                        <th scope="col">Fecha de Reserva</th>
+                        <th scope="col">Hora de Inicio</th>
+                        <th scope="col">Hora de Fin</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for solicitud in solicitudes %}
+                    <tr>
+                        <td>{{ solicitud.id }}</td>
+                        <td>{{ solicitud.usuario_id }}</td>
+                        <td>{{ solicitud.fecha_solicitud }}</td>
+                        <td>{{ solicitud.laboratorio }}</td>
+                        <td>{{ solicitud.fecha_reserva }}</td>
+                        <td>{{ solicitud.hora_inicio }}</td>
+                        <td>{{ solicitud.hora_fin }}</td>
+                        <td>{{ solicitud.estado }}</td>
+                        <td>
+                            <div class="btn-group" role="group" aria-label="Acciones de solicitud">
+                                <a href="{% url 'ver_items_solicitud' solicitud.id %}" class="btn btn-info btn-sm me-2">Ver Ítems</a>
+                                <a href="{% url 'aprobar_solicitud' solicitud.id %}" class="btn btn-primary btn-sm me-2">Aprobar</a>
+                                <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm me-2">Rechazar</a>
+                                <a href="{% url 'solicitud_pendiente' solicitud.id %}" class="btn btn-warning btn-sm">Pendiente</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-center">No hay solicitudes disponibles.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
 {% endblock %}

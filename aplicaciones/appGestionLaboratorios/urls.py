@@ -1,10 +1,21 @@
 from django.urls import path, include
 from . import views
 
-urlpatterns = [ 
+urlpatterns = [
+    # URLs para formulario y tabla de laboratorio
     path('reservar_laboratorio/', views.reservar_laboratorio, name='reservar_laboratorio'),
+
+    # URLs para formulario y tabla de recursos
+    path('solicitar_recursos/', views.solicitar_recursos, name='solicitar_recursos'),
+    
+    #Urls para llamar a las categorias a las que pertenece cada recurso del inventario
+    path('obtener_subcategorias/<int:categoria_id>/', views.obtener_subcategorias, name='obtener_subcategorias'),
+    path('obtener_items/<int:categoria_id>/<int:subcategoria_id>/', views.obtener_items, name='obtener_items'),
+
+
+    # URLs para usuarios admin
     path('administracionLaboratorios/', views.administracionLaboratorios, name='administracion_laboratorios'),
-    path('mis_solicitudes/', views.lista_solicitudes_usuario, name='lista_solicitudes_usuario'),
+    path('ver-items-solicitud/<int:solicitud_id>/', views.ver_items_solicitud, name='ver_items_solicitud'),
     path('aprobar_solicitud/<int:solicitud_id>/', views.aprobar_solicitud, name='aprobar_solicitud'),
     path('rechazar_solicitud/<int:solicitud_id>/', views.rechazar_solicitud, name='rechazar_solicitud'),
     path('solicitud_pendiente/<int:solicitud_id>/', views.solicitud_pendiente, name='solicitud_pendiente'),
