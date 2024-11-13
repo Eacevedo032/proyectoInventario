@@ -80,9 +80,13 @@ class SolicitudLaboratorio(models.Model):
     ]
     
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     fecha_solicitud = models.DateField(auto_now_add=True)
     laboratorio = models.CharField(max_length=255)
     estado = models.CharField(max_length=50, choices=ESTADOS, default=PENDIENTE)
+    fecha_reserva = models.DateField()
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
     fecha_reserva = models.DateField()
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
@@ -94,10 +98,36 @@ class SolicitudLaboratorio(models.Model):
 
     def __str__(self):
         return f"{self.laboratorio} - {self.usuario.username} - {self.estado}"
+    def __str__(self):
+        return f"{self.laboratorio} - {self.usuario.username} - {self.estado}"
 
     def clean(self):
         if self.hora_inicio >= self.hora_fin:
             raise ValidationError('La hora de inicio debe ser anterior a la hora de fin.')
+
+    def aprobar_solicitud(self):
+        if self.estado != SolicitudLaboratorio.PENDIENTE:
+            raise ValidationError("Solo se pueden aprobar solicitudes pendientes.")
+        
+        usos = UsoItemLaboratorio.objects.filter(solicitud=self)
+        for uso in usos:
+            inventario_item = uso.item
+            if inventario_item.cantidad_disponible >= uso.cantidad_utilizada:
+                inventario_item.cantidad_disponible -= uso.cantidad_utilizada
+                inventario_item.save()
+
+                # Registrar en el historial
+                HistorialInventario.objects.create(
+                    item=inventario_item,
+                    cantidad_cambiada=uso.cantidad_utilizada,
+                    fecha_cambio=timezone.now(),
+                    tipo_cambio='salida'
+                )
+            else:
+                raise ValidationError(f"No hay suficiente cantidad de {inventario_item.nombre} en inventario.")
+
+        self.estado = SolicitudLaboratorio.APROBADA
+        self.save()
 
     def aprobar_solicitud(self):
         if self.estado != SolicitudLaboratorio.PENDIENTE:
