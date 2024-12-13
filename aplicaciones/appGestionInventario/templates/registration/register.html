@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %} Login {% endblock %}
+{% block title %} Registrarse {% endblock %}
 
 {% block body %}
 {% if user.is_authenticated %}
@@ -11,14 +11,14 @@
 {% else %}
 <div class="col-md-4 offset-md-4">
     <h2 class="text-center">
-        <i class="bi bi-person-circle" style="font-size: 3rem; color: #007bff;"></i><br> <!-- Ícono colorido de persona -->
-        Inicio de Sesión
+        <i class="bi bi-person-vcard" style="font-size: 3rem; color: #007bff;"></i><br> <!-- Ícono colorido de persona -->
+        Registrarse
     </h2>
     <div class="card">
         <div class="card-body">
-            <form action="" method="POST"> 
+            <form action="{% url 'register' %}" method="POST"> 
                 {% csrf_token %}
-                
+
                 <!-- Grupo de input con icono de usuario -->
                 <div class="form-group mb-3">
                     <div class="input-group">
@@ -29,22 +29,42 @@
                     </div>
                 </div>
 
-                <!-- Grupo de input con icono de candado -->
+                <!-- Grupo de input con icono de correo electrónico -->
                 <div class="form-group mb-3">
                     <div class="input-group">
                         <span class="input-group-text" id="basic-addon2">
+                            <i class="bi bi-envelope"></i> <!-- Icono de correo -->
+                        </span>
+                        <input type="email" name="email" class="form-control" placeholder="Correo Electrónico" required>
+                    </div>
+                </div>
+
+                <!-- Grupo de input con icono de candado -->
+                <div class="form-group mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text" id="basic-addon3">
                             <i class="bi bi-lock"></i> <!-- Icono de candado -->
                         </span>
-                        <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
+                        <input type="password" name="password1" class="form-control" placeholder="Contraseña" required>
+                    </div>
+                </div>
+
+                <!-- Confirmación de contraseña -->
+                <div class="form-group mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text" id="basic-addon4">
+                            <i class="bi bi-lock-fill"></i> <!-- Icono de candado -->
+                        </span>
+                        <input type="password" name="password2" class="form-control" placeholder="Confirmar Contraseña" required>
                     </div>
                 </div>
 
                 <div class="form-group mb-3 d-flex justify-content-center align-items-center" style="height: 5vh;">
-                    <button id="btn-Registrar" class="btn btn-primary">Iniciar Sesión</button>
+                    <button id="btn-Registrar" class="btn btn-primary">Registrarse</button>
                 </div>
                 
                 <div class="form-group mb-3 d-flex justify-content-center align-items-center">
-                    <p>No tienes cuenta? <a href="{% url 'register' %}">Registrate aquí</a></p>
+                    <p>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></p>
                 </div>
                 <div class="clearfix"></div>
             </form>

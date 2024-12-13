@@ -13,4 +13,5 @@ urlpatterns = [
     path('eliminarSubcategoria/<int:id_subcategoria>/', views.eliminarSubcategoria, name='eliminarSubcategoria'),
     path('verSubcategorias/<int:id_categoria>/', views.verSubcategorias, name='verSubcategorias'),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/register/', views.register, name='register')
 ]
