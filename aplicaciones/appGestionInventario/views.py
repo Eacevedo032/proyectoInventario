@@ -1,10 +1,14 @@
 from django.shortcuts import render,redirect, get_object_or_404
 from .models import Categoria, SubCategoria
+from .models import Inventario, DetalleTecnico, DatosComplementarios
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_control
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
+#from django.db import IntegrityError
+from datetime import datetime
+from django.db import transaction
 
 def register(request):
     if request.method == 'POST':
@@ -149,3 +153,102 @@ def eliminarSubcategoria(request, id_subcategoria):
 
     messages.success(request, '¡Subcategoría Eliminada!')
     return redirect('gestionSubcategorias', id_categoria=id_categoria)
+
+#.strip() se utiliza para evitar que los espacios en blanco adicionales causen errores 
+# o inconsistencias en la base de datos.
+
+# Aquí empieza la vista del Inventario
+
+@login_required
+def agregarInventario(request, id_subcategoria):
+    # Obtener la subcategoría y su categoría
+    subcategoria = get_object_or_404(SubCategoria, id_subcategoria=id_subcategoria)
+    categoria = subcategoria.categoria
+
+    if request.method == "POST":
+        # Obtener campos del formulario
+        nombre = request.POST.get("nombre")
+        cantidad_disponible = request.POST.get("cantidad_disponible", None)
+        descripcion = request.POST.get("descripcion", "") # ()"") se guardan como cadenas vacias en la BD (ideal para campos que aplican pero no hay datos) 
+        lote = request.POST.get("lote", "")
+        vencimiento = request.POST.get("vencimiento", None) # Django traduce este valor a NULL en la base de datos. Ideal para campos que no aplican necesariamente
+        observaciones = request.POST.get("observaciones", "")
+
+        # Validar campos obligatorios
+        if not nombre or not cantidad_disponible:
+            messages.error(request, "El nombre y la cantidad disponible son campos obligatorios.")
+            return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
+
+        # Validar unicidad del nombre
+        if Inventario.objects.filter(nombre=nombre).exists():
+            messages.error(request, "El nombre ingresado ya existe en el inventario general, ingrese otro.")
+            return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
+
+        # Validar y procesar el campo de vencimiento
+        if vencimiento:
+            try:
+                # Intentar convertir el formato de fecha recibido
+                vencimiento = datetime.strptime(vencimiento, "%Y-%m-%d").date()
+            except ValueError:
+                messages.error(request, "El formato de la fecha de vencimiento debe ser YYYY-MM-DD.")
+                return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
+        else:
+            # Si no se proporciona una fecha de vencimiento, establecer como None
+            vencimiento = None
+
+        # Transacción para asegurarnos de que todo o nada se guarde
+        try:
+            with transaction.atomic():
+                # Crear el objeto Inventario
+                inventario = Inventario.objects.create(
+                    categoria=categoria,
+                    subcategoria=subcategoria,
+                    nombre=nombre,
+                    cantidad_disponible=cantidad_disponible,
+                    descripcion=descripcion,
+                    lote=lote,
+                    vencimiento=vencimiento,
+                    observaciones=observaciones,
+                )
+
+                # Crear el objeto Detalle Técnico
+                DetalleTecnico.objects.create(
+                    inventario=inventario,
+                    categoria=categoria,
+                    subcategoria=subcategoria,
+                    marca_caracteristica=request.POST.get("marca_caracteristica", ""),
+                    num_cat=request.POST.get("num_cat", ""),
+                    num_serie=request.POST.get("num_serie", ""),
+                    modelo=request.POST.get("modelo", ""),
+                    codigo=request.POST.get("codigo", ""),
+                    articulo=request.POST.get("articulo", ""),
+                )
+
+                # Crear el objeto Datos Complementarios
+                DatosComplementarios.objects.create(
+                    inventario=inventario,  # Asociar al inventario creado
+                    categoria=categoria, # Asocia a la Categoria
+                    subcategoria=subcategoria, #Asocia a la Subcategoria
+                    presentacion=request.POST.get("presentacion", ""),
+                    accesorios=request.POST.get("accesorios", ""),
+                    medidas=request.POST.get("medidas", ""),
+                    colores=request.POST.get("colores", ""),
+                    capacidad=request.POST.get("capacidad", ""),
+                    informacionAdicional=request.POST.get("informacionAdicional", ""),
+                )
+
+            # Mensaje de éxito
+            messages.success(request, "¡Item agregado correctamente al inventario!")
+            return redirect('gestionSubcategorias', id_categoria=categoria.id_categoria)
+
+        except Exception as e:
+            # Capturar cualquier error y enviar un mensaje
+            messages.error(request, f"Error al agregar el inventario: {str(e)}")
+            return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
+
+    # Si el método no es POST, renderizar el formulario vacío
+    return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
+
+
+#Se uso transaction.atomic() para garantizar que todo el proceso de creación de objetos sea atómico, 
+# evitando inconsistencias en caso de error.

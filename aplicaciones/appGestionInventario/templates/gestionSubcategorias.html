@@ -12,7 +12,7 @@
             {% endfor %}
         </div>
         {% endif %}
-        <h2 class="text-center" style="padding: 0.7%; color: blue;">Agregar Subcategoría</h2>
+        <h2 class="text-center" style="padding: 0.7%; color: blue;">Agregar Nueva Subcategoría</h2>
         <div class="card py-2">
             <div class="card-body">
                 <form action="{% url 'agregarSubcategoria' categoria.id_categoria %}" method="POST">
@@ -29,13 +29,13 @@
         </div>
     </div>
     <div class="col-sm-12 col-md-6 col-lg-8 col-xl-9">
-        <h2>Listado de Subcategorías para {{ categoria.nombre_categoria }}</h2>
+        <h2>Listado de Subcategorías para: {{ categoria.nombre_categoria }}</h2>
         <div class="table-responsive py-2">
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Ítems</th>
-                        <th>Nombre</th>
+                        <th>Ítem</th>
+                        <th>Nombre de Subcategoría</th>
                         <th>Opciones</th>
                     </tr>
                 </thead>
@@ -55,25 +55,18 @@
                                     title="Eliminar Subcategoría">
                                     Eliminar
                                 </a>
-                                <!-- El siguiente es un script usando JS para validar doblemente la eliminación-->
+                                <a href="{% url 'agregarInventario' subcategoria.id_subcategoria %}"
+                                    class="btn btn-success btn-sm">
+                                    Agregar al Inventario
+                                </a>
                                 <script>
                                     function doubleConfirmSubcategoria() {
-                                        // Primera confirmación
                                         var firstConfirm = confirm("¿Estás seguro de que deseas eliminar esta subcategoría?");
                                         if (firstConfirm) {
-                                            // Segunda confirmación
                                             var secondConfirm = confirm("¡Esto es irreversible! ¿Estás seguro?");
-                                            if (secondConfirm) {
-                                                // Si ambos son confirmados, procedemos con la eliminación
-                                                return true;
-                                            } else {
-                                                // Si la segunda confirmación es cancelada, no hace nada
-                                                return false;
-                                            }
-                                        } else {
-                                            // Si la primera confirmación es cancelada, no hace nada
-                                            return false;
+                                            return secondConfirm;
                                         }
+                                        return false;
                                     }
                                 </script>
                             </div>
@@ -86,3 +79,4 @@
     </div>
 </div>
 {% endblock %}
+
