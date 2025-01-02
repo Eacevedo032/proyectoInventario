@@ -21,51 +21,55 @@ class SubCategoria(models.Model):
     def __str__(self):
         return f"{self.nombre} - {self.categoria.nombre_categoria}"
 
-class DetalleTecnico(models.Model):
-    marca_caracteristica = models.TextField(blank=True)
-    num_cat = models.CharField(max_length=50, blank=True)
-    num_serie = models.CharField(max_length=25, blank=True)
-    modelo = models.CharField(max_length=25, blank=True)
-    accesorios = models.TextField(blank=True)
-    medidas = models.CharField(max_length=50, blank=True)
-    colores = models.CharField(max_length=50, blank=True)
-    capacidad = models.CharField(max_length=25, blank=True)
-
-    def __str__(self):
-        return f"Detalle Técnico {self.id}"
-
-
 class Inventario(models.Model):
-    id_inventario = models.AutoField(primary_key=True)
-    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True)
-    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.SET_NULL, null=True)
-    nombre = models.CharField(max_length=50, unique=True, null=False)
-    descripcion = models.TextField(blank=True)
-    cantidad_disponible = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    codigo = models.CharField(max_length=50, unique=True, blank=True)
-    detalle_tecnico = models.ForeignKey(DetalleTecnico, on_delete=models.SET_NULL, null=True)
+    #id_inventario = models.AutoField(primary_key=True) esto se crea solo sin necesidad de escribirlo
+    #on delete cascade  asegura que, al eliminar una subcategoría, todos los ítems relacionados 
+    #también se eliminen automáticamente.
+    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, null=True)
+    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE, null=True)
+    nombre = models.CharField(max_length=100, unique=True, null=False)
+    descripcion = models.TextField(blank=True, null=True)
+    cantidad_disponible = models.DecimalField(max_digits=10, decimal_places=2, default=0, null = False)
+    lote = models.CharField(max_length=36, null=True)
+    vencimiento = models.DateField(blank=True, null=True)
+    observaciones = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.nombre
 
+#Con OneToOneField en DetalleTecnico, se garantiza que:
+#Cada registro en DetalleTecnico está vinculado a un único registro en Inventario.
+#Cada registro en Inventario tiene, como máximo, un único registro en DetalleTecnico.
 
-class Lote(models.Model):
-    inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE)
-    lote = models.CharField(max_length=36)
-    vencimiento = models.DateField()
+class DetalleTecnico(models.Model):
+    inventario = models.OneToOneField(Inventario, on_delete=models.CASCADE, related_name="detalle_tecnico")
+    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, null=True)
+    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE, null=True)
+    marca_caracteristica = models.TextField(blank=True, null=True)
+    num_cat = models.TextField(blank=True, null=True)
+    num_serie = models.TextField(blank=True, null=True)
+    modelo = models.TextField(blank=True, null=True)
+    codigo = models.TextField(blank=True, null=True)
+    articulo = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Lote {self.lote}"
+        return f"Detalle Técnico para {self.inventario.nombre}"
 
 
-class InformacionAdicional(models.Model):
-    inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE)
-    observaciones = models.TextField(blank=True)
-    presentacion = models.TextField(blank=True)
-    articulo = models.CharField(max_length=50, blank=True)
+class DatosComplementarios(models.Model):
+    inventario = models.OneToOneField(Inventario, on_delete=models.CASCADE, related_name="datos_complementarios")
+    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, null=True)
+    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE, null=True)
+    presentacion = models.TextField(blank=True, null=True)
+    accesorios = models.TextField(blank=True, null=True)
+    medidas = models.TextField(blank=True, null=True)
+    colores = models.TextField(blank=True, null=True)
+    capacidad = models.TextField(blank=True, null=True)
+    informacionAdicional = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Información Adicional para {self.inventario.nombre}"
+        return f"Datos complementarios para {self.inventario.nombre}"
+
 
 # Tabla Solicitudes de Laboratorios
 class SolicitudLaboratorio(models.Model):
@@ -187,3 +191,6 @@ class Reporte(models.Model):
 
     def __str__(self):
         return f"Reporte {self.tipo_reporte} - {self.fecha_generacion}"
+
+
+
