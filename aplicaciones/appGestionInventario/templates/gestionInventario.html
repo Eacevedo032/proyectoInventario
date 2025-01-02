@@ -1,0 +1,107 @@
+{% extends "./base.html" %}
+
+{% block title %}Gestión de Inventario{% endblock %}
+
+{% block body %}
+<!-- Mensajes -->
+{% if messages %}
+<div class="alert alert-dismissible alert-success">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+</div>
+{% endif %}
+
+<h2>Agregar al Inventario Ítems de la Subcategoría: {{ subcategoria.nombre }}</h2><br>
+
+<form method="post">
+    {% csrf_token %}
+
+    <!-- Datos del Inventario -->
+    <h3>Datos del Inventario</h3>
+    <div class="row">
+        <div class="col-md-6">
+            <label for="nombre">Nombre de Ítem:</label>
+            <input type="text" name="nombre" id="nombre" class="form-control">
+
+            <label for="cantidad_disponible">Cantidad Disponible:</label>
+            <input type="number" name="cantidad_disponible" id="cantidad_disponible" class="form-control" step="0.01">
+
+            <label for="descripcion">Descripción:</label>
+            <textarea name="descripcion" id="descripcion" class="form-control"></textarea>
+        </div>
+        <div class="col-md-6">
+            <label for="lote">Lote:</label>
+            <input type="text" name="lote" id="lote" class="form-control">
+
+            <label for="vencimiento">Vencimiento (DD-MM-AAAA):</label>
+            <input type="date" name="vencimiento" id="vencimiento" class="form-control" placeholder="DD-MM-AAAA">
+            <!-- Sin input type = "date" no pone el formato de fecha, a como esta en la clase (como datefield) -->
+
+            <label for="observaciones">Observaciones:</label>
+            <textarea name="observaciones" id="observaciones" class="form-control"></textarea>
+
+        </div>
+    </div><br>
+
+    <!-- Detalle Técnico -->
+    <h3>Detalles Técnicos</h3>
+    <div class="row">
+        <div class="col-md-6">
+            <label for="num_serie">Números de Serie:</label>
+            <input type="text" name="num_serie" id="num_serie" class="form-control">
+
+            <label for="num_cat">Números de Cat:</label>
+            <input type="text" name="num_cat" id="num_cat" class="form-control">
+
+            <label for="marca_caracteristica">Marcas o Características:</label>
+            <textarea name="marca_caracteristica" id="marca_caracteristica" class="form-control"></textarea>
+
+        </div>
+        <div class="col-md-6">
+            <label for="codigo">Códigos:</label>
+            <input type="text" name="codigo" id="codigo" class="form-control">
+
+            <label for="articulo">Artículos:</label>
+            <input type="text" name="articulo" id="articulo" class="form-control">
+
+            <label for="modelo">Modelos:</label>
+            <textarea name="modelo" id="modelo" class="form-control"></textarea>
+        </div>
+    </div><br>
+
+    <!-- Datos Complementarios -->
+    <h3>Aspectos Complementarios</h3>
+    <div class="row">
+        <div class="col-md-6">
+            <label for="colores">Colores:</label>
+            <input type="text" name="colores" id="colores" class="form-control">
+
+            <label for="capacidad">Capacidades:</label>
+            <input type="text" name="capacidad" id="capacidad" class="form-control">
+
+            <label for="accesorios">Accesorios:</label>
+            <textarea name="accesorios" id="accesorios" class="form-control"></textarea>
+        </div>
+        <div class="col-md-6">
+            <label for="medidas">Medidas:</label>
+            <input type="text" name="medidas" id="medidas" class="form-control">
+
+            <label for="presentacion">Presentaciones:</label>
+            <input type="text" name="presentacion" id="presentacion" class="form-control">
+
+            <label for="informacionAdicional">Información Adicional:</label>
+            <textarea name="informacionAdicional" id="informacionAdicional" class="form-control"></textarea>
+        </div>
+    </div><br>
+
+    <div class="text-center">
+        <!-- Botón Guardar Todo -->
+        <button type="submit" class="btn btn-success mt-3">Guardar Todo</button>
+
+        <!-- Botón Salir -->
+        <button type="button" class="btn btn-danger mt-3 ms-3" onclick="window.history.back();">Salir</button>
+    </div>
+</form> <!-- Si los botones estan fuera del form no funcionaran -->
+
+{% endblock %}
