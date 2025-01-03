@@ -59,6 +59,9 @@
                                     class="btn btn-success btn-sm">
                                     Agregar al Inventario
                                 </a>
+                                <a href="{% url 'inventario_general' %}" class="btn btn-info btn-sm">
+                                    Ver Inventario General
+                                </a>
                                 <script>
                                     function doubleConfirmSubcategoria() {
                                         var firstConfirm = confirm("¿Estás seguro de que deseas eliminar esta subcategoría?");
@@ -79,4 +82,3 @@
     </div>
 </div>
 {% endblock %}
-

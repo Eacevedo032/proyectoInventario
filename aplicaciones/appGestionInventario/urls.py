@@ -14,6 +14,7 @@ urlpatterns = [
     path('verSubcategorias/<int:id_categoria>/', views.verSubcategorias, name='verSubcategorias'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/register/', views.register, name='register'),
+    path('inventarioGeneral/', views.inventario_general, name='inventario_general'),
     path("agregarInventario/<int:id_subcategoria>/", views.agregarInventario, name="agregarInventario")#URL para agregar Inventario
 #Podría dejar este path ultimo sin parametro (id_subcategoria) cuando se use un formulario genérico donde el usuario seleccione la subcategoría manualmente.
 

@@ -249,6 +249,34 @@ def agregarInventario(request, id_subcategoria):
     # Si el método no es POST, renderizar el formulario vacío
     return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
 
-
 #Se uso transaction.atomic() para garantizar que todo el proceso de creación de objetos sea atómico, 
 # evitando inconsistencias en caso de error.
+
+def inventario_general(request):
+    categorias = Categoria.objects.all()
+    inventario_data = {}
+
+    for categoria in categorias:
+        subcategorias = SubCategoria.objects.filter(categoria=categoria)
+        subcat_data = {}
+
+        for subcat in subcategorias:
+            items = Inventario.objects.filter(subcategoria=subcat)
+
+            # Crear una lista de datos combinados (Inventario, DetalleTecnico, DatosComplementarios)
+            subcat_data[subcat] = [
+                {
+                    'inventario': item,
+                    'detalle_tecnico': item.detalle_tecnico if hasattr(item, 'detalle_tecnico') else None,
+                    'datos_complementarios': item.datos_complementarios if hasattr(item, 'datos_complementarios') else None,
+                }
+                for item in items
+            ]
+
+        inventario_data[categoria] = subcat_data
+
+    context = {
+        'categorias': categorias,
+        'inventario_data': inventario_data,
+    }
+    return render(request, 'inventarioGeneral.html', context)

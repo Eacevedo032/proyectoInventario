@@ -1,0 +1,111 @@
+{% extends "./base.html" %}
+
+{% block title %}Inventario General{% endblock %}
+
+{% block body %}
+<!-- Mensajes -->
+{% if messages %}
+<div class="alert alert-dismissible alert-success">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+</div>
+{% endif %}
+    <h1>Inventario General</h1>
+
+    <!-- Tabs por Categoría -->
+    <div class="tabs">
+        {% for categoria in categorias %}
+        <button class="tab-button" data-tab="{{ categoria.id }}">{{ categoria.nombre_categoria }}</button>
+        {% endfor %}
+    </div>
+
+    <!-- Contenido de las Tabs -->
+    <div class="tab-content">
+        {% for categoria, subcats in inventario_data.items %}
+        <div class="tab-pane" id="tab-{{ categoria.id }}">
+            <h2>{{ categoria.nombre_categoria }}</h2>
+
+            {% for subcat, items in subcats.items %}
+            <h3>{{ subcat.nombre }}</h3>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Cantidad</th>
+                        <th>Lote</th>
+                        <th>Vencimiento</th>
+                        <th>Observaciones</th>
+                        <th>Marca</th>
+                        <th>Número de Catálogo</th>
+                        <th>Número de Serie</th>
+                        <th>Modelo</th>
+                        <th>Código</th>
+                        <th>Artículo</th>
+                        <th>Presentación</th>
+                        <th>Accesorios</th>
+                        <th>Medidas</th>
+                        <th>Colores</th>
+                        <th>Capacidad</th>
+                        <th>Información Adicional</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in items %}
+                    <tr>
+                        <!-- Campos de Inventario -->
+                        <td>{{ data.inventario.nombre }}</td>
+                        <td>{{ data.inventario.descripcion }}</td>
+                        <td>{{ data.inventario.cantidad_disponible }}</td>
+                        <td>{{ data.inventario.lote }}</td>
+                        <td>{{ data.inventario.vencimiento }}</td>
+                        <td>{{ data.inventario.observaciones }}</td>
+
+                        <!-- Campos de DetalleTecnico -->
+                        <td>{{ data.detalle_tecnico.marca_caracteristica if data.detalle_tecnico }}</td>
+                        <td>{{ data.detalle_tecnico.num_cat if data.detalle_tecnico }}</td>
+                        <td>{{ data.detalle_tecnico.num_serie if data.detalle_tecnico }}</td>
+                        <td>{{ data.detalle_tecnico.modelo if data.detalle_tecnico }}</td>
+                        <td>{{ data.detalle_tecnico.codigo if data.detalle_tecnico }}</td>
+                        <td>{{ data.detalle_tecnico.articulo if data.detalle_tecnico }}</td>
+
+                        <!-- Campos de DatosComplementarios -->
+                        <td>{{ data.datos_complementarios.presentacion if data.datos_complementarios }}</td>
+                        <td>{{ data.datos_complementarios.accesorios if data.datos_complementarios }}</td>
+                        <td>{{ data.datos_complementarios.medidas if data.datos_complementarios }}</td>
+                        <td>{{ data.datos_complementarios.colores if data.datos_complementarios }}</td>
+                        <td>{{ data.datos_complementarios.capacidad if data.datos_complementarios }}</td>
+                        <td>{{ data.datos_complementarios.informacionAdicional if data.datos_complementarios }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="18">No hay ítems en esta subcategoría.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const buttons = document.querySelectorAll(".tab-button");
+            const panes = document.querySelectorAll(".tab-pane");
+
+            buttons.forEach(button => {
+                button.addEventListener("click", function() {
+                    const tabId = button.getAttribute("data-tab");
+                    panes.forEach(pane => {
+                        pane.style.display = pane.id === `tab-${tabId}` ? "block" : "none";
+                    });
+                });
+            });
+
+            if (panes.length > 0) panes[0].style.display = "block";
+        });
+    </script>
+</body>
+</html>
