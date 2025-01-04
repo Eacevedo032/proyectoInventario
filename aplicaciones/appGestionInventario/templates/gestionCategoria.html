@@ -47,6 +47,11 @@
                         <th colspan="2">Opciones</th>
                     </tr>
                 </thead>
+
+                <a href="{% url 'inventario_general' %}" class="btn btn-info btn-sm">
+                    Ver Inventario General
+                </a>
+
                 <tbody>
                     {% for c in Categorias %}
                     <tr>

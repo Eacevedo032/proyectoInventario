@@ -252,31 +252,31 @@ def agregarInventario(request, id_subcategoria):
 #Se uso transaction.atomic() para garantizar que todo el proceso de creación de objetos sea atómico, 
 # evitando inconsistencias en caso de error.
 
+
+# Vista del Inventario General
 def inventario_general(request):
     categorias = Categoria.objects.all()
-    inventario_data = {}
+    inventario_data = {} #almacena información de cada categoria, subcategoria e items relacionados por medio de un diccionario
 
-    for categoria in categorias:
-        subcategorias = SubCategoria.objects.filter(categoria=categoria)
-        subcat_data = {}
+    for categoria in categorias: #Recorre todas las categorias obtenidas 
+        subcategorias = SubCategoria.objects.filter(categoria=categoria) #Filtra las subcategorías asociadas a la categoría actual y las almacena en subcategorias.
+        subcats_data = [] # Crea una lista vacía llamada subcats_data, que se usará para almacenar la información de las subcategorías de la categoría actual.
 
-        for subcat in subcategorias:
-            items = Inventario.objects.filter(subcategoria=subcat)
-
-            # Crear una lista de datos combinados (Inventario, DetalleTecnico, DatosComplementarios)
-            subcat_data[subcat] = [
+        for subcat in subcategorias: # Recorre todas las subcategorías asociadas a la categoría actual.
+            inventarios = Inventario.objects.filter(subcategoria=subcat).select_related("detalle_tecnico", "datos_complementarios") #select_related carga objetos por medio de claves foraneas, objetos relacionados con el inventario
+            items = [ #Lista llamada items. Si el inventario tiene detalles tecnicos y datos complemenetarios los agrega, si no, agrega none
                 {
-                    'inventario': item,
-                    'detalle_tecnico': item.detalle_tecnico if hasattr(item, 'detalle_tecnico') else None,
-                    'datos_complementarios': item.datos_complementarios if hasattr(item, 'datos_complementarios') else None,
+                    "inventario": inventario,
+                    "detalle_tecnico": inventario.detalle_tecnico if hasattr(inventario, "detalle_tecnico") else None,
+                    "datos_complementarios": inventario.datos_complementarios if hasattr(inventario, "datos_complementarios") else None,
                 }
-                for item in items
+                for inventario in inventarios
             ]
+            subcats_data.append({"subcategoria": subcat, "items": items})#Agrega un diccionario a la lista subcats_data que contiene:"subcategoria": El objeto subcat e "items": La lista items que contiene los inventarios y sus datos.
 
-        inventario_data[categoria] = subcat_data
+        inventario_data[categoria] = subcats_data # Asocia la lista subcats_data con la categoría actual en el diccionario inventario_data.
 
-    context = {
-        'categorias': categorias,
-        'inventario_data': inventario_data,
-    }
-    return render(request, 'inventarioGeneral.html', context)
+    return render(request, "inventarioGeneral.html", { #pasa los datos organizados "categorias" e "inventario_data" a la plantilla
+        "categorias": categorias,
+        "inventario_data": inventario_data,
+    })
