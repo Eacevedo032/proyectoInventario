@@ -117,15 +117,6 @@ def agregarSubcategoria(request, id_categoria):
 
     return redirect('gestionSubcategorias', id_categoria=id_categoria)
 
-def verSubcategorias(request, id_categoria):
-    categoria = get_object_or_404(Categoria, id_categoria=id_categoria)
-    subcategorias = SubCategoria.objects.filter(categoria=categoria)
-    
-    return render(request, 'verSubcategorias.html', {
-        'categoria': categoria,
-        'subcategorias': subcategorias,
-    })
-
 @login_required
 def editarSubcategoria(request, id_subcategoria):
     # Obtener la subcategoría con el ID proporcionado
@@ -255,28 +246,12 @@ def agregarInventario(request, id_subcategoria):
 
 # Vista del Inventario General
 def inventario_general(request):
-    categorias = Categoria.objects.all()
-    inventario_data = {} #almacena información de cada categoria, subcategoria e items relacionados por medio de un diccionario
+    # Obtener todas las categorías con sus subcategorías y sus ítems
+    categorias = Categoria.objects.prefetch_related( #prefetch_related reduce el numero de consultas a la BD al cargar subcategorias e items de las categorias
+        'subcategoria_set__inventario_set'
+    )  # Carga subcategorías e ítems relacionados
 
-    for categoria in categorias: #Recorre todas las categorias obtenidas 
-        subcategorias = SubCategoria.objects.filter(categoria=categoria) #Filtra las subcategorías asociadas a la categoría actual y las almacena en subcategorias.
-        subcats_data = [] # Crea una lista vacía llamada subcats_data, que se usará para almacenar la información de las subcategorías de la categoría actual.
-
-        for subcat in subcategorias: # Recorre todas las subcategorías asociadas a la categoría actual.
-            inventarios = Inventario.objects.filter(subcategoria=subcat).select_related("detalle_tecnico", "datos_complementarios") #select_related carga objetos por medio de claves foraneas, objetos relacionados con el inventario
-            items = [ #Lista llamada items. Si el inventario tiene detalles tecnicos y datos complemenetarios los agrega, si no, agrega none
-                {
-                    "inventario": inventario,
-                    "detalle_tecnico": inventario.detalle_tecnico if hasattr(inventario, "detalle_tecnico") else None,
-                    "datos_complementarios": inventario.datos_complementarios if hasattr(inventario, "datos_complementarios") else None,
-                }
-                for inventario in inventarios
-            ]
-            subcats_data.append({"subcategoria": subcat, "items": items})#Agrega un diccionario a la lista subcats_data que contiene:"subcategoria": El objeto subcat e "items": La lista items que contiene los inventarios y sus datos.
-
-        inventario_data[categoria] = subcats_data # Asocia la lista subcats_data con la categoría actual en el diccionario inventario_data.
-
-    return render(request, "inventarioGeneral.html", { #pasa los datos organizados "categorias" e "inventario_data" a la plantilla
-        "categorias": categorias,
-        "inventario_data": inventario_data,
+    # Pasar las categorías al contexto
+    return render(request, "inventarioGeneral.html", {
+        "Categorias": categorias,
     })

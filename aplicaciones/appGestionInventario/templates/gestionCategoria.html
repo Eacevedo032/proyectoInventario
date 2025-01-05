@@ -101,14 +101,6 @@
                                     class="btn btn-primary btn-sm me-1" title="Opciones de Subcategorías">
                                     Subcategorías
                                 </a>
-                                {% if c.subcategoria_set.exists %}
-                                <a href="{% url 'verSubcategorias' c.id_categoria %}" class="btn btn-sm"
-                                    style="background-color: orange; color: black" ; title="Ver Subcategorías">
-                                    Registros
-                                </a>
-                                {% else %}
-                                <span class="btn btn-secondary btn-sm disabled" style="color:black">Vacío</span>
-                                {% endif %}
                             </div>
                         </td>
 
