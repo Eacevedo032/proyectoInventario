@@ -4,6 +4,15 @@
 
 {% block body %}
 
+<!-- Mensajes -->
+{% if messages %}
+<div class="alert alert-dismissible alert-success">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="row">
     <div class="col-12">
         <h1 class="text-center" style="color: blue; padding-bottom: 1rem;">Inventario General</h1>
@@ -64,9 +73,21 @@
                                 <th>Nombre</th>
                                 <th>Descripción</th>
                                 <th>Cantidad</th>
-                                <th>Vencimiento(A-M-D)</th>
+                                <th>Vencimiento</th>
                                 <th>Lote</th>
                                 <th>Observaciones</th>
+                                <th>Num Serie</th>
+                                <th>Num Cat</th>
+                                <th>Marca/Características</th>
+                                <th>Códigos</th>
+                                <th>Artículos</th>
+                                <th>Modelo</th>
+                                <th>Colores</th>
+                                <th>Capacidades</th>
+                                <th>Accesorios</th>
+                                <th>Medidas</th>
+                                <th>Presentación</th>
+                                <th>Info Adicional</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -79,13 +100,25 @@
                                 <td>{{ item.vencimiento|date:"Y-m-d"|default:"-" }}</td>
                                 <td>{{ item.lote|default:"-" }}</td>
                                 <td>{{ item.observaciones|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.num_serie|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.num_cat|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.marca_caracteristica|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.codigo|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.articulo|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.modelo|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.colores|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.capacidad|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.accesorios|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.medidas|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.presentacion|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.informacionAdicional|default:"-" }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center">No hay ítems en esta subcategoría.</td>
+                                <td colspan="19" class="text-center">No hay ítems en esta subcategoría.</td>
                             </tr>
                             {% endfor %}
-                        </tbody>
+                        </tbody>                        
                     </table>
                 </div>
 
@@ -119,6 +152,18 @@
                                 <th>Vencimiento</th>
                                 <th>Lote</th>
                                 <th>Observaciones</th>
+                                <th>Num Serie</th>
+                                <th>Num Cat</th>
+                                <th>Marca/Características</th>
+                                <th>Códigos</th>
+                                <th>Artículos</th>
+                                <th>Modelo</th>
+                                <th>Colores</th>
+                                <th>Capacidades</th>
+                                <th>Accesorios</th>
+                                <th>Medidas</th>
+                                <th>Presentación</th>
+                                <th>Info Adicional</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -131,10 +176,22 @@
                                 <td>{{ item.vencimiento|date:"Y-m-d"|default:"-" }}</td>
                                 <td>{{ item.lote|default:"-" }}</td>
                                 <td>{{ item.observaciones|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.num_serie|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.num_cat|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.marca_caracteristica|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.codigo|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.articulo|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.modelo|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.colores|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.capacidad|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.accesorios|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.medidas|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.presentacion|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.informacionAdicional|default:"-" }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center">No hay ítems en esta subcategoría.</td>
+                                <td colspan="19" class="text-center">No hay ítems en esta subcategoría.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -151,5 +208,91 @@
         </div>
     </div>
 </div>
+
+ <!-- Formato de CSS para la tabla -->
+<style>
+    /* Aplica bordes a toda la tabla */
+    table {
+        border-collapse: collapse; /* Une los bordes de las celdas */
+        width: 100%; /* Para ajustar al ancho disponible */
+    }
+    
+    /* Estilo de los bordes de las celdas */
+    table th, table td {
+        border: 2px solid #ddd; /* Color del borde */
+        padding: 8px; /* Espaciado interno */
+    }
+    
+    /* Alternar colores para las filas */
+    table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    
+    /* Resaltar encabezados */
+    table th {
+        background-color: #4CAF50;
+        color: white;
+        text-align: center; /* Alineación del texto */
+    }
+    
+    /* Opcional: Bordes más oscuros para la tabla completa */
+    table {
+        border: 2px solid #4CAF50; /* Bordes exteriores */
+    }
+    </style>    
+
+<div class="table-responsive py-2">
+    <style>
+        /* Definir ancho para cada columna */
+        table.table-striped col:nth-child(1) { width: 5%; }  /* Ítems */
+        table.table-striped col:nth-child(2) { width: 10%; } /* Nombre */
+        table.table-striped col:nth-child(3) { width: 15%; } /* Descripción */
+        table.table-striped col:nth-child(4) { width: 7%; }  /* Cantidad */
+        table.table-striped col:nth-child(5) { width: 8%; }  /* Vencimiento */
+        table.table-striped col:nth-child(6) { width: 8%; }  /* Lote */
+        table.table-striped col:nth-child(7) { width: 10%; } /* Observaciones */
+        table.table-striped col:nth-child(8) { width: 8%; }  /* Num Serie */
+        table.table-striped col:nth-child(9) { width: 8%; }  /* Num Cat */
+        table.table-striped col:nth-child(10) { width: 10%; } /* Marca/Características */
+        table.table-striped col:nth-child(11) { width: 8%; } /* Códigos */
+        table.table-striped col:nth-child(12) { width: 8%; } /* Artículos */
+        table.table-striped col:nth-child(13) { width: 8%; } /* Modelo */
+        table.table-striped col:nth-child(14) { width: 8%; } /* Colores */
+        table.table-striped col:nth-child(15) { width: 8%; } /* Capacidades */
+        table.table-striped col:nth-child(16) { width: 8%; } /* Accesorios */
+        table.table-striped col:nth-child(17) { width: 8%; } /* Medidas */
+        table.table-striped col:nth-child(18) { width: 8%; } /* Presentación */
+        table.table-striped col:nth-child(19) { width: 10%; } /* Info Adicional */
+
+        /* Ajuste del contenido dentro de las celdas */
+        table.table-striped th, table.table-striped td {
+            white-space: nowrap;    /* No permitir saltos de línea */
+            overflow: hidden;       /* Esconder contenido excedente */
+            text-overflow: ellipsis; /* Agregar "..." si el texto es largo */
+        }
+    </style>
+
+    <table class="table table-striped">
+        <colgroup>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+            <col>
+        </colgroup>
 
 {% endblock %}

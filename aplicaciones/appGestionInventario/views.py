@@ -230,7 +230,7 @@ def agregarInventario(request, id_subcategoria):
 
             # Mensaje de éxito
             messages.success(request, "¡Item agregado correctamente al inventario!")
-            return redirect('gestionSubcategorias', id_categoria=categoria.id_categoria)
+            return redirect('inventario_general') #Me dirige a la vista de Inventario General si es exitosa
 
         except Exception as e:
             # Capturar cualquier error y enviar un mensaje
@@ -246,10 +246,11 @@ def agregarInventario(request, id_subcategoria):
 
 # Vista del Inventario General
 def inventario_general(request):
-    # Obtener todas las categorías con sus subcategorías y sus ítems
-    categorias = Categoria.objects.prefetch_related( #prefetch_related reduce el numero de consultas a la BD al cargar subcategorias e items de las categorias
-        'subcategoria_set__inventario_set'
-    )  # Carga subcategorías e ítems relacionados
+    # Cargar categorías con sus subcategorías e ítems (incluyendo las tablas (clases) relacionadas)
+    categorias = Categoria.objects.prefetch_related( #prefetch_related asegura que todos los datos relacionados se carguen de manera eficiente, evitando múltiples consultas innecesarias
+        'subcategoria_set__inventario_set__detalle_tecnico',
+        'subcategoria_set__inventario_set__datos_complementarios'
+    )
 
     # Pasar las categorías al contexto
     return render(request, "inventarioGeneral.html", {
