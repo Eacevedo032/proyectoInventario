@@ -14,7 +14,7 @@
 
 <h2>Agregar al Inventario Ítems de la Subcategoría: {{ subcategoria.nombre }}</h2><br>
 
-<form method="post">
+<form method="post" autocomplete="off">  <!-- el autocomplete="off" evita que el navegador guarde el estado en los datos del formulario -->
     {% csrf_token %}
 
     <!-- Datos del Inventario -->
@@ -25,7 +25,10 @@
             <input type="text" name="nombre" id="nombre" class="form-control">
 
             <label for="cantidad_disponible">Cantidad Disponible:</label>
-            <input type="number" name="cantidad_disponible" id="cantidad_disponible" class="form-control" step="0.01">
+            <input type="number" name="cantidad_disponible" class="form-control" placeholder="Cantidad en Existencia" min="0" step="0.01" required>
+
+            <label for="unidad_medida">Unidad de Medida:</label>
+            <input type="text" name="unidad_medida" class="form-control" placeholder="(ml,lts,gr,unidades)">
 
             <label for="descripcion">Descripción:</label>
             <textarea name="descripcion" id="descripcion" class="form-control"></textarea>

@@ -1,6 +1,6 @@
 {% extends "./base.html" %}
 
-{% block title %} Control de Inventario General {% endblock %}
+{% block title %} Visualización del Inventario General {% endblock %}
 
 {% block body %}
 
@@ -89,7 +89,6 @@
                                 <th>Medidas</th>
                                 <th>Presentación</th>
                                 <th>Info Adicional</th>
-                                <th colspan="2">Opciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -115,41 +114,10 @@
                                 <td>{{ item.datos_complementarios.medidas|default:"-" }}</td>
                                 <td>{{ item.datos_complementarios.presentacion|default:"-" }}</td>
                                 <td>{{ item.datos_complementarios.informacionAdicional|default:"-" }}</td>
-                                <td>
-                                    <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <!--d-flex justify-content-center esto pone centrado si es center, final si es end y start inicio-->
-                                        <a href="{% url 'editarInventario' item.id %}" class="btn btn-primary btn-sm">Actualizar</a>
-                    
-                                        <a href="{% url 'eliminarInventario' item.id %}" class="btn btn-danger btn-sm" 
-                                        onclick="return doubleConfirm('¿Estás seguro de que deseas eliminar este ítem?');">Eliminar</a>
-
-                                        <!-- El siguiente es un script usando JS para validar doblemente la eliminación-->
-                                        <script>  
-                                            function doubleConfirm() {
-                                                // Primera confirmación
-                                                var firstConfirm = confirm("¿Estás seguro de que deseas eliminar este Item del Inventario?");
-                                                if (firstConfirm) {
-                                                    // Segunda confirmación
-                                                    var secondConfirm = confirm("¡Esto es irreversible! ¿Estás seguro?");
-                                                    if (secondConfirm) {
-                                                        // Si ambos son confirmados, procedemos con la eliminación
-                                                        return true;
-                                                    } else {
-                                                        // Si la segunda confirmación es cancelada, no hace nada
-                                                        return false;
-                                                    }
-                                                } else {
-                                                    // Si la primera confirmación es cancelada, no hace nada
-                                                    return false;
-                                                }
-                                            }
-                                        </script>
-                                    </td>
-                                </div>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="21" class="text-center">No hay ítems en esta subcategoría.</td>
+                                <td colspan="20" class="text-center">No hay ítems en esta subcategoría.</td>
                             </tr>
                             {% endfor %}
                         </tbody>                        
@@ -201,7 +169,6 @@
                                 <th>Medidas</th>
                                 <th>Presentación</th>
                                 <th>Info Adicional</th>
-                                <th colspan="2">Opciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -227,45 +194,14 @@
                                 <td>{{ item.datos_complementarios.medidas|default:"-" }}</td>
                                 <td>{{ item.datos_complementarios.presentacion|default:"-" }}</td>
                                 <td>{{ item.datos_complementarios.informacionAdicional|default:"-" }}</td>
-                                <td>
-                                    <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <!--d-flex justify-content-center esto pone centrado si es center, final si es end y start inicio-->
-                                        <a href="{% url 'editarInventario' item.id %}" class="btn btn-primary btn-sm">Actualizar</a>
-                    
-                                        <a href="{% url 'eliminarInventario' item.id %}" class="btn btn-danger btn-sm" 
-                                        onclick="return doubleConfirm('¿Estás seguro de que deseas eliminar este ítem?');">Eliminar</a>
-
-                                        <!-- El siguiente es un script usando JS para validar doblemente la eliminación-->
-                                        <script>  
-                                            function doubleConfirm() {
-                                                // Primera confirmación
-                                                var firstConfirm = confirm("¿Estás seguro de que deseas eliminar este Item del Inventario?");
-                                                if (firstConfirm) {
-                                                    // Segunda confirmación
-                                                    var secondConfirm = confirm("¡Esto es irreversible! ¿Estás seguro?");
-                                                    if (secondConfirm) {
-                                                        // Si ambos son confirmados, procedemos con la eliminación
-                                                        return true;
-                                                    } else {
-                                                        // Si la segunda confirmación es cancelada, no hace nada
-                                                        return false;
-                                                    }
-                                                } else {
-                                                    // Si la primera confirmación es cancelada, no hace nada
-                                                    return false;
-                                                }
-                                            }
-                                        </script>
-                                    </td>
-                                </div>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="21" class="text-center">No hay ítems en esta subcategoría.</td>
+                                <td colspan="20" class="text-center">No hay ítems en esta subcategoría.</td>
                             </tr>
                             {% endfor %}
-                        </tbody>
-                    </table> 
+                        </tbody>                        
+                    </table>
                 </div>
 
                 {% endfor %} 

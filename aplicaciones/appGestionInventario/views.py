@@ -9,6 +9,8 @@ from django.contrib.auth import login
 #from django.db import IntegrityError
 from datetime import datetime
 from django.db import transaction
+from django.views.decorators.cache import never_cache
+from django.core.exceptions import ValidationError
 
 def register(request):
     if request.method == 'POST':
@@ -151,6 +153,7 @@ def eliminarSubcategoria(request, id_subcategoria):
 # Aquí empieza la vista del Inventario
 
 @login_required
+@never_cache
 def agregarInventario(request, id_subcategoria):
     # Obtener la subcategoría y su categoría
     subcategoria = get_object_or_404(SubCategoria, id_subcategoria=id_subcategoria)
@@ -159,10 +162,13 @@ def agregarInventario(request, id_subcategoria):
     if request.method == "POST":
         # Obtener campos del formulario
         nombre = request.POST.get("nombre")
-        cantidad_disponible = request.POST.get("cantidad_disponible", None)
+        cantidad_disponible = request.POST.get('cantidad_disponible')
+        if float(cantidad_disponible) < 0:
+            raise ValidationError("La cantidad disponible no puede ser negativa.")
+        unidad_medida =  request.POST.get("unidad_medida", "")
         descripcion = request.POST.get("descripcion", "") # ()"") se guardan como cadenas vacias en la BD (ideal para campos que aplican pero no hay datos) 
         lote = request.POST.get("lote", "")
-        vencimiento = request.POST.get("vencimiento", None) # Django traduce este valor a NULL en la base de datos. Ideal para campos que no aplican necesariamente
+        vencimiento = request.POST.get("vencimiento", None) # None: Django traduce este valor a NULL en la base de datos. Ideal para campos que no aplican necesariamente
         observaciones = request.POST.get("observaciones", "")
 
         # Validar campos obligatorios
@@ -196,6 +202,7 @@ def agregarInventario(request, id_subcategoria):
                     subcategoria=subcategoria,
                     nombre=nombre,
                     cantidad_disponible=cantidad_disponible,
+                    unidad_medida = unidad_medida,
                     descripcion=descripcion,
                     lote=lote,
                     vencimiento=vencimiento,
@@ -245,6 +252,8 @@ def agregarInventario(request, id_subcategoria):
 
 
 # Vista del Inventario General
+
+@never_cache #Esto evita que el navegador guarde el estado previo del formulario
 def inventario_general(request):
     # Cargar categorías con sus subcategorías e ítems (incluyendo las tablas (clases) relacionadas)
     categorias = Categoria.objects.prefetch_related( #prefetch_related asegura que todos los datos relacionados se carguen de manera eficiente, evitando múltiples consultas innecesarias
@@ -256,3 +265,81 @@ def inventario_general(request):
     return render(request, "inventarioGeneral.html", {
         "Categorias": categorias,
     })
+
+#Vista solamenete para el boton que dice "Ver Inventario General"
+@never_cache #Esto evita que el navegador guarde el estado previo del formulario
+def verInventarioGeneral(request):
+    # Cargar categorías con sus subcategorías e ítems (incluyendo las tablas (clases) relacionadas)
+    categorias = Categoria.objects.prefetch_related( #prefetch_related asegura que todos los datos relacionados se carguen de manera eficiente, evitando múltiples consultas innecesarias
+        'subcategoria_set__inventario_set__detalle_tecnico',
+        'subcategoria_set__inventario_set__datos_complementarios'
+    )
+
+    # Pasar las categorías al contexto
+    return render(request, "verInventarioGeneral.html", {
+        "Categorias": categorias,
+    })
+
+@never_cache
+def editarInventario(request, inventario_id):
+    # Obtiene el objeto del inventario y sus relaciones
+    inventario = get_object_or_404(Inventario, id=inventario_id)
+    detalle_tecnico = get_object_or_404(DetalleTecnico, inventario=inventario)
+    datos_complementarios = get_object_or_404(DatosComplementarios, inventario=inventario)
+
+    if request.method == "POST":
+        try:
+            with transaction.atomic():
+                # Actualiza datos de Inventario
+                inventario.nombre = request.POST.get("nombre", inventario.nombre)
+                inventario.cantidad_disponible = request.POST.get("cantidad_disponible", inventario.cantidad_disponible)
+                inventario.unidad_medida = request.POST.get("unidad_medida", inventario.unidad_medida)
+                inventario.descripcion = request.POST.get("descripcion", inventario.descripcion)
+                inventario.lote = request.POST.get("lote", inventario.lote)
+                inventario.vencimiento = request.POST.get("vencimiento", inventario.vencimiento)
+                inventario.observaciones = request.POST.get("observaciones", inventario.observaciones)
+                inventario.save()
+
+                # Actualiza datos de Detalle Técnico
+                detalle_tecnico.marca_caracteristica = request.POST.get("marca_caracteristica", detalle_tecnico.marca_caracteristica)
+                detalle_tecnico.num_cat = request.POST.get("num_cat", detalle_tecnico.num_cat)
+                detalle_tecnico.num_serie = request.POST.get("num_serie", detalle_tecnico.num_serie)
+                detalle_tecnico.modelo = request.POST.get("modelo", detalle_tecnico.modelo)
+                detalle_tecnico.codigo = request.POST.get("codigo", detalle_tecnico.codigo)
+                detalle_tecnico.articulo = request.POST.get("articulo", detalle_tecnico.articulo)
+                detalle_tecnico.save()
+
+                # Actualiza datos complementarios
+                datos_complementarios.presentacion = request.POST.get("presentacion", datos_complementarios.presentacion)
+                datos_complementarios.accesorios = request.POST.get("accesorios", datos_complementarios.accesorios)
+                datos_complementarios.medidas = request.POST.get("medidas", datos_complementarios.medidas)
+                datos_complementarios.colores = request.POST.get("colores", datos_complementarios.colores)
+                datos_complementarios.capacidad = request.POST.get("capacidad", datos_complementarios.capacidad)
+                datos_complementarios.informacionAdicional = request.POST.get("informacionAdicional", datos_complementarios.informacionAdicional)
+                datos_complementarios.save()
+
+            messages.success(request, "¡Inventario actualizado exitosamente!")
+            return redirect("inventario_general")  # Redirige a la vista del inventario general
+        except Exception as e:
+            messages.error(request, f"Error al actualizar el inventario: {e}")
+    
+    # Renderiza el formulario con los datos cargados
+    return render(request, "gestionInventario.html", {
+        "subcategoria": inventario.subcategoria,
+        "inventario": inventario,
+        "detalle_tecnico": detalle_tecnico,
+        "datos_complementarios": datos_complementarios,
+    })
+
+def eliminarInventario(request, inventario_id):
+    try:
+        # Obtiene el objeto del inventario
+        inventario = get_object_or_404(Inventario, id=inventario_id)
+
+        # Elimina en cascada (DetalleTecnico y DatosComplementarios)
+        inventario.delete()
+        messages.success(request, "¡Item eliminado exitosamente!")
+    except Exception as e:
+        messages.error(request, f"Error al eliminar el item: {e}")
+
+    return redirect("inventario_general")

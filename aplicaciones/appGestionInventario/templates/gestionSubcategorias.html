@@ -27,6 +27,14 @@
                 </form>
             </div>
         </div>
+        
+        <!-- Botón para Control de Inventario General -->
+        <div class="mt-3" style="margin: 0 15px;"> <!-- Usamos mt-3 para margen superior y margen lateral similar al card -->
+            <a href="{% url 'inventario_general' %}" class="btn btn-info btn-sm btn-block text-center w-100">
+                Control de Inventario General
+            </a>
+        </div>
+        
     </div>
     <div class="col-sm-12 col-md-6 col-lg-8 col-xl-9">
         <h2>Listado de Subcategorías para: {{ categoria.nombre_categoria }}</h2>
@@ -37,11 +45,6 @@
                         <th>Ítem</th>
                         <th>Nombre de Subcategoría</th>
                         <th>Opciones</th>
-                        
-                            <a href="{% url 'inventario_general' %}" class="btn btn-info btn-sm">
-                                Control de Inventario General
-                            </a>
-                        
                     </tr>
                 </thead>
                 <tbody>

@@ -2,6 +2,7 @@ from datetime import timezone
 from django.db import models
 from django.contrib.auth.models import User
 from django.forms import ValidationError
+from django.core.validators import MinValueValidator
 
 # Tabla Categoria
 class Categoria(models.Model):
@@ -29,8 +30,13 @@ class Inventario(models.Model):
     subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE, null=True)
     nombre = models.CharField(max_length=100, unique=True, null=False)
     descripcion = models.TextField(blank=True, null=True)
-    cantidad_disponible = models.DecimalField(max_digits=10, decimal_places=2, default=0, null = False)
-    lote = models.CharField(max_length=36, null=True)
+    cantidad_disponible = models.FloatField(
+         default=0.0,
+        validators=[MinValueValidator(0.0)],
+        verbose_name="Cantidad Disponible"
+    )
+    unidad_medida = models.CharField(max_length=50, null=True, blank=True)
+    lote = models.CharField(max_length=36, blank=True, null=True)
     vencimiento = models.DateField(blank=True, null=True)
     observaciones = models.TextField(blank=True, null=True)
 
