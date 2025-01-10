@@ -167,12 +167,12 @@ def agregarInventario(request, id_subcategoria):
         vencimiento = request.POST.get("vencimiento", "").strip()  # Aseguramos que no tenga espacios en blanco
         observaciones = request.POST.get("observaciones", "")
 
-        # Validar cantidad_disponible
+        # Validamos que cantidad_disponible exista y que sea mayor o igual a 0
         if not cantidad_disponible or float(cantidad_disponible) < 0:
             messages.error(request, "La cantidad disponible debe ser un número mayor o igual a 0.")
             return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
 
-        # Validar campos obligatorios
+        # Validamos campos obligatorios (nombre en este caso)
         if not nombre:
             messages.error(request, "El nombre es un campo obligatorio.")
             return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
@@ -237,9 +237,8 @@ def agregarInventario(request, id_subcategoria):
 
 #Se uso transaction.atomic() para garantizar que todo el proceso de creación de objetos sea atómico, 
 # evitando inconsistencias en caso de error.
-
-
-# Vista del Inventario General
+#vencimiento.strip(): Se asegura que cualquier valor ingresado para vencimiento no tenga espacios en blanco.
+#En Vencimiento: Si el campo está vacío, se guarda como None, Si el formato no es válido, se muestra un mensaje de error claro.
 
 @never_cache #Esto evita que el navegador guarde el estado previo del formulario
 def inventario_general(request):
@@ -254,7 +253,7 @@ def inventario_general(request):
         "Categorias": categorias,
     })
 
-#Vista solamenete para el boton que dice "Ver Inventario General"
+#Vista solamente para el boton que dice "Ver Inventario General"
 @never_cache #Esto evita que el navegador guarde el estado previo del formulario
 def verInventarioGeneral(request):
     # Cargar categorías con sus subcategorías e ítems (incluyendo las tablas (clases) relacionadas)
@@ -278,20 +277,75 @@ def editarInventario(request, inventario_id):
     if request.method == "POST":
         try:
             with transaction.atomic():
-                # Imprime los datos enviados para depuración
-                print(request.POST)
+                # Validar y actualizar `nombre tanto si esta vacio como si esta repetido`
+                nombre = request.POST.get("nombre", "").strip()
+                if not nombre:
+                    messages.error(request, "El campo 'Nombre' es obligatorio.")
+                    return render(request, "edicionInventario.html", {
+                        "subcategoria": inventario.subcategoria,
+                        "inventario": inventario,
+                        "detalle_tecnico": detalle_tecnico,
+                        "datos_complementarios": datos_complementarios,
+                    })
+                if nombre != inventario.nombre and Inventario.objects.filter(nombre=nombre).exists():
+                    messages.error(request, "El nombre ingresado ya existe en el inventario general. Elija otro.")
+                    return render(request, "edicionInventario.html", {
+                        "subcategoria": inventario.subcategoria,
+                        "inventario": inventario,
+                        "detalle_tecnico": detalle_tecnico,
+                        "datos_complementarios": datos_complementarios,
+                    })
+                inventario.nombre = nombre
 
-                # Actualiza datos de Inventario
-                inventario.nombre = request.POST.get("nombre", inventario.nombre)
-                inventario.cantidad_disponible = request.POST.get("cantidad_disponible", inventario.cantidad_disponible)
+                # Validar y actualizar `cantidad_disponible, campo siempre debe existir y ser igual a 0 o mayor`
+                cantidad_disponible = request.POST.get("cantidad_disponible", "").strip()
+                if not cantidad_disponible:
+                    messages.error(request, "El campo 'Cantidad Disponible' es obligatorio.")
+                    return render(request, "edicionInventario.html", {
+                        "subcategoria": inventario.subcategoria,
+                        "inventario": inventario,
+                        "detalle_tecnico": detalle_tecnico,
+                        "datos_complementarios": datos_complementarios,
+                    })
+                try:
+                    cantidad_disponible = float(cantidad_disponible)
+                    if cantidad_disponible < 0:
+                        raise ValueError
+                except ValueError:
+                    messages.error(request, "La cantidad disponible debe ser un número mayor o igual a 0.")
+                    return render(request, "edicionInventario.html", {
+                        "subcategoria": inventario.subcategoria,
+                        "inventario": inventario,
+                        "detalle_tecnico": detalle_tecnico,
+                        "datos_complementarios": datos_complementarios,
+                    })
+                inventario.cantidad_disponible = cantidad_disponible
+
+                # Validar y actualizar `vencimiento que se envie de forma aceptada por el navegador (formato correcto)`
+                vencimiento = request.POST.get("vencimiento", "").strip()
+                if vencimiento:
+                    try:
+                        vencimiento = datetime.strptime(vencimiento, "%Y-%m-%d").date()
+                    except ValueError:
+                        messages.error(request, "El formato de la fecha de vencimiento debe ser YYYY-MM-DD.")
+                        return render(request, "edicionInventario.html", {
+                            "subcategoria": inventario.subcategoria,
+                            "inventario": inventario,
+                            "detalle_tecnico": detalle_tecnico,
+                            "datos_complementarios": datos_complementarios,
+                        })
+                else:
+                    vencimiento = None
+                inventario.vencimiento = vencimiento
+
+                # Actualiza otros campos de Inventario
                 inventario.unidad_medida = request.POST.get("unidad_medida", inventario.unidad_medida)
                 inventario.descripcion = request.POST.get("descripcion", inventario.descripcion)
                 inventario.lote = request.POST.get("lote", inventario.lote)
-                inventario.vencimiento = request.POST.get("vencimiento", inventario.vencimiento)
                 inventario.observaciones = request.POST.get("observaciones", inventario.observaciones)
                 inventario.save()
 
-                # Actualiza datos de Detalle Técnico
+                # Actualiza Detalle Técnico y Datos Complementarios
                 detalle_tecnico.marca_caracteristica = request.POST.get("marca_caracteristica", detalle_tecnico.marca_caracteristica)
                 detalle_tecnico.num_cat = request.POST.get("num_cat", detalle_tecnico.num_cat)
                 detalle_tecnico.num_serie = request.POST.get("num_serie", detalle_tecnico.num_serie)
@@ -300,7 +354,6 @@ def editarInventario(request, inventario_id):
                 detalle_tecnico.articulo = request.POST.get("articulo", detalle_tecnico.articulo)
                 detalle_tecnico.save()
 
-                # Actualiza datos complementarios
                 datos_complementarios.presentacion = request.POST.get("presentacion", datos_complementarios.presentacion)
                 datos_complementarios.accesorios = request.POST.get("accesorios", datos_complementarios.accesorios)
                 datos_complementarios.medidas = request.POST.get("medidas", datos_complementarios.medidas)
@@ -310,11 +363,11 @@ def editarInventario(request, inventario_id):
                 datos_complementarios.save()
 
                 messages.success(request, "¡Inventario actualizado exitosamente!")
-                return redirect("inventario_general")  # Redirige a la vista del inventario general
+                return redirect("inventario_general")
         except Exception as e:
             messages.error(request, f"Error al actualizar el inventario: {e}")
 
-        # Pasar cantidad disponible como string formateado, esto fuerza a usar formato valido para el navegador regional
+    # Pasar cantidad disponible como string formateado
     inventario.cantidad_disponible = f"{inventario.cantidad_disponible:.2f}".replace(',', '.')
 
     # Renderiza el formulario con los datos cargados

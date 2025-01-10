@@ -4,6 +4,13 @@
 
 {% block body %}
 
+<!-- Estilos personalizados para mostrar en azul los encabezados de cada campo por medio de "label" -->
+<style>
+    label {
+        color: #007bff; /* Azul */
+    }
+</style>
+
 <!-- Mensajes -->
 {% if messages %}
 <div class="alert alert-dismissible alert-success">
@@ -14,26 +21,30 @@
 {% endif %}
 
 <div class="row">
-    <div class="col-md-6 offset-md-3">
-        <h1 style="text-align: center;">Editar Ítem de Inventario</h1>
+    <div class="col-md-8 offset-md-2">
+        <h1 class="text-center">Editar Ítem de Inventario</h1>
         <form action="{% url 'editarInventario' inventario.id %}" method="POST">
             {% csrf_token %}
-            <!-- Datos del Inventario -->
-            <div class="card">
+
+            <!-- Datos del Inventario. Card mb-4 distribuye por secciones (datos, detalles y aspectos) y card header da un subrayado-->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4>Datos del Inventario</h4>
+                </div>
                 <div class="card-body">
-                    <h3>Datos del Inventario</h3>
                     <!-- Nombre del Ítem -->
                     <div class="form-group mb-3">
                         <label for="nombre">Nombre del Ítem:</label>
                         <input type="text" id="nombre" name="nombre" value="{{ inventario.nombre }}"
-                            class="form-control" placeholder="Nombre del Ítem" maxlength="100">
+                            class="form-control" maxlength="100" required>
                     </div>
 
                     <!-- Cantidad Disponible -->
                     <div class="form-group mb-3">
                         <label for="cantidad_disponible">Cantidad Disponible:</label>
                         <input type="number" id="cantidad_disponible" name="cantidad_disponible"
-                            value="{{ inventario.cantidad_disponible }}" class="form-control" min="0" step="0.01">
+                            value="{{ inventario.cantidad_disponible }}" class="form-control" min="0" step="0.01"
+                            required>
                     </div>
 
                     <!-- Unidad de Medida -->
@@ -41,22 +52,134 @@
                         <label for="unidad_medida">Unidad de Medida:</label>
                         <input type="text" id="unidad_medida" name="unidad_medida"
                             value="{{ inventario.unidad_medida }}" class="form-control"
-                            placeholder="Unidad de Medida (ml, gr, unidades)">
+                            placeholder="(ml, gr, lts, unidades)">
                     </div>
 
                     <!-- Descripción -->
                     <div class="form-group mb-3">
                         <label for="descripcion">Descripción:</label>
                         <textarea id="descripcion" name="descripcion" class="form-control"
-                            placeholder="Descripción">{{ inventario.descripcion }}</textarea>
+                        >{{ inventario.descripcion }}</textarea>
                     </div>
 
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-success w-100">Guardar</button>
+                    <!-- Lote -->
+                    <div class="form-group mb-3">
+                        <label for="lote">Lote:</label>
+                        <input type="text" id="lote" name="lote" value="{{ inventario.lote }}" class="form-control">
                     </div>
+
+                    <!-- Fecha de Vencimiento. El filtro |date:'Y-m-d' formatea el valor de inventario.vencimiento a YYYY-MM-DD para que se obtenga y se muestre la fecha a editar-->
+                    <div class="form-group mb-3">
+                        <label for="vencimiento">Fecha de Vencimiento:</label>
+                        <input type="date" id="vencimiento" name="vencimiento" value="{{ inventario.vencimiento|date:'Y-m-d' }}" class="form-control">
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="form-group mb-3">
+                        <label for="observaciones">Observaciones:</label>
+                        <textarea id="observaciones" name="observaciones" class="form-control"
+                        >{{ inventario.observaciones }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalle Técnico -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h4>Detalle Técnico</h4>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label for="marca_caracteristica">Marca/Características:</label>
+                        <input type="text" id="marca_caracteristica" name="marca_caracteristica"
+                            value="{{ detalle_tecnico.marca_caracteristica }}" class="form-control">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="num_cat">Número de Catálogo:</label>
+                        <input type="text" id="num_cat" name="num_cat" value="{{ detalle_tecnico.num_cat }}"
+                            class="form-control">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="num_serie">Número de Serie:</label>
+                        <input type="text" id="num_serie" name="num_serie" value="{{ detalle_tecnico.num_serie }}"
+                            class="form-control">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="modelo">Modelo:</label>
+                        <input type="text" id="modelo" name="modelo" value="{{ detalle_tecnico.modelo }}"
+                            class="form-control">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="codigo">Código:</label>
+                        <input type="text" id="codigo" name="codigo" value="{{ detalle_tecnico.codigo }}"
+                            class="form-control">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="articulo">Artículo:</label>
+                        <input type="text" id="articulo" name="articulo" value="{{ detalle_tecnico.articulo }}"
+                            class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Datos Complementarios -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4>Datos Complementarios</h4>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label for="presentacion">Presentación:</label>
+                        <input type="text" id="presentacion" name="presentacion"
+                            value="{{ datos_complementarios.presentacion }}" class="form-control">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="accesorios">Accesorios:</label>
+                        <input type="text" id="accesorios" name="accesorios"
+                            value="{{ datos_complementarios.accesorios }}" class="form-control">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="medidas">Medidas:</label>
+                        <input type="text" id="medidas" name="medidas" value="{{ datos_complementarios.medidas }}"
+                            class="form-control">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="colores">Colores:</label>
+                        <input type="text" id="colores" name="colores" value="{{ datos_complementarios.colores }}"
+                            class="form-control">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="capacidad">Capacidad:</label>
+                        <input type="text" id="capacidad" name="capacidad" value="{{ datos_complementarios.capacidad }}" class="form-control">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="informacionAdicional">Información Adicional:</label>
+                        <textarea id="informacionAdicional" name="informacionAdicional" class="form-control"
+                        >{{ datos_complementarios.informacionAdicional }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón Guardar -->
+            <div class="text-center">
+                <!-- Botón Guardar Todo -->
+                <button type="submit" class="btn btn-success mt-3">Guardar Cambios</button>
+
+                <!-- Botón Salir -->
+                <button type="button" class="btn btn-danger mt-3 ms-3" onclick="window.history.back();">Cancelar</button>
+            </div>
         </form>
     </div>
 </div>
-</div>
-</div>
+
 {% endblock %}
