@@ -155,25 +155,26 @@ def eliminarSubcategoria(request, id_subcategoria):
 @login_required
 @never_cache
 def agregarInventario(request, id_subcategoria):
-    # Obtener la subcategoría y su categoría
     subcategoria = get_object_or_404(SubCategoria, id_subcategoria=id_subcategoria)
     categoria = subcategoria.categoria
 
     if request.method == "POST":
-        # Obtener campos del formulario
         nombre = request.POST.get("nombre")
-        cantidad_disponible = request.POST.get('cantidad_disponible')
-        if float(cantidad_disponible) < 0:
-            raise ValidationError("La cantidad disponible no puede ser negativa.")
-        unidad_medida =  request.POST.get("unidad_medida", "")
-        descripcion = request.POST.get("descripcion", "") # ()"") se guardan como cadenas vacias en la BD (ideal para campos que aplican pero no hay datos) 
+        cantidad_disponible = request.POST.get("cantidad_disponible")
+        unidad_medida = request.POST.get("unidad_medida", "")
+        descripcion = request.POST.get("descripcion", "")
         lote = request.POST.get("lote", "")
-        vencimiento = request.POST.get("vencimiento", None) # None: Django traduce este valor a NULL en la base de datos. Ideal para campos que no aplican necesariamente
+        vencimiento = request.POST.get("vencimiento", "").strip()  # Aseguramos que no tenga espacios en blanco
         observaciones = request.POST.get("observaciones", "")
 
+        # Validar cantidad_disponible
+        if not cantidad_disponible or float(cantidad_disponible) < 0:
+            messages.error(request, "La cantidad disponible debe ser un número mayor o igual a 0.")
+            return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
+
         # Validar campos obligatorios
-        if not nombre or not cantidad_disponible:
-            messages.error(request, "El nombre y la cantidad disponible son campos obligatorios.")
+        if not nombre:
+            messages.error(request, "El nombre es un campo obligatorio.")
             return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
 
         # Validar unicidad del nombre
@@ -181,35 +182,29 @@ def agregarInventario(request, id_subcategoria):
             messages.error(request, "El nombre ingresado ya existe en el inventario general, ingrese otro.")
             return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
 
-        # Validar y procesar el campo de vencimiento
+        # Validar vencimiento (si no está vacío)
         if vencimiento:
             try:
-                # Intentar convertir el formato de fecha recibido
                 vencimiento = datetime.strptime(vencimiento, "%Y-%m-%d").date()
             except ValueError:
                 messages.error(request, "El formato de la fecha de vencimiento debe ser YYYY-MM-DD.")
                 return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
         else:
-            # Si no se proporciona una fecha de vencimiento, establecer como None
-            vencimiento = None
+            vencimiento = None  # Aseguramos que se guarde como None si está vacío
 
-        # Transacción para asegurarnos de que todo o nada se guarde
         try:
             with transaction.atomic():
-                # Crear el objeto Inventario
                 inventario = Inventario.objects.create(
                     categoria=categoria,
                     subcategoria=subcategoria,
                     nombre=nombre,
-                    cantidad_disponible=cantidad_disponible,
-                    unidad_medida = unidad_medida,
+                    cantidad_disponible=float(cantidad_disponible),
+                    unidad_medida=unidad_medida,
                     descripcion=descripcion,
                     lote=lote,
                     vencimiento=vencimiento,
                     observaciones=observaciones,
                 )
-
-                # Crear el objeto Detalle Técnico
                 DetalleTecnico.objects.create(
                     inventario=inventario,
                     categoria=categoria,
@@ -221,12 +216,10 @@ def agregarInventario(request, id_subcategoria):
                     codigo=request.POST.get("codigo", ""),
                     articulo=request.POST.get("articulo", ""),
                 )
-
-                # Crear el objeto Datos Complementarios
                 DatosComplementarios.objects.create(
-                    inventario=inventario,  # Asociar al inventario creado
-                    categoria=categoria, # Asocia a la Categoria
-                    subcategoria=subcategoria, #Asocia a la Subcategoria
+                    inventario=inventario,
+                    categoria=categoria,
+                    subcategoria=subcategoria,
                     presentacion=request.POST.get("presentacion", ""),
                     accesorios=request.POST.get("accesorios", ""),
                     medidas=request.POST.get("medidas", ""),
@@ -234,18 +227,13 @@ def agregarInventario(request, id_subcategoria):
                     capacidad=request.POST.get("capacidad", ""),
                     informacionAdicional=request.POST.get("informacionAdicional", ""),
                 )
-
-            # Mensaje de éxito
-            messages.success(request, "¡Item agregado correctamente al inventario!")
-            return redirect('inventario_general') #Me dirige a la vista de Inventario General si es exitosa
-
+                messages.success(request, "¡Item agregado correctamente al inventario!")
+                return redirect('inventario_general')
         except Exception as e:
-            # Capturar cualquier error y enviar un mensaje
             messages.error(request, f"Error al agregar el inventario: {str(e)}")
-            return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
 
-    # Si el método no es POST, renderizar el formulario vacío
     return render(request, "gestionInventario.html", {"subcategoria": subcategoria})
+
 
 #Se uso transaction.atomic() para garantizar que todo el proceso de creación de objetos sea atómico, 
 # evitando inconsistencias en caso de error.
@@ -280,7 +268,7 @@ def verInventarioGeneral(request):
         "Categorias": categorias,
     })
 
-@never_cache
+@never_cache 
 def editarInventario(request, inventario_id):
     # Obtiene el objeto del inventario y sus relaciones
     inventario = get_object_or_404(Inventario, id=inventario_id)
@@ -290,6 +278,9 @@ def editarInventario(request, inventario_id):
     if request.method == "POST":
         try:
             with transaction.atomic():
+                # Imprime los datos enviados para depuración
+                print(request.POST)
+
                 # Actualiza datos de Inventario
                 inventario.nombre = request.POST.get("nombre", inventario.nombre)
                 inventario.cantidad_disponible = request.POST.get("cantidad_disponible", inventario.cantidad_disponible)
@@ -318,19 +309,23 @@ def editarInventario(request, inventario_id):
                 datos_complementarios.informacionAdicional = request.POST.get("informacionAdicional", datos_complementarios.informacionAdicional)
                 datos_complementarios.save()
 
-            messages.success(request, "¡Inventario actualizado exitosamente!")
-            return redirect("inventario_general")  # Redirige a la vista del inventario general
+                messages.success(request, "¡Inventario actualizado exitosamente!")
+                return redirect("inventario_general")  # Redirige a la vista del inventario general
         except Exception as e:
             messages.error(request, f"Error al actualizar el inventario: {e}")
-    
+
+        # Pasar cantidad disponible como string formateado, esto fuerza a usar formato valido para el navegador regional
+    inventario.cantidad_disponible = f"{inventario.cantidad_disponible:.2f}".replace(',', '.')
+
     # Renderiza el formulario con los datos cargados
-    return render(request, "gestionInventario.html", {
+    return render(request, "edicionInventario.html", {
         "subcategoria": inventario.subcategoria,
         "inventario": inventario,
         "detalle_tecnico": detalle_tecnico,
         "datos_complementarios": datos_complementarios,
     })
 
+@never_cache
 def eliminarInventario(request, inventario_id):
     try:
         # Obtiene el objeto del inventario
@@ -343,3 +338,4 @@ def eliminarInventario(request, inventario_id):
         messages.error(request, f"Error al eliminar el item: {e}")
 
     return redirect("inventario_general")
+
