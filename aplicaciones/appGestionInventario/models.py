@@ -23,9 +23,9 @@ class SubCategoria(models.Model):
         return f"{self.nombre} - {self.categoria.nombre_categoria}"
 
 class Inventario(models.Model):
-    #id_inventario = models.AutoField(primary_key=True) esto se crea solo sin necesidad de escribirlo
     #on delete cascade  asegura que, al eliminar una subcategoría, todos los ítems relacionados 
     #también se eliminen automáticamente.
+    id_inventario = models.AutoField(primary_key=True, unique=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, null=True)
     subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE, null=True)
     nombre = models.CharField(max_length=100, unique=True, null=False)

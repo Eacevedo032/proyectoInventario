@@ -268,9 +268,9 @@ def verInventarioGeneral(request):
     })
 
 @never_cache 
-def editarInventario(request, inventario_id):
+def editarInventario(request, id_inventario):
     # Obtiene el objeto del inventario y sus relaciones
-    inventario = get_object_or_404(Inventario, id=inventario_id)
+    inventario = get_object_or_404(Inventario, id_inventario=id_inventario)
     detalle_tecnico = get_object_or_404(DetalleTecnico, inventario=inventario)
     datos_complementarios = get_object_or_404(DatosComplementarios, inventario=inventario)
 
@@ -379,10 +379,10 @@ def editarInventario(request, inventario_id):
     })
 
 @never_cache
-def eliminarInventario(request, inventario_id):
+def eliminarInventario(request, id_inventario):
     try:
         # Obtiene el objeto del inventario
-        inventario = get_object_or_404(Inventario, id=inventario_id)
+        inventario = get_object_or_404(Inventario, id_inventario=id_inventario)
 
         # Elimina en cascada (DetalleTecnico y DatosComplementarios)
         inventario.delete()

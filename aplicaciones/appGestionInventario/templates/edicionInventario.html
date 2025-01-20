@@ -23,7 +23,7 @@
 <div class="row">
     <div class="col-md-8 offset-md-2">
         <h1 class="text-center">Editar Ítem de Inventario</h1>
-        <form action="{% url 'editarInventario' inventario.id %}" method="POST">
+        <form action="{% url 'editarInventario' inventario.id_inventario %}" method="POST">
             {% csrf_token %}
 
             <!-- Datos del Inventario. Card mb-4 distribuye por secciones (datos, detalles y aspectos) y card header da un subrayado-->

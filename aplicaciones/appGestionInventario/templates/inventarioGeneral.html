@@ -118,9 +118,9 @@
                                 <td>
                                     <div class="d-flex justify-content-center align-items-center gap-2">
                                         <!--d-flex justify-content-center esto pone centrado si es center, final si es end y start inicio-->
-                                        <a href="{% url 'editarInventario' item.id %}" class="btn btn-primary btn-sm">Actualizar</a>
+                                        <a href="{% url 'editarInventario' item.id_inventario %}" class="btn btn-primary btn-sm">Actualizar</a>
                     
-                                        <a href="{% url 'eliminarInventario' item.id %}" class="btn btn-danger btn-sm" 
+                                        <a href="{% url 'eliminarInventario' item.id_inventario %}" class="btn btn-danger btn-sm" 
                                         onclick="return doubleConfirm('¿Estás seguro de que deseas eliminar este ítem?');">Eliminar</a>
 
                                         <!-- El siguiente es un script usando JS para validar doblemente la eliminación-->
@@ -230,9 +230,9 @@
                                 <td>
                                     <div class="d-flex justify-content-center align-items-center gap-2">
                                         <!--d-flex justify-content-center esto pone centrado si es center, final si es end y start inicio-->
-                                        <a href="{% url 'editarInventario' item.id %}" class="btn btn-primary btn-sm">Actualizar</a>
+                                        <a href="{% url 'editarInventario' item.id_inventario %}" class="btn btn-primary btn-sm">Actualizar</a>
                     
-                                        <a href="{% url 'eliminarInventario' item.id %}" class="btn btn-danger btn-sm" 
+                                        <a href="{% url 'eliminarInventario' item.id_inventario %}" class="btn btn-danger btn-sm" 
                                         onclick="return doubleConfirm('¿Estás seguro de que deseas eliminar este ítem?');">Eliminar</a>
 
                                         <!-- El siguiente es un script usando JS para validar doblemente la eliminación-->
