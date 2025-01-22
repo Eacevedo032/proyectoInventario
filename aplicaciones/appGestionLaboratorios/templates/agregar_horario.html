@@ -1,0 +1,79 @@
+{% extends "./base.html" %}
+
+{% block title %}Horario para clases y Maestros en los laboratorios{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            {% if messages %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {% for message in messages %}
+                    <strong>{{ message }}</strong>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <h1 class="mb-4 text-center">Añadir Horario de Laboratorio</h1>
+
+            {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="post" action="" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="laboratorio" class="form-label">Laboratorio:</label>
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="sin_supervision" name="sin_supervision">
+                        <label for="sin_supervision" class="form-check-label">Bloquear por falta de supervisión</label>
+                    </div>                    
+                    
+                    <select id="laboratorio" name="laboratorio" class="form-control" required>
+                        <option value="">Selecciona un laboratorio</option>
+                        <option value="Laboratorio Planta Alta">Laboratorio Planta Alta</option>
+                        <option value="Laboratorio Planta Baja">Laboratorio Planta Baja</option>
+                        <option value="Laboratorio Microbial">Laboratorio Microbial</option>
+                    </select>
+                    <div class="invalid-feedback">
+                        Por favor, selecciona un laboratorio.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="fecha_reserva" class="form-label">Fecha de Reserva:</label>
+                    <input type="date" id="fecha_reserva" name="fecha_reserva" class="form-control" value="{{ fecha_reserva|default:'' }}" required>
+                    <div class="invalid-feedback">
+                        Por favor, ingresa la fecha de reserva.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="hora_inicio" class="form-label">Hora de Inicio:</label>
+                    <input type="time" id="hora_inicio" name="hora_inicio" class="form-control" value="{{ hora_inicio|default:'' }}" required>
+                    <div class="invalid-feedback">
+                        Por favor, ingresa la hora de inicio.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="hora_fin" class="form-label">Hora de Fin:</label>
+                    <input type="time" id="hora_fin" name="hora_fin" class="form-control" value="{{ hora_fin|default:'' }}" required>
+                    <div class="invalid-feedback">
+                        Por favor, ingresa la hora de fin.
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Guardar Horario</button>
+                    <a href="{% url 'administracion_laboratorios' %}" class="btn btn-secondary">Volver</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

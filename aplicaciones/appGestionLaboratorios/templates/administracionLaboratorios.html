@@ -2,12 +2,21 @@
 {% block title %}Gestión de Reservaciones{% endblock %}
 {% block body %}
 <div class="container my-5">
+
+    {% if messages %}
+        <div class="alert alert-dismissible alert-success">
+            {% for message in messages %}
+            <strong class="text-dark">{{ message }}</strong>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <h1 class="text-center mb-4">Administración de Solicitudes de Laboratorios</h1>
 
     <div class="d-flex justify-content-start mb-4">
-        <button type="submit" class="btn btn-success me-2">Exportar Excel</button>
-        <button type="submit" class="btn btn-danger">Exportar PDF</button>
-    </div>
+        <a href="{% url 'agregar_horario' %}" class="btn btn-success btn-sm me-2">Añadir Horario</a>
+        <a href="{% url 'listar_horarios' %}" class="btn btn-success btn-sm ms-2">Ver Horarios</a>
+    </div>    
 
     {% for usuario, solicitudes in solicitudes_por_usuario.items %}
     <div class="card mb-4">

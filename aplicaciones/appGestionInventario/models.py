@@ -76,6 +76,19 @@ class DatosComplementarios(models.Model):
     def __str__(self):
         return f"Datos complementarios para {self.inventario.nombre}"
 
+#control de horarios en los laboratorios
+class HorarioLaboratorio(models.Model):
+    laboratorio = models.CharField(max_length=255)
+    fecha_reserva = models.DateField()
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    sin_supervision = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ('laboratorio', 'fecha_reserva', 'hora_inicio', 'hora_fin')
+
+    def __str__(self):
+        return f"{self.laboratorio} - {self.fecha_reserva} {self.hora_inicio}-{self.hora_fin}"
 
 # Tabla Solicitudes de Laboratorios
 class SolicitudLaboratorio(models.Model):
@@ -90,13 +103,9 @@ class SolicitudLaboratorio(models.Model):
     ]
     
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     fecha_solicitud = models.DateField(auto_now_add=True)
     laboratorio = models.CharField(max_length=255)
     estado = models.CharField(max_length=50, choices=ESTADOS, default=PENDIENTE)
-    fecha_reserva = models.DateField()
-    hora_inicio = models.TimeField()
-    hora_fin = models.TimeField()
     fecha_reserva = models.DateField()
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
@@ -108,60 +117,48 @@ class SolicitudLaboratorio(models.Model):
 
     def __str__(self):
         return f"{self.laboratorio} - {self.usuario.username} - {self.estado}"
-    def __str__(self):
-        return f"{self.laboratorio} - {self.usuario.username} - {self.estado}"
 
     def clean(self):
-        if self.hora_inicio >= self.hora_fin:
-            raise ValidationError('La hora de inicio debe ser anterior a la hora de fin.')
+     if self.hora_inicio >= self.hora_fin:
+        raise ValidationError('La hora de inicio debe ser anterior a la hora de fin.')
+
+     conflictos = HorarioLaboratorio.objects.filter(
+         laboratorio=self.laboratorio,
+         fecha_reserva=self.fecha_reserva,
+         hora_inicio__lt=self.hora_fin,
+         hora_fin__gt=self.hora_inicio,
+     )
+     if conflictos.exists():
+        raise ValidationError("El laboratorio ya está reservado en el horario solicitado.")
+
 
     def aprobar_solicitud(self):
-        if self.estado != SolicitudLaboratorio.PENDIENTE:
-            raise ValidationError("Solo se pueden aprobar solicitudes pendientes.")
-        
-        usos = UsoItemLaboratorio.objects.filter(solicitud=self)
-        for uso in usos:
-            inventario_item = uso.item
-            if inventario_item.cantidad_disponible >= uso.cantidad_utilizada:
-                inventario_item.cantidad_disponible -= uso.cantidad_utilizada
-                inventario_item.save()
+     if self.estado != SolicitudLaboratorio.PENDIENTE:
+        raise ValidationError("Solo se pueden aprobar solicitudes pendientes.")
 
-                # Registrar en el historial
-                HistorialInventario.objects.create(
-                    item=inventario_item,
-                    cantidad_cambiada=uso.cantidad_utilizada,
-                    fecha_cambio=timezone.now(),
-                    tipo_cambio='salida'
-                )
-            else:
-                raise ValidationError(f"No hay suficiente cantidad de {inventario_item.nombre} en inventario.")
+     # Verificar disponibilidad del laboratorio
+     conflictos = HorarioLaboratorio.objects.filter(
+         laboratorio=self.laboratorio,
+         fecha_reserva=self.fecha_reserva,
+         hora_inicio__lt=self.hora_fin,
+         hora_fin__gt=self.hora_inicio,
+     )
 
-        self.estado = SolicitudLaboratorio.APROBADA
-        self.save()
+     if conflictos.exists():
+        raise ValidationError("El laboratorio ya está reservado en el horario solicitado.")
 
-    def aprobar_solicitud(self):
-        if self.estado != SolicitudLaboratorio.PENDIENTE:
-            raise ValidationError("Solo se pueden aprobar solicitudes pendientes.")
-        
-        usos = UsoItemLaboratorio.objects.filter(solicitud=self)
-        for uso in usos:
-            inventario_item = uso.item
-            if inventario_item.cantidad_disponible >= uso.cantidad_utilizada:
-                inventario_item.cantidad_disponible -= uso.cantidad_utilizada
-                inventario_item.save()
+    # Registrar horario de ocupación
+     HorarioLaboratorio.objects.create(
+        laboratorio=self.laboratorio,
+        fecha_reserva=self.fecha_reserva,
+        hora_inicio=self.hora_inicio,
+        hora_fin=self.hora_fin,
+    )
 
-                # Registrar en el historial
-                HistorialInventario.objects.create(
-                    item=inventario_item,
-                    cantidad_cambiada=uso.cantidad_utilizada,
-                    fecha_cambio=timezone.now(),
-                    tipo_cambio='salida'
-                )
-            else:
-                raise ValidationError(f"No hay suficiente cantidad de {inventario_item.nombre} en inventario.")
+    # Actualizar estado de la solicitud
+     self.estado = SolicitudLaboratorio.APROBADA
+     self.save()
 
-        self.estado = SolicitudLaboratorio.APROBADA
-        self.save()
 
 # Tabla Usos de Ítems en Laboratorios
 class UsoItemLaboratorio(models.Model):
@@ -177,7 +174,7 @@ class UsoItemLaboratorio(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.item.nombre} - {self.cantidad_utilizada} - {self.fecha_uso}"
+        return f"{self.inventario.nombre} - {self.cantidad_utilizada} - {self.fecha_uso}"
 
 # Tabla Historial de Inventario
 class HistorialInventario(models.Model):
