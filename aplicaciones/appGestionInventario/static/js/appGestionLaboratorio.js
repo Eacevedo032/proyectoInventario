@@ -1,14 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const categoriaElement = document.getElementById('categoria');
-    const subcategoriaElement = document.getElementById('subcategoria');
-    const solicitudElement = document.querySelector('[name="solicitud"]');
+    if (document.body.contains(document.getElementById('categoria')) &&
+        document.body.contains(document.getElementById('subcategoria')) &&
+        document.body.contains(document.querySelector('[name="solicitud"]'))) {
+        
+        const categoriaElement = document.getElementById('categoria');
+        const subcategoriaElement = document.getElementById('subcategoria');
+        const solicitudElement = document.querySelector('[name="solicitud"]');
 
-    if (categoriaElement && subcategoriaElement && solicitudElement) {
-        categoriaElement.addEventListener('change', actualizarSubcategorias);
-        subcategoriaElement.addEventListener('change', actualizarItems);
-        solicitudElement.addEventListener('change', updateFechaUso);
-    } else {
-        console.error("No se encontraron los elementos con ID 'categoria', 'subcategoria' o el selector 'solicitud'");
+        if (categoriaElement && subcategoriaElement && solicitudElement) {
+            categoriaElement.addEventListener('change', actualizarSubcategorias);
+            subcategoriaElement.addEventListener('change', actualizarItems);
+            solicitudElement.addEventListener('change', function() {
+                updateFechaUso(this);
+            });
+        } else {
+            console.error("No se encontraron los elementos con ID 'categoria', 'subcategoria' o el selector 'solicitud'");
+        }
     }
 });
 
@@ -78,8 +85,16 @@ function actualizarSubcategorias() {
 }
 
 function actualizarItems() {
-    const categoriaId = document.getElementById('categoria').value;
-    const subcategoriaId = document.getElementById('subcategoria').value;
+    const categoriaElement = document.getElementById('categoria');
+    const subcategoriaElement = document.getElementById('subcategoria');
+
+    if (!categoriaElement || !subcategoriaElement) {
+        console.log("Faltan los elementos con ID 'categoria' o 'subcategoria', no se puede actualizar los ítems.");
+        return;  // No hacer nada si faltan los elementos
+    }
+
+    const categoriaId = categoriaElement.value;
+    const subcategoriaId = subcategoriaElement.value;
 
     console.log("ID de categoría seleccionado:", categoriaId);
     console.log("ID de subcategoría seleccionado:", subcategoriaId);
@@ -106,9 +121,12 @@ function actualizarItems() {
         data.items.forEach(item => {
             const option = document.createElement('option');
             option.value = item.id_inventario; // Usa id_inventario aquí
-            option.textContent = `${item.nombre} - Disponible: ${item.cantidad_disponible}`;
+            option.textContent = `${item.nombre} - Disponible: ${item.cantidad_disponible} ${item.unidad_medida}`;
             itemSelect.appendChild(option);
         });
     })
     .catch(error => console.error('Error al obtener los ítems:', error));
 }
+
+// Inicializar la función después de que el DOM esté cargado
+document.addEventListener('DOMContentLoaded', actualizarItems);

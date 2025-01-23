@@ -19,60 +19,36 @@
 
 <body>
     {% if user.is_authenticated %}
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand tex-center" href="#">
-            <span class="Gris">Ingeniería En</span>
-            <span class="Verde">Biotecnología Industrial</span>
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
-            aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-            <div class="navbar-nav ms-auto">
-                <a class="nav-item nav-link active" href="{% url 'inicio' %}">Inicio</a>
-                {% if user.is_staff or user.is_superuser %}
-                <li class="nav-item">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <span class="Gris">Ingeniería En</span>
+                <span class="Verde">Biotecnología Industrial</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
+                aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-item nav-link active" href="{% url 'inicio' %}">Inicio</a>
+                    {% if user.is_staff or user.is_superuser %}
+                    <a class="nav-item nav-link" href="{% url 'gestionCategoria' %}">Gestión Inventario</a>
                     <a class="nav-link" href="{% url 'administracion_laboratorios' %}">Administración de Laboratorios</a>
-                </li>
-
-                <li class="nav-item">
-                <a class="nav-item nav-link" href="{% url 'gestionCategoria' %}">Gestión Inventario</a>
-                </li>
-                
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Gestión Categorías
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li class="nav-item"><a class="dropdown-item" href="#">Reactivos</a></li>
-                        <li class="nav-item"><a class="dropdown-item" href="#">Cristalería</a></li>
-                        <li class="nav-item"><a class="dropdown-item" href="#">Equipos</a></li>
-                    </ul>
-                </li>
-
-                <li class="nav-item"><a class="nav-link" href="#">Generar Reportes</a></li>
-
-                {% else %}
-                <li class="nav-item">
+                    <a class="nav-item nav-link" href="#">Generar Reportes</a>
+                    {% else %}
                     <a class="nav-link" href="{% url 'reservar_laboratorio' %}">Reservación de Laboratorios</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="{% url 'solicitar_recursos' %}">Solicitud de recursos</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="{% url 'listar_horarios_lectura' %}">Ver Horarios</a>
-                </li>
-                {% endif %}
-
-                <!-- Botón de Cerrar Sesión -->
-                <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <button class="btn btn-danger ms-3" type="submit">
-                        <i class="bi bi-box-arrow-right"></i> <!-- Icono de salida -->
-                        Cerrar sesión
-                    </button>
-                </form>
+                    {% endif %}
+                    <!-- Botón de Cerrar Sesión -->
+                    <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button class="btn btn-danger ms-3" type="submit">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </nav>
@@ -85,10 +61,8 @@
 
     <!-- Enlace a jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
     <!-- Enlace a Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-
     <!-- Archivo JavaScript personalizado -->
     <script src="{% static 'js/gestionCategorias.js' %}"></script>
     <script src="{% static 'js/appGestionLaboratorio.js' %}"></script>

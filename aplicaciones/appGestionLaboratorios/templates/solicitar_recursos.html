@@ -11,7 +11,7 @@
         </div>
     {% endif %}
 
-    <div class="card" style="width: 60%;">
+    <div class="card" style="width: 100%; max-width: 800px;">
         <div class="card-header text-center">
             <h5 class="mt-4">Solicitar Ítems del Inventario</h5>
         </div>
@@ -20,7 +20,7 @@
                 {% csrf_token %}
                 <div id="items-container">
                     <div class="form-group row align-items-center justify-content-center">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 col-md-6 mb-3">
                             <label for="usuario" class="text-center w-100">Usuario:</label>
                             <input type="text" class="form-control text-center" value="{{ request.user.username }}" readonly>
                             <input type="hidden" name="usuario" value="{{ request.user.id }}">
@@ -28,7 +28,7 @@
                     </div>
                     
                     <div class="form-group row align-items-center justify-content-center">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 col-md-6 mb-3">
                             <label for="solicitud" class="text-center w-100">Solicitud:</label>
                             <select name="solicitud" class="form-control" required onchange="updateFechaUso(this)">
                                 <option value="">Selecciona una solicitud de laboratorio creada</option>
@@ -38,14 +38,14 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 col-md-6 mb-3">
                             <label for="fecha_uso" class="text-center w-100">Fecha de Uso:</label>
                             <input type="date" id="fecha_uso" class="form-control" readonly>
                             <input type="hidden" name="fecha_uso" id="hidden_fecha_uso">
                         </div>
                     </div>
                     <div class="form-group row align-items-center justify-content-center">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 col-md-6 mb-3">
                             <label for="categoria" class="text-center w-100">Categoría:</label>
                             <select name="categoria" id="categoria" class="form-control" required onchange="actualizarItems()">
                                 <option value="">Selecciona una categoría</option>
@@ -54,7 +54,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 col-md-6 mb-3">
                             <label for="subcategoria" class="text-center w-100">Subcategoría:</label>
                             <select name="subcategoria" id="subcategoria" class="form-control" required onchange="actualizarItems()">
                                 {% for subcategoria in subcategorias %}
@@ -64,13 +64,13 @@
                         </div> 
                     </div>
                     <div class="form-group row align-items-center justify-content-center">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 col-md-6 mb-3">
                             <label for="item" class="text-center w-100">Ítem:</label>
                             <select name="inventario" id="item" class="form-control" required>
                                 <!-- Aquí se cargarán los ítems según la categoría seleccionada -->
                             </select>
                         </div>                        
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 col-md-6 mb-3">
                             <label for="cantidad_utilizada" class="text-center w-100">Cantidad a Utilizar:</label>
                             <input type="number" name="cantidad_utilizada" step="0.01" class="form-control" required>
                         </div>
@@ -92,32 +92,34 @@
         <h5>{{ laboratorio }}</h5>
     </div>
     <div class="card-body">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Ítem</th>
-                    <th>Laboratorio</th>
-                    <th>Cantidad a utilizar</th>
-                    <th>Fecha de uso</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for solicitud in solicitudes %}
-                <tr>
-                    <td>{{ solicitud.inventario.nombre }}</td>
-                    <td>{{ solicitud.solicitud.laboratorio }}</td>
-                    <td>{{ solicitud.cantidad_utilizada }}</td>
-                    <td>{{ solicitud.fecha_uso }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4">No tienes solicitudes de reservación para este laboratorio.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Ítem</th>
+                        <th>Laboratorio</th>
+                        <th>Cantidad a utilizar</th>
+                        <th>Fecha de uso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for solicitud in solicitudes %}
+                    <tr>
+                        <td>{{ solicitud.inventario.nombre }}</td>
+                        <td>{{ solicitud.solicitud.laboratorio }}</td>
+                        <td>{{ solicitud.cantidad_utilizada }}</td>
+                        <td>{{ solicitud.fecha_uso }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">No tienes solicitudes de reservación para este laboratorio.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
-{% endfor %} 
+{% endfor %}
 
 {% endblock %}

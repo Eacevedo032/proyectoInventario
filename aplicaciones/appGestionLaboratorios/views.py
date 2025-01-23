@@ -112,11 +112,11 @@ def obtener_items(request, categoria_id, subcategoria_id=None):
     if subcategoria_id:
         try:
             subcategoria = SubCategoria.objects.get(id_subcategoria=subcategoria_id, categoria_id=categoria_id)
-            items = Inventario.objects.filter(categoria_id=categoria_id, subcategoria_id=subcategoria_id).values('id_inventario', 'nombre', 'descripcion', 'cantidad_disponible')
+            items = Inventario.objects.filter(categoria_id=categoria_id, subcategoria_id=subcategoria_id).values('id_inventario', 'nombre', 'descripcion', 'cantidad_disponible', 'unidad_medida')
         except SubCategoria.DoesNotExist:
             return JsonResponse({'error': 'Subcategoría no encontrada o no pertenece a la categoría'}, status=404)
     else:
-        items = Inventario.objects.filter(categoria_id=categoria_id).values('id_inventario', 'nombre', 'descripcion', 'cantidad_disponible')
+        items = Inventario.objects.filter(categoria_id=categoria_id).values('id_inventario', 'nombre', 'descripcion', 'cantidad_disponible', 'unidad_medida')
 
     items_list = list(items)
     return JsonResponse({'items': items_list})

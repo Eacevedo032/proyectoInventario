@@ -1,7 +1,33 @@
 {% extends "./base.html" %}
 
-{% block title %} Gestion de Categorias {% endblock %}
+{% block title %}Inicio{% endblock %}
 
 {% block body %}
-<h1>Hola mundo</h1>
-{% endblock%}
+<div class="container py-5">
+    <div class="jumbotron text-center bg-light p-4 mb-4 rounded">
+        <h1 class="display-4">Bienvenido al Sistema de Gestión de Laboratorios</h1>
+        <p class="lead">Este sistema está diseñado para facilitar la administración de los recursos y laboratorios de la carrera de Ingeniería en Biotecnología.</p>
+    </div>
+
+    <h2 class="my-4">Funciones principales:</h2>
+    <div class="row">
+        <div class="col-lg-6 col-md-6 col-sm-12">
+            <ul class="list-group">
+                <li class="list-group-item">Reserva de laboratorios y equipos.</li>
+                {% if user.is_staff or user.is_superuser %}
+                <li class="list-group-item">Gestión y control de inventario.</li>
+                {% endif %}
+                <li class="list-group-item">Solicitud y aprobación de recursos.</li>
+                <li class="list-group-item">Control de horarios y acceso restringido.</li>
+            </ul>
+        </div>
+        <div class="col-lg-6 col-md-6 col-sm-12 d-none d-md-block">
+            {% load static %}
+            <img src="{% static 'img/inicio.jpg' %}"  class="img-fluid rounded" alt="Laboratorio">
+        </div>
+    </div>
+
+    <p class="mt-4">Por favor, selecciona una opción en el menú para comenzar.</p>
+</div>
+{% endblock %}
+

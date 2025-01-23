@@ -7,89 +7,95 @@
 <div class="container my-5">
     <h1 class="text-center mb-5">Horarios de Laboratorios</h1>
     
-<div class="col-12">
-    <div class="card mt-4">
-        <div class="card-header bg-danger text-white">
-            <h4>Horarios Bloqueados (Sin Supervisión)</h4>
-        </div>
-        <div class="card-body">
-            {% if bloqueos %}
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Laboratorio</th>
-                        <th>Fecha</th>
-                        <th>Inicio</th>
-                        <th>Fin</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for bloqueo in bloqueos %}
-                    <tr>
-                        <td>{{ bloqueo.laboratorio }}</td>
-                        <td>{{ bloqueo.fecha_reserva }}</td>
-                        <td>{{ bloqueo.hora_inicio }}</td>
-                        <td>{{ bloqueo.hora_fin }}</td>
-                        <td>
-                            <div class="d-flex justify-content-between">
-                                <!-- Botón para editar el bloqueo -->
-                                <a href="{% url 'editar_horario' bloqueo.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
-                                <!-- Formulario para eliminar el bloqueo -->
-                                <form action="{% url 'eliminar_horario' bloqueo.id %}" method="post" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('¿Estás seguro de eliminar este bloqueo?');">Eliminar</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>No hay bloqueos registrados.</p>
-            {% endif %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card mt-4">
+                <div class="card-header bg-danger text-white">
+                    <h4>Horarios Bloqueados (Sin Supervisión)</h4>
+                </div>
+                <div class="card-body">
+                    {% if bloqueos %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Laboratorio</th>
+                                    <th>Fecha</th>
+                                    <th>Inicio</th>
+                                    <th>Fin</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bloqueo in bloqueos %}
+                                <tr>
+                                    <td>{{ bloqueo.laboratorio }}</td>
+                                    <td>{{ bloqueo.fecha_reserva }}</td>
+                                    <td>{{ bloqueo.hora_inicio }}</td>
+                                    <td>{{ bloqueo.hora_fin }}</td>
+                                    <td>
+                                        <div class="d-flex justify-content-between">
+                                            <!-- Botón para editar el bloqueo -->
+                                            <a href="{% url 'editar_horario' bloqueo.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
+                                            <!-- Formulario para eliminar el bloqueo -->
+                                            <form action="{% url 'eliminar_horario' bloqueo.id %}" method="post" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('¿Estás seguro de eliminar este bloqueo?');">Eliminar</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p>No hay bloqueos registrados.</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
     <div class="row">
         <!-- Laboratorio 1 -->
-        <div class="col-md-4">
+        <div class="col-md-4 col-sm-6 mb-4">
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h4>Laboratorio Planta Alta</h4>
                 </div>
                 <div class="card-body">
                     {% if laboratorio1 %}
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Inicio</th>
-                                <th>Fin</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for horario in laboratorio1 %}
-                            <tr>
-                                <td>{{ horario.fecha_reserva }}</td>
-                                <td>{{ horario.hora_inicio }}</td>
-                                <td>{{ horario.hora_fin }}</td>
-                                <td>
-                                    <div class="d-flex justify-content-between">
-                                        <a href="{% url 'editar_horario' horario.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
-                                        <form action="{% url 'eliminar_horario' horario.id %}" method="post" style="display: inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('¿Estás seguro?');">Eliminar</button>
-                                        </form>
-                                    </div>
-                                </td>                                
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Inicio</th>
+                                    <th>Fin</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for horario in laboratorio1 %}
+                                <tr>
+                                    <td>{{ horario.fecha_reserva }}</td>
+                                    <td>{{ horario.hora_inicio }}</td>
+                                    <td>{{ horario.hora_fin }}</td>
+                                    <td>
+                                        <div class="d-flex justify-content-between">
+                                            <a href="{% url 'editar_horario' horario.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
+                                            <form action="{% url 'eliminar_horario' horario.id %}" method="post" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('¿Estás seguro?');">Eliminar</button>
+                                            </form>
+                                        </div>
+                                    </td>                                
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                     {% else %}
                     <p>No hay horarios registrados.</p>
                     {% endif %}
@@ -98,41 +104,43 @@
         </div>
 
         <!-- Laboratorio 2 -->
-        <div class="col-md-4">
+        <div class="col-md-4 col-sm-6 mb-4">
             <div class="card">
                 <div class="card-header bg-success text-white">
                     <h4>Laboratorio Planta Baja</h4>
                 </div>
                 <div class="card-body">
                     {% if laboratorio2 %}
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Inicio</th>
-                                <th>Fin</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for horario in laboratorio2 %}
-                            <tr>
-                                <td>{{ horario.fecha_reserva }}</td>
-                                <td>{{ horario.hora_inicio }}</td>
-                                <td>{{ horario.hora_fin }}</td>
-                                <td>
-                                    <div class="d-flex justify-content-between">
-                                        <a href="{% url 'editar_horario' horario.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
-                                        <form action="{% url 'eliminar_horario' horario.id %}" method="post" style="display: inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('¿Estás seguro?');">Eliminar</button>
-                                        </form>
-                                    </div>
-                                </td>                                
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Inicio</th>
+                                    <th>Fin</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for horario in laboratorio2 %}
+                                <tr>
+                                    <td>{{ horario.fecha_reserva }}</td>
+                                    <td>{{ horario.hora_inicio }}</td>
+                                    <td>{{ horario.hora_fin }}</td>
+                                    <td>
+                                        <div class="d-flex justify-content-between">
+                                            <a href="{% url 'editar_horario' horario.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
+                                            <form action="{% url 'eliminar_horario' horario.id %}" method="post" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('¿Estás seguro?');">Eliminar</button>
+                                            </form>
+                                        </div>
+                                    </td>                                
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                     {% else %}
                     <p>No hay horarios registrados.</p>
                     {% endif %}
@@ -141,41 +149,43 @@
         </div>
 
         <!-- Laboratorio 3 -->
-        <div class="col-md-4">
+        <div class="col-md-4 col-sm-6 mb-4">
             <div class="card">
                 <div class="card-header bg-warning text-dark">
                     <h4>Laboratorio Microbial</h4>
                 </div>
                 <div class="card-body">
                     {% if laboratorio3 %}
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Inicio</th>
-                                <th>Fin</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for horario in laboratorio3 %}
-                            <tr>
-                                <td>{{ horario.fecha_reserva }}</td>
-                                <td>{{ horario.hora_inicio }}</td>
-                                <td>{{ horario.hora_fin }}</td>
-                                <td>
-                                    <div class="d-flex justify-content-between">
-                                        <a href="{% url 'editar_horario' horario.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
-                                        <form action="{% url 'eliminar_horario' horario.id %}" method="post" style="display: inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('¿Estás seguro?');">Eliminar</button>
-                                        </form>
-                                    </div>
-                                </td>                                
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Inicio</th>
+                                    <th>Fin</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for horario in laboratorio3 %}
+                                <tr>
+                                    <td>{{ horario.fecha_reserva }}</td>
+                                    <td>{{ horario.hora_inicio }}</td>
+                                    <td>{{ horario.hora_fin }}</td>
+                                    <td>
+                                        <div class="d-flex justify-content-between">
+                                            <a href="{% url 'editar_horario' horario.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
+                                            <form action="{% url 'eliminar_horario' horario.id %}" method="post" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('¿Estás seguro?');">Eliminar</button>
+                                            </form>
+                                        </div>
+                                    </td>                                
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                     {% else %}
                     <p>No hay horarios registrados.</p>
                     {% endif %}
@@ -189,4 +199,5 @@
         <a href="{% url 'administracion_laboratorios' %}" class="btn btn-secondary">Volver</a>
     </div>
 </div>
+
 {% endblock %}

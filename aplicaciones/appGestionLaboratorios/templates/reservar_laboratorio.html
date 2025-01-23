@@ -10,7 +10,7 @@
             {% endfor %}
         </div>
     {% endif %}
-    
+
     <h1 class="text-center mb-4">Gestión de Solicitudes</h1>
 
     <!-- Formulario de reservación de laboratorio -->
@@ -47,39 +47,41 @@
     </form>
 
 <h2>Mis Solicitudes de Reservación</h2>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Laboratorio</th>
-            <th>Fecha de Solicitud</th>
-            <th>Hora de Inicio</th>
-            <th>Hora de Fin</th>
-            <th>Estado</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for solicitud in solicitudes %}
-        <tr>
-            <td>{{ solicitud.laboratorio }}</td>
-            <td>{{ solicitud.fecha_reserva }}</td>
-            <td>{{ solicitud.hora_inicio }}</td>
-            <td>{{ solicitud.hora_fin }}</td>
-            <td>
-            <span class="badge 
-            {% if solicitud.estado == 'aprobada' %}bg-success
-            {% elif solicitud.estado == 'rechazada' %}bg-danger
-            {% elif solicitud.estado == 'pendiente' %}bg-warning
-            {% endif %}">
-            {{ solicitud.estado }}
-        </span>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">No tienes solicitudes de reservación.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Laboratorio</th>
+                <th>Fecha de Solicitud</th>
+                <th>Hora de Inicio</th>
+                <th>Hora de Fin</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for solicitud in solicitudes %}
+            <tr>
+                <td>{{ solicitud.laboratorio }}</td>
+                <td>{{ solicitud.fecha_reserva }}</td>
+                <td>{{ solicitud.hora_inicio }}</td>
+                <td>{{ solicitud.hora_fin }}</td>
+                <td>
+                <span class="badge 
+                {% if solicitud.estado == 'aprobada' %}bg-success
+                {% elif solicitud.estado == 'rechazada' %}bg-danger
+                {% elif solicitud.estado == 'pendiente' %}bg-warning
+                {% endif %}">
+                {{ solicitud.estado }}
+            </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No tienes solicitudes de reservación.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {% endblock %}
