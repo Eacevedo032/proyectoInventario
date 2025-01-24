@@ -4,26 +4,45 @@ from .models import Inventario, DetalleTecnico, DatosComplementarios
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_control
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login
-#from django.db import IntegrityError
 from datetime import datetime
 from django.db import transaction
 from django.views.decorators.cache import never_cache
-from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User #User propio de Django
+from django.contrib.auth.decorators import user_passes_test
+from .forms import CustomUserCreationForm #Importa el formulario de registro de usuario personalizado de forms.py
+from django.utils.safestring import mark_safe #Marca contenido seguro
 
-def register(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+#Registro de usuario 
+def register_user(request):
+    if request.method == "POST":
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('inicio')
+            user = form.save(commit=False)
+            user.is_active = False  # Desactiva el usuario por defecto
+            user.save()
+            messages.success(request, mark_safe(
+                "Registro exitoso. Tu cuenta será activada tras la aprobación de un administrador. "
+            ))
+            return render(request, 'registration/register.html', {'form': CustomUserCreationForm()}) #Crea un nuevo formulario vacio cada vez que se desea registrar un nuevo usuario
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
     return render(request, 'registration/register.html', {'form': form})
 
+@user_passes_test(lambda u: u.is_superuser)
+def approve_users(request):
+    pending_users = User.objects.filter(is_active=False)
+    if request.method == "POST":
+        user_id = request.POST.get("user_id")
+        user = User.objects.get(id=user_id)
+        user.is_active = True
+        user.save()
+        messages.success(request, f"Usuario {user.username} aprobado exitosamente.")
+        return redirect('approve_users')  # Cambia esta URL según tu configuración
+
+    return render(request, 'admin/approve_users.html', {'pending_users': pending_users})
+
 # Creación de vistas.
+
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) #controla la cache. En otras palabras, siempre 
 #deben hacer una nueva solicitud al servidor para obtener la versión más reciente.

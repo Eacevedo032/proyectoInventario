@@ -65,7 +65,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
+                'django.contrib.auth.context_processors.auth', #Esto hará que request.user esté disponible en todas las plantillas.
                 'django.contrib.messages.context_processors.messages',
             ],
         },
@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'proyectoInventario.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', #Se hizo uan migración a mysql, estaba en sqlite3
+        'ENGINE': 'django.db.backends.mysql', #Se hizo una migración a mysql, estaba en sqlite3
         'NAME': 'inventario_db',
         'USER': 'root',
         'PASSWORD': 'unp.1234',

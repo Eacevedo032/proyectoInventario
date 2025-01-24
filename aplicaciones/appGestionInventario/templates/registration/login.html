@@ -2,6 +2,8 @@
 
 {% block title %} Login {% endblock %}
 
+{% load static %}
+
 {% block body %}
 {% if user.is_authenticated %}
     <script>
@@ -10,10 +12,14 @@
     </script>
 {% else %}
 <div class="col-md-4 offset-md-4">
-    <h2 class="text-center">
-        <i class="bi bi-person-circle" style="font-size: 3rem; color: #007bff;"></i><br> <!-- Ícono colorido de persona -->
-        Inicio de Sesión
-    </h2>
+    <div class="d-flex flex-column align-items-center">
+        <img src="{% static 'img/login_image.png' %}" class="img-fluid" 
+             style="max-width: 200px; height: auto; border: 4px solid #007bff; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" 
+             alt="Imagen de Login">
+    </div>
+    <br>
+    <h2 class="text-center text-primary fw-bold mb-6">Biotecnología Industrial</h2>
+    <h4 class="text-center text-primary fw-bold mb-6">Inicio de Sesión</h4>
     <div class="card">
         <div class="card-body">
             <form action="" method="POST"> 
@@ -44,7 +50,7 @@
                 </div>
                 
                 <div class="form-group mb-3 d-flex justify-content-center align-items-center">
-                    <p>No tienes cuenta? <a href="{% url 'register' %}">Registrate aquí</a></p>
+                    <p>¿No tienes cuenta? <a href="{% url 'register' %}">Registrate aquí</a></p> 
                 </div>
                 <div class="clearfix"></div>
             </form>

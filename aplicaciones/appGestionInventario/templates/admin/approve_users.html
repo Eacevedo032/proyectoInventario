@@ -1,0 +1,12 @@
+{% block title %} Aprobar Usuarios {% endblock %}
+
+{% block body %}
+
+<form method="post">
+    {% csrf_token %}
+    {% for user in pending_users %}
+        <p>{{ user.username }} ({{ user.email }})</p>
+        <button type="submit" name="user_id" value="{{ user.id }}">Aprobar</button>
+    {% endfor %}
+</form>
+{% endblock%}

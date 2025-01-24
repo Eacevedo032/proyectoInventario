@@ -1,75 +1,150 @@
 {% extends "base.html" %}
 
-{% block title %} Registrarse {% endblock %}
+{% block title %}Registro de Usuario{% endblock %}
+
+{% load static %}
+
+{% load custom_filters %}
 
 {% block body %}
-{% if user.is_authenticated %}
-    <script>
-        // Redirige al usuario al home si ya está autenticado
-        window.location.href = "{% url 'inicio' %}";  // Asegúrate de que 'inicio' sea el nombre de la URL correcta
-    </script>
-{% else %}
-<div class="col-md-4 offset-md-4">
+
+<!-- Mensajes junto con un script de JS donde despues de 3 segundos, dicho mensaje redirije al login-->
+{% if messages %}
+<div class="alert alert-success">
+    {% for message in messages %}
+    <strong>{{ message }}</strong>
+    {% endfor %}
+</div>
+<script>
+    setTimeout(function () {
+        window.location.href = "{% url 'login' %}";
+    }, 3000);
+</script>
+{% endif %}
+
+<!-- forms.as_p: en caso de usar esto, es un método del formulario de Django que renderiza 
+ todos los campos del formulario dentro, en este caso se llenara por medio de input personalizados si -->
+
+<div class="col-md-6 offset-md-3">
     <h2 class="text-center">
-        <i class="bi bi-person-vcard" style="font-size: 3rem; color: #007bff;"></i><br> <!-- Ícono colorido de persona -->
-        Registrarse
+        <i class="bi bi-person-vcard" style="font-size: 3rem; color: #007bff;"></i><br>
+        Regístrate
     </h2>
     <div class="card">
         <div class="card-body">
-            <form action="{% url 'register' %}" method="POST"> 
+            <form method="post" autocomplete="off">
                 {% csrf_token %}
 
-                <!-- Grupo de input con icono de usuario -->
+                <!-- Nombre de usuario -->
                 <div class="form-group mb-3">
                     <div class="input-group">
-                        <span class="input-group-text" id="basic-addon1">
-                            <i class="bi bi-person"></i> <!-- Icono de usuario -->
+                        <span class="input-group-text" id="username-addon">
+                            <i class="bi bi-person"></i>
                         </span>
-                        <input type="text" name="username" class="form-control" placeholder="Usuario" required>
+                        {{ form.username|add_class:"form-control" }}
                     </div>
+                    {% if form.username.errors %}
+                    <div class="text-danger small">{{ form.username.errors.0 }}</div>
+                    {% else %}
+                    <small class="form-text text-muted">Requerido. 150 caracteres como máximo. Únicamente letras,
+                        dígitos y @/./+/-/_</small>
+                    {% endif %}
                 </div>
 
-                <!-- Grupo de input con icono de correo electrónico -->
+                <!-- Nombres -->
                 <div class="form-group mb-3">
                     <div class="input-group">
-                        <span class="input-group-text" id="basic-addon2">
-                            <i class="bi bi-envelope"></i> <!-- Icono de correo -->
+                        <span class="input-group-text" id="first-name-addon">
+                            <i class="bi bi-person"></i>
                         </span>
-                        <input type="email" name="email" class="form-control" placeholder="Correo Electrónico" required>
+                        {{ form.first_name|add_class:"form-control" }}
                     </div>
+                    {% if form.first_name.errors %}
+                    <div class="text-danger small">{{ form.first_name.errors.0 }}</div>
+                    {% else %}
+                    <small class="form-text text-muted">Ingrese sus nombres completos.</small>
+                    {% endif %}
                 </div>
 
-                <!-- Grupo de input con icono de candado -->
+                <!-- Apellidos -->
+                <!--form.last_name: Representa el campo del formulario para los apellidos (last_name).
+                Por defecto, cuando se usa en un template, Django genera el HTML correspondiente al <input> de ese campo.
+                |add_class:"form-control": Es un filtro personalizado que se aplicó a este campo del formulario (filtro definido en add_class de custom_filters en templatetags). -->
                 <div class="form-group mb-3">
                     <div class="input-group">
-                        <span class="input-group-text" id="basic-addon3">
-                            <i class="bi bi-lock"></i> <!-- Icono de candado -->
+                        <span class="input-group-text" id="last-name-addon">
+                            <i class="bi bi-person"></i>
                         </span>
-                        <input type="password" name="password1" class="form-control" placeholder="Contraseña" required>
+                        {{ form.last_name|add_class:"form-control" }}
                     </div>
+                    <!--form.last_name.errors:Este atributo contiene una lista de errores de validación para el campo last_name.
+                    *Si el campo tiene errores (por ejemplo, quedó vacío o no pasó alguna validación), se activa este bloque y 
+                    muestra el primer error con form.last_name.errors.0.
+                    *form.last_name.errors.0: Muestra el primer mensaje de error de la lista.
+                    *Si no hay errores, se muestra un texto de ayuda con la clase form-text text-muted -->
+                    {% if form.last_name.errors %}
+                    <div class="text-danger small">{{ form.last_name.errors.0 }}</div>
+                    {% else %}
+                    <small class="form-text text-muted">Ingrese sus apellidos completos.</small>
+                    {% endif %}
                 </div>
 
-                <!-- Confirmación de contraseña -->
+                <!-- Email -->
                 <div class="form-group mb-3">
                     <div class="input-group">
-                        <span class="input-group-text" id="basic-addon4">
-                            <i class="bi bi-lock-fill"></i> <!-- Icono de candado -->
+                        <span class="input-group-text" id="email-addon">
+                            <i class="bi bi-envelope"></i>
                         </span>
-                        <input type="password" name="password2" class="form-control" placeholder="Confirmar Contraseña" required>
+                        {{ form.email|add_class:"form-control" }}
                     </div>
+                    {% if form.email.errors %}
+                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                    {% else %}
+                    <small class="form-text text-muted">Ingrese un correo electrónico válido.</small>
+                    {% endif %}
                 </div>
 
-                <div class="form-group mb-3 d-flex justify-content-center align-items-center" style="height: 5vh;">
-                    <button id="btn-Registrar" class="btn btn-primary">Registrarse</button>
+                <!-- Contraseña -->
+                <div class="form-group mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text" id="password1-addon">
+                            <i class="bi bi-lock"></i>
+                        </span>
+                        {{ form.password1|add_class:"form-control" }}
+                    </div>
+                    {% if form.password1.errors %}
+                    <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+                    {% else %}
+                    <small class="form-text text-muted">Su contraseña debe contener al menos 8 caracteres.</small>
+                    {% endif %}
                 </div>
-                
+
+                <!-- Confirmar contraseña -->
+                <div class="form-group mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text" id="password2-addon">
+                            <i class="bi bi-lock-fill"></i>
+                        </span>
+                        {{ form.password2|add_class:"form-control" }}
+                    </div>
+                    {% if form.password2.errors %}
+                    <div class="text-danger small">{{ form.password2.errors.0 }}</div>
+                    {% else %}
+                    <small class="form-text text-muted">Ingrese la misma contraseña para confirmación.</small>
+                    {% endif %}
+                </div>
+
                 <div class="form-group mb-3 d-flex justify-content-center align-items-center">
-                    <p>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></p>
+                    <button type="submit" class="btn btn-primary">Registrarse</button>
                 </div>
-                <div class="clearfix"></div>
+
+                <div class="form-group mb-3 d-flex justify-content-center align-items-center">
+                    <p>¿Ya tienes una cuenta? <a href="{% url 'login' %}"> Presiona aquí para iniciar sesión</a></p>
+                </div>
+
             </form>
         </div>
     </div>
 </div>
-{% endif %}
+
 {% endblock %}
