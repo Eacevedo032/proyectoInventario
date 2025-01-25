@@ -3,31 +3,171 @@
 {% block title %}Inicio{% endblock %}
 
 {% block body %}
+
+<!-- Estilos personalizados para el fondo y tarjetas -->
+<style>
+  body {
+    background: linear-gradient(135deg, #74b9ff, #92bbba);
+    color: #ffffff;
+    font-family: 'Arial', sans-serif;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 50px 20px;
+  }
+
+  .hero h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    text-shadow: 2px 2px #0984e3;
+  }
+
+  .hero p {
+    font-size: 1.2rem;
+    margin-top: 10px;
+  }
+
+  .section-title {
+    text-align: center;
+    margin: 40px 0 20px 0;
+    font-size: 2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #2d3436;
+  }
+
+  .card {
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    margin: 15px;
+    transition: transform 0.3s;
+  }
+
+  .card:hover {
+    transform: translateY(-10px);
+  }
+
+  .card-header {
+    background-color: #00cec9;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 10px;
+    text-align: center;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+
+  .card-body {
+    padding: 15px;
+    color: #2d3436;
+  }
+
+  .btn-custom {
+    background-color: #0984e3;
+    color: #ffffff;
+    border: none;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+  }
+
+  .btn-custom:hover {
+    background-color: #74b9ff;
+  }
+</style>
+
+<!-- Contenido de la página -->
 <div class="container py-5">
-    <div class="jumbotron text-center bg-light p-4 mb-4 rounded">
-        <h1 class="display-4">Bienvenido al Sistema de Gestión de Laboratorios</h1>
-        <p class="lead">Este sistema está diseñado para facilitar la administración de los recursos y laboratorios de la carrera de Ingeniería en Biotecnología.</p>
-    </div>
+  <!-- Encabezado Principal -->
+  <div class="text-center">
+    <h1 class="display-4">Bienvenido al Sistema de Gestión de Laboratorios</h1>
+    <p class="lead">Este sistema está diseñado para facilitar la administración de los recursos y laboratorios de la carrera de Ingeniería en Biotecnología.</p>
+  </div>
 
-    <h2 class="my-4">Funciones principales:</h2>
-    <div class="row">
-        <div class="col-lg-6 col-md-6 col-sm-12">
-            <ul class="list-group">
-                <li class="list-group-item">Reserva de laboratorios y equipos.</li>
-                {% if user.is_staff or user.is_superuser %}
-                <li class="list-group-item">Gestión y control de inventario.</li>
-                {% endif %}
-                <li class="list-group-item">Solicitud y aprobación de recursos.</li>
-                <li class="list-group-item">Control de horarios y acceso restringido.</li>
-            </ul>
-        </div>
-        <div class="col-lg-6 col-md-6 col-sm-12 d-none d-md-block">
-            {% load static %}
-            <img src="{% static 'img/inicio.jpg' %}"  class="img-fluid rounded" alt="Laboratorio">
-        </div>
+  <!-- Funciones principales -->
+  <h2 class="section-title">Funciones principales:</h2>
+  <div class="row">
+    <div class="col-lg-6 col-md-6 col-sm-12">
+      <ul class="list-group">
+        <li class="list-group-item">Reserva de laboratorios y equipos.</li>
+        {% if user.is_staff or user.is_superuser %}
+        <li class="list-group-item">Gestión y control de inventario.</li>
+        {% endif %}
+        <li class="list-group-item">Solicitud y aprobación de recursos.</li>
+        <li class="list-group-item">Control de horarios y acceso restringido.</li>
+      </ul>
     </div>
+    <div class="col-lg-6 col-md-6 col-sm-12 d-none d-md-block">
+      {% load static %}
+      <img src="{% static 'img/inicio.jpg' %}" class="img-fluid rounded" alt="Laboratorio">
+    </div>
+  </div>
 
-    <p class="mt-4">Por favor, selecciona una opción en el menú para comenzar.</p>
+  <p class="mt-4">Por favor, selecciona una opción en el menú para comenzar.</p>
+
+  <!-- Sección de Gestión de Laboratorios -->
+  <h2 class="section-title">Gestión de Laboratorios</h2>
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">Laboratorios Disponibles</div>
+        <div class="card-body">
+          Consulta el estado y disponibilidad de los laboratorios.
+          <a href="#" class="btn btn-custom btn-block">Ver Disponibilidad</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">Tiempos de Inactividad</div>
+        <div class="card-body">
+          Supervisa los tiempos de mantenimiento y actividades programadas.
+          <a href="#" class="btn btn-custom btn-block">Ver Tiempos</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">Reservas de Laboratorio</div>
+        <div class="card-body">
+          Administra y organiza reservas para proyectos y prácticas.
+          <a href="#" class="btn btn-custom btn-block">Gestionar Reservas</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección de Gestión de Inventario -->
+  <h2 class="section-title">Gestión de Inventario</h2>
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">Inventario General</div>
+        <div class="card-body">
+          Consulta y organiza todos los ítems del inventario.
+          <a href="#" class="btn btn-custom btn-block">Ver Inventario</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">Agregar Ítem</div>
+        <div class="card-body">
+          Añade nuevos ítems al inventario de manera rápida y sencilla.
+          <a href="#" class="btn btn-custom btn-block">Agregar Ítem</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">Reportes</div>
+        <div class="card-body">
+          Genera reportes detallados sobre el inventario.
+          <a href="#" class="btn btn-custom btn-block">Generar Reporte</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-{% endblock %}
 
+{% endblock %}

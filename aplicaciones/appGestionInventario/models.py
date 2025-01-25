@@ -3,6 +3,27 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.core.validators import MinValueValidator
+from django.db import models
+from django.contrib.auth.models import User
+
+# Tabla para manejar los usuarios aprobados y denegados
+class ApprovedUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Usuario aprobado
+    date_approved = models.DateTimeField(auto_now_add=True)  # Fecha de aprobación
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="approved_by")  # Admin que lo creó
+
+    def __str__(self):
+        return f"{self.user.username} (Aprobado por: {self.created_by.username if self.created_by else 'Desconocido'})"
+
+
+class DeniedUser(models.Model):
+    username = models.CharField(max_length=150)  # Nombre del usuario denegado
+    email = models.EmailField()  # Correo electrónico del usuario denegado
+    date_denied = models.DateTimeField(auto_now_add=True)  # Fecha de denegación
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="denied_by")  # Admin que lo creó
+
+    def __str__(self):
+        return f"{self.username} (Denegado por: {self.created_by.username if self.created_by else 'Desconocido'})"
 
 # Tabla Categoria
 class Categoria(models.Model):
