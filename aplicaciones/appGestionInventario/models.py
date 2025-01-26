@@ -187,13 +187,15 @@ class HistorialInventario(models.Model):
         return f"{self.item.nombre} - {self.tipo_cambio} - {self.cantidad_cambiada} - {self.fecha_cambio}"
 
 # Tabla Reportes
-class Reporte(models.Model):
-    tipo_reporte = models.CharField(max_length=50)
-    fecha_generacion = models.DateField()
-    contenido = models.TextField()
+class ReporteUsoLaboratorio(models.Model):
+    solicitud = models.OneToOneField(SolicitudLaboratorio, on_delete=models.CASCADE, verbose_name="Solicitud Asociada")
+    numero_estudiantes = models.PositiveIntegerField(verbose_name="Número de Estudiantes")
+    objetivo_practica = models.TextField(verbose_name="Objetivo de la Práctica")
+    foto = models.ImageField(upload_to='reportes_fotos/', blank=True, null=True, verbose_name="Foto Adjunta")
+    fecha_generacion = models.DateField(auto_now_add=True, verbose_name="Fecha de Generación")
 
     def __str__(self):
-        return f"Reporte {self.tipo_reporte} - {self.fecha_generacion}"
+        return f"Reporte para {self.solicitud.laboratorio} - {self.solicitud.usuario.username}"
 
 
 

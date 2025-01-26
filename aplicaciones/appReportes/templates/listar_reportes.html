@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de Reportes{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h1 class="mb-4">Lista de Reportes</h1>
+    <a href="{% url 'crear_reporte' %}" class="btn btn-success mb-3">
+        <i class="bi bi-plus-circle"></i> Crear Nuevo Reporte
+    </a>
+
+    {% if reportes %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Objetivo de la practica</th>
+                    <th>Fecha de Generación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reporte in reportes %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ reporte.objetivo_practica }}</td>
+                        <td>{{ reporte.fecha_generacion }}</td>
+                        <td>
+                            <a href="{% url 'detalle_reporte' reporte.id %}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-eye"></i> Ver
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No hay reportes disponibles.</p>
+    {% endif %}
+</div>
+{% endblock %}

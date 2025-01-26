@@ -35,7 +35,19 @@
                     {% if user.is_staff or user.is_superuser %}
                     <a class="nav-item nav-link" href="{% url 'gestionCategoria' %}">Gestión Inventario</a>
                     <a class="nav-link" href="{% url 'administracion_laboratorios' %}">Administración de Laboratorios</a>
-                    <a class="nav-item nav-link" href="#">Generar Reportes</a>
+                    
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          Generar Reportes
+                        </a>
+                        <ul class="dropdown-menu">
+                          <li><a class="nav-item nav-link" href="{% url 'listar_reportes' %}">Uso de Laboratorio</a></li>
+                          <li><a class="dropdown-item" href="#">Another action</a></li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li><a class="dropdown-item" href="#">Something else here</a></li>
+                        </ul>
+                      </li>
+
                     {% else %}
                     <a class="nav-link" href="{% url 'reservar_laboratorio' %}">Reservación de Laboratorios</a>
                     <a class="nav-link" href="{% url 'solicitar_recursos' %}">Solicitud de recursos</a>

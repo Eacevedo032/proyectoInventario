@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Reporte{% endblock %}
+
+{% block body %}
+
+{% if messages %}
+        <div class="alert alert-dismissible alert-success">
+            {% for message in messages %}
+            <strong class="text-dark">{{ message }}</strong>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+<div class="container">
+    <h1 class="mb-4">Crear Reporte</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="solicitud">Seleccione una Solicitud Aprobada:</label>
+            <select name="solicitud" id="solicitud" class="form-control" required>
+                <option value="" disabled selected>Seleccione...</option>
+                {% for solicitud in solicitudes %}
+                    <option value="{{ solicitud.id }}">
+                        {{ solicitud.laboratorio }} - {{ solicitud.usuario.username }} - {{ solicitud.fecha_reserva }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="numero_estudiantes">Número de Estudiantes:</label>
+            <input type="number" name="numero_estudiantes" id="numero_estudiantes" class="form-control" min="1" required>
+        </div>
+        <div class="mb-3">
+            <label for="objetivo_practica">Objetivo de la Práctica:</label>
+            <textarea name="objetivo_practica" id="objetivo_practica" class="form-control" rows="4" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="foto">Foto:</label>
+            <input type="file" name="foto" id="foto" class="form-control" accept="image/*">
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </form>
+</div>
+{% endblock %}
