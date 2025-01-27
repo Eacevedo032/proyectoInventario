@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -43,7 +44,6 @@ INSTALLED_APPS = [
     'aplicaciones.appGestionLaboratorios',
     'aplicaciones.appReportes'
 ]
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -130,6 +130,14 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 STATICFILES_DIRS = [ BASE_DIR ] # Donde se recopilarán los archivos estáticos durante la ejecución de 'collectstatic'
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Ruta donde se almacenan los archivos subidos
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+MEDIA_ROOT = os.path.join(BASE_DIR)  # Ruta donde están las imágenes
+MEDIA_URL = '/reportes_fotos/'  # URL para acceder a las imágenes
+
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

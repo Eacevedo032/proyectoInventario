@@ -105,6 +105,17 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='ReporteUsoLaboratorio',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('numero_estudiantes', models.PositiveIntegerField(verbose_name='Número de Estudiantes')),
+                ('objetivo_practica', models.TextField(verbose_name='Objetivo de la Práctica')),
+                ('foto', models.ImageField(blank=True, null=True, upload_to='reportes_fotos/', verbose_name='Foto Adjunta')),
+                ('fecha_generacion', models.DateField(auto_now_add=True, verbose_name='Fecha de Generación')),
+                ('solicitud', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='appGestionInventario.solicitudlaboratorio', verbose_name='Solicitud Asociada')),
+            ],
+        ),
+        migrations.CreateModel(
             name='SubCategoria',
             fields=[
                 ('id_subcategoria', models.AutoField(primary_key=True, serialize=False, unique=True)),
