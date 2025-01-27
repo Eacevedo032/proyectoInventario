@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # Apps propias
     'aplicaciones.appGestionInventario',
     'aplicaciones.appGestionLaboratorios',
+    'aplicaciones.appReportes'
 ]
 
 
@@ -131,6 +132,12 @@ STATICFILES_DIRS = [ BASE_DIR ] # Donde se recopilarán los archivos estáticos 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Ruta donde se almacenan los archivos subidos de fotos de reporte
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+MEDIA_ROOT = os.path.join(BASE_DIR)  # Ruta donde están las imágenes
+MEDIA_URL = '/reportes_fotos/'  # URL para acceder a las imágenes
 
 # redireccion de login a inicio en settings.py
 LOGIN_REDIRECT_URL = 'inicio'
