@@ -4,7 +4,6 @@ from django.contrib import messages
 from django.conf import settings
 from aplicaciones.appGestionInventario.models import ReporteUsoLaboratorio, SolicitudLaboratorio
 
-
 def crear_reporte(request):
     """Vista para crear un nuevo reporte vinculado a una solicitud aprobada."""
     solicitudes_aprobadas = SolicitudLaboratorio.objects.filter(estado='aprobada')
@@ -58,6 +57,3 @@ def listar_reportes(request):
     """Vista para listar todos los reportes registrados."""
     reportes = ReporteUsoLaboratorio.objects.all()
     return render(request, "listar_reportes.html", {"reportes": reportes})
-
-
-

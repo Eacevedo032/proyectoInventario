@@ -1,5 +1,5 @@
 from django.urls import path, include
-from . import views
+from aplicaciones.appGestionLaboratorios.views import views
 
 urlpatterns = [
     # URLs para formulario y tabla de laboratorio
