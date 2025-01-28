@@ -5,6 +5,7 @@ from itertools import groupby
 from django.shortcuts import get_object_or_404, redirect, render
 from aplicaciones.appGestionInventario.models import HistorialInventario, SolicitudLaboratorio, HorarioLaboratorio, UsoItemLaboratorio
 from django.contrib import messages  # Importa para mostrar mensajes en la interfaz
+from django.db import transaction
 
 #views solo para opciones de administrador
 # Vista para administrar las solicitudes de laboratorio con ítems solicitados
