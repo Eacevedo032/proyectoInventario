@@ -1,6 +1,16 @@
 {% extends "./base.html" %}
 {% block title %}Gestión de Reservaciones{% endblock %}
 {% block body %}
+
+<style>
+    .btn-disabled {
+        background-color: grey !important;
+        border-color: grey !important;
+        pointer-events: none;
+        color: white !important;
+    }
+</style>
+
 <div class="container my-5">
 
     {% if messages %}
@@ -41,6 +51,7 @@
                 </thead>
                 <tbody>
                     {% for solicitud in solicitudes %}
+                    {% if solicitud.estado == 'aprobada' or solicitud.estado == 'pendiente' %}
                     <tr>
                         <td>{{ solicitud.id }}</td>
                         <td>{{ solicitud.usuario_id }}</td>
@@ -54,12 +65,15 @@
                             <div class="btn-group" role="group" aria-label="Acciones de solicitud">
                                 <a href="{% url 'ver_items_solicitud' solicitud.id %}" class="btn btn-info btn-sm me-2">Ver Ítems</a>
                                 <a href="{% url 'aprobar_solicitud' solicitud.id %}" class="btn btn-primary btn-sm me-2">Aprobar</a>
-                                <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm me-2">Rechazar</a>
-                                <a href="{% url 'solicitud_pendiente' solicitud.id %}" class="btn btn-warning btn-sm">Pendiente</a>
+                                <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-sm me-2 btn-danger 
+                                       {% if solicitud.estado == 'aprobada' %} btn-disabled {% endif %}">Rechazar</a>
+                                <a href="{% url 'solicitud_pendiente' solicitud.id %}" class="btn btn-sm btn-warning
+                                       {% if solicitud.estado == 'aprobada' %} btn-disabled {% endif %}">Pendiente</a>
                             </div>
                         </td>
                     </tr>
-                    {% endfor %}
+                    {% endif %}
+                    {% endfor %}                                                
                 </tbody>
             </table>
             {% else %}

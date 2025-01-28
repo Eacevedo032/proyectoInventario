@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     # URLs para formulario y tabla de laboratorio
     path('reservar_laboratorio/', views.reservar_laboratorio, name='reservar_laboratorio'),
+     path('eliminar_solicitud/<int:solicitud_id>/', views.eliminar_solicitud, name='eliminar_solicitud'),
 
     # URLs para formulario y tabla de recursos
     path('solicitar_recursos/', views.solicitar_recursos, name='solicitar_recursos'),

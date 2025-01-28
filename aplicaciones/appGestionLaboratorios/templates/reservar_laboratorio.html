@@ -56,6 +56,7 @@
                 <th>Hora de Inicio</th>
                 <th>Hora de Fin</th>
                 <th>Estado</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -66,18 +67,28 @@
                 <td>{{ solicitud.hora_inicio }}</td>
                 <td>{{ solicitud.hora_fin }}</td>
                 <td>
-                <span class="badge 
-                {% if solicitud.estado == 'aprobada' %}bg-success
-                {% elif solicitud.estado == 'rechazada' %}bg-danger
-                {% elif solicitud.estado == 'pendiente' %}bg-warning
-                {% endif %}">
-                {{ solicitud.estado }}
-            </span>
+                    <span class="badge 
+                    {% if solicitud.estado == 'aprobada' %}bg-success
+                    {% elif solicitud.estado == 'rechazada' %}bg-danger
+                    {% elif solicitud.estado == 'pendiente' %}bg-warning
+                    {% endif %}">
+                    {{ solicitud.estado }}
+                    </span>
+                </td>
+                <td>
+                    {% if solicitud.estado == 'aprobada' %}
+                        N/A
+                    {% else %}
+                        <form method="post" action="{% url 'eliminar_solicitud' solicitud.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                        </form>
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5">No tienes solicitudes de reservación.</td>
+                <td colspan="6">No tienes solicitudes de reservación.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -85,3 +96,4 @@
 </div>
 
 {% endblock %}
+

@@ -13,7 +13,7 @@ from datetime import date
 from django.utils.dateparse import parse_date
 
 # Vista para solicitar una reservación de laboratorio y mostrar las solicitudes del usuario autenticado
-@login_required 
+@login_required
 def reservar_laboratorio(request):
     if request.method == 'POST':
         laboratorio = request.POST['laboratorio']
@@ -41,17 +41,38 @@ def reservar_laboratorio(request):
             solicitud.full_clean()
         except ValidationError as e:
             for field, error_list in e.message_dict.items():
-             for error in error_list: messages.error(request, error)
+                for error in error_list:
+                    messages.error(request, error)
             return redirect('reservar_laboratorio')
-        
+
         solicitud.save()
         messages.success(request, 'La solicitud de reserva se ha creado exitosamente.')
         return redirect('reservar_laboratorio')
 
-    # Obtener todas las solicitudes del usuario autenticado
-    solicitudes = SolicitudLaboratorio.objects.filter(usuario=request.user)
-    
+    # Obtener todas las solicitudes del usuario autenticado, ordenadas de la más reciente a la más antigua
+    solicitudes = SolicitudLaboratorio.objects.filter(usuario=request.user).order_by('-fecha_reserva', '-hora_inicio')
+
     return render(request, 'reservar_laboratorio.html', {'solicitudes': solicitudes})
+
+# Eliminar solicitud de laboratorio
+def eliminar_solicitud(request, solicitud_id):
+    solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id)
+    if request.method == 'POST':
+        solicitud.delete()
+        messages.success(request, 'La solicitud ha sido eliminada exitosamente.')
+        return redirect('reservar_laboratorio')
+    return render(request, 'reservar_laboratorio.html', {'solicitud': solicitud})
+
+
+#eliminar solicitud de laboratorio
+def eliminar_solicitud(request, solicitud_id):
+    solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id)
+    if request.method == 'POST':
+        solicitud.delete()
+        messages.success(request, 'La solicitud ha sido eliminada exitosamente.')
+        return redirect('reservar_laboratorio')  
+    return render(request, 'reservar_laboratorio.html', {'solicitud': solicitud})
+
 
 # Vista para solicitar recursos desde una cuenta de usuario sin privilegios de administrador
 @login_required

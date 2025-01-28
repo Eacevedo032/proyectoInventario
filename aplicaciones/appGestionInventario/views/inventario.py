@@ -1,271 +1,23 @@
-from django.shortcuts import render,redirect, get_object_or_404
-from .models import Categoria, SubCategoria
-from .models import Inventario, DetalleTecnico, DatosComplementarios
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import cache_control
-from datetime import datetime
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
+from django.contrib import messages
+from datetime import datetime
 from django.views.decorators.cache import never_cache
-from django.contrib.auth.models import User #User propio de Django
-from .forms import CustomUserCreationForm #Importa el formulario de registro de usuario personalizado de forms.py
-from django.utils.safestring import mark_safe #Marca contenido seguro
-from .models import ApprovedUser, DeniedUser #Tablas para guardar el historial de Usuarios denegados y aceptados
-from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
+from aplicaciones.appGestionInventario.models import Categoria, SubCategoria, Inventario, DetalleTecnico, DatosComplementarios
 
-#Registro de usuario 
-def register_user(request):
-    if request.method == "POST":
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.is_active = False  # Desactiva el usuario por defecto
-            user.save()
-            messages.success(request, mark_safe(
-                "Registro exitoso. Tu cuenta será activada tras la aprobación de un administrador. "
-            ))
-            return render(request, 'registration/register.html', {'form': CustomUserCreationForm()}) #Crea un nuevo formulario vacio cada vez que se desea registrar un nuevo usuario
-    else:
-        form = CustomUserCreationForm()
-    return render(request, 'registration/register.html', {'form': form})
 
-"""
-Vista `approve_users`
 
-1. Obtiene tres listas principales:
-   - Usuarios pendientes (`is_active=False`).
-   - Usuarios aprobados (`is_active=True`).
-   - Usuarios denegados (guardados en la sesión).
 
-2. Maneja el formulario (POST):
-   - `user_id`: ID del usuario enviado desde la plantilla.
-   - `action`: Acción a realizar ('approve' o 'deny').
+'''agregarInventario
 
-3. Acciones:
-   - Aprobar: Activa al usuario (`is_active=True`) y lo guarda en la base de datos.
-   - Denegar: Elimina al usuario de la base de datos y lo agrega a la lista de usuarios denegados.
-
-4. Redirige a la misma página para actualizar la interfaz.
-"""
-
-@login_required
-def approve_users(request):
-    pending_users = User.objects.filter(is_active=False)
-    approved_users = ApprovedUser.objects.all()
-    denied_users = DeniedUser.objects.all()
-
-    if request.method == "POST":
-        action = request.POST.get('action')  # Aprobar, Denegar, Eliminar o Limpiar historial
-        user_id = request.POST.get('user_id')
-        approved_user_id = request.POST.get('approved_user_id')
-
-        if action == "approve":
-            try:
-                user = User.objects.get(id=user_id)
-                user.is_active = True
-                user.save()
-                ApprovedUser.objects.create(user=user, created_by=request.user)  # Guardar admin en created_by
-                messages.success(request, f"Usuario {user.username} aprobado con éxito.")
-            except User.DoesNotExist:
-                messages.error(request, "El usuario no existe.")
-        
-        elif action == "deny":
-            try:
-                user = User.objects.get(id=user_id)
-                DeniedUser.objects.create(
-                    username=user.username,
-                    email=user.email,
-                    created_by=request.user  # Guardar admin en created_by
-                )
-                user.delete()
-                messages.success(request, f"Usuario {user.username} denegado y eliminado.")
-            except User.DoesNotExist:
-                messages.error(request, "El usuario no existe.")
-        
-        elif action == "delete_approved":
-            if approved_user_id:
-                try:
-                    approved_user = ApprovedUser.objects.get(id=approved_user_id)
-                    approved_user.delete()
-                    messages.success(request, "Registro del usuario aprobado eliminado con éxito.")
-                except ApprovedUser.DoesNotExist:
-                    messages.error(request, "El registro del usuario aprobado no existe.")
-            else:
-                messages.error(request, "ID de usuario aprobado no proporcionado.")
-
-        elif action == "delete_approved_user":
-            if user_id:
-                try:
-                    user = User.objects.get(id=user_id)
-                    ApprovedUser.objects.filter(user=user).delete()
-                    user.delete()
-                    messages.success(request, f"Usuario {user.username} eliminado con éxito.")
-                except User.DoesNotExist:
-                    messages.error(request, "El usuario no existe.")
-            else:
-                messages.error(request, "ID de usuario no proporcionado.")
-        
-        elif action == "delete_denied":
-            try:
-                denied_user = DeniedUser.objects.get(id=user_id)
-                denied_user.delete()
-                messages.success(request, f"Registro del usuario denegado eliminado con éxito.")
-            except DeniedUser.DoesNotExist:
-                messages.error(request, "El registro del usuario denegado no existe.")
-        
-        elif action == "clear_approved":
-            try:
-                ApprovedUser.objects.all().delete()
-                messages.success(request, "Historial de usuarios aprobados limpiado con éxito.")
-            except Exception as e:
-                messages.error(request, f"Error al limpiar el historial de usuarios aprobados: {str(e)}")
-
-        elif action == "clear_denied":
-            try:
-                DeniedUser.objects.all().delete()
-                messages.success(request, "Historial de usuarios denegados limpiado con éxito.")
-            except Exception as e:
-                messages.error(request, f"Error al limpiar el historial de usuarios denegados: {str(e)}")
-
-        return redirect('approve_users')
-
-    # Renderizar la plantilla para solicitudes GET
-    context = {
-        'pending_users': pending_users,
-        'approved_users': approved_users,
-        'denied_users': denied_users,
-    }
-    return render(request, 'admin/approve_users.html', context)
-
-# Creación de vistas.
-@login_required
-@cache_control(no_cache=True, must_revalidate=True, no_store=True) #controla la cache. En otras palabras, siempre 
-#deben hacer una nueva solicitud al servidor para obtener la versión más reciente.
-def inicio(request):
-    '''Esto es la pagina principal'''
-     # Mensaje que se mostrará en la plantilla
-    return render(request, "inicio.html")
-
-@login_required
-@cache_control(no_cache=True, must_revalidate=True, no_store=True)
-def gestionCategorias(request):
-    categorias = Categoria.objects.all()
-    return render(request, 'gestionCategoria.html', {'Categorias': categorias})
-
-@login_required
-def registrarCategoria(request):
-    if request.method == "POST":
-        nombre_categoria = request.POST['txtNombre'].strip()
-        descripcion = request.POST['txtDescripcion']
-
-        # Verificar si la categoría ya existe
-        #filter(nombre_categoria=nombre_categoria).exists() comprueba si ya existe uno con ese nombre
-        #if not ... exists() crea la categoria si no existe
-        if not Categoria.objects.filter(nombre_categoria=nombre_categoria).exists():
-            # Crear la categoría si no existe una con el mismo nombre
-            Categoria.objects.create(
-                nombre_categoria=nombre_categoria,
-                descripcion=descripcion
-            )
-            messages.success(request, '¡Categoría Registrada!')
-        else:
-            # Mensaje de error si el nombre ya existe
-            messages.error(request, 'La categoría ya existe, por favor elige un nombre diferente.')
-
-        return redirect('gestionCategoria')
-
-@login_required
-def edicionCategoria(request, id_categoria):
-    # Obtener la categoría con el ID proporcionado
-    categoria = get_object_or_404(Categoria, id_categoria=id_categoria)
-
-    # Verificar si se trata de una solicitud POST para guardar los cambios
-    if request.method == "POST":
-        nombre_categoria = request.POST['txtNombre']
-        descripcion = request.POST.get('txtDescripcion', '')  # Usar .get() para evitar KeyError
-
-        # Asignar un guion si la descripción está vacía
-        if not descripcion.strip():  # Comprobar si está vacío o solo espacios
-            descripcion = '-'
-
-        categoria.nombre_categoria = nombre_categoria
-        categoria.descripcion = descripcion
-        categoria.save()
-
-        messages.success(request, '¡Categoría Actualizada!')
-        return redirect('gestionCategoria')
-
-    # Si no es POST, muestra el formulario
-    return render(request, 'edicionCategoria.html', {'categoria': categoria})
-
-def eliminarCategoria(request, id_categoria):
-    categoria = get_object_or_404(Categoria, id_categoria=id_categoria)
-    categoria.delete()
-
-    messages.success(request, '¡Categoría Eliminada!')
-
-    return redirect('gestionCategoria')
-
-@login_required
-@cache_control(no_cache=True, must_revalidate=True, no_store=True)
-def gestionSubcategorias(request, id_categoria):
-    categoria = get_object_or_404(Categoria, id_categoria=id_categoria)
-    subcategorias = SubCategoria.objects.filter(categoria=categoria)
-
-    return render(request, 'gestionSubcategorias.html', {
-        'categoria': categoria,
-        'subcategorias': subcategorias
-    })
-
-@login_required
-def agregarSubcategoria(request, id_categoria):
-    categoria = get_object_or_404(Categoria, id_categoria=id_categoria)
-
-    if request.method == "POST":
-        nombre = request.POST['txtNombreSubcategoria'].strip()
-
-        # Verificar si la subcategoría ya existe
-        if not SubCategoria.objects.filter(nombre=nombre, categoria=categoria).exists():
-            SubCategoria.objects.create(nombre=nombre, categoria=categoria)
-            messages.success(request, '¡Subcategoría Registrada!')
-        else:
-            messages.error(request, 'La subcategoría ya existe, ingrese otra.')
-
-    return redirect('gestionSubcategorias', id_categoria=id_categoria)
-
-@login_required
-def editarSubcategoria(request, id_subcategoria):
-    # Obtener la subcategoría con el ID proporcionado
-    subcategoria = get_object_or_404(SubCategoria, id_subcategoria=id_subcategoria)
-
-    if request.method == "POST":
-        nombre = request.POST.get('txtNombre', '').strip()
-        if nombre:
-            subcategoria.nombre = nombre
-            subcategoria.save()
-            messages.success(request, '¡Subcategoría Actualizada!')
-            # Redirige a la vista de gestión de subcategorías de la categoría
-            return redirect('gestionSubcategorias', id_categoria=subcategoria.categoria.id_categoria)
-        else:
-            messages.error(request, 'El nombre no puede estar vacío.')
-
-    # Renderiza la plantilla de edición si no es POST
-    return render(request, 'edicionSubcategoria.html', {'subcategoria': subcategoria})
-
-@login_required
-def eliminarSubcategoria(request, id_subcategoria):
-    subcategoria = get_object_or_404(SubCategoria, id_subcategoria=id_subcategoria)
-    id_categoria = subcategoria.categoria.id_categoria
-    subcategoria.delete()
-
-    messages.success(request, '¡Subcategoría Eliminada!')
-    return redirect('gestionSubcategorias', id_categoria=id_categoria)
-
-#.strip() se utiliza para evitar que los espacios en blanco adicionales causen errores 
-# o inconsistencias en la base de datos.
-
-# Aquí empieza la vista del Inventario
-
+Permite agregar un nuevo ítem al inventario de una subcategoría específica.
+Valida que los campos obligatorios (como nombre y cantidad_disponible) estén completos y sean correctos.
+Verifica que el nombre no esté repetido en el inventario general.
+Asegura que la cantidad disponible sea un número mayor o igual a 0.
+Valida el formato de la fecha de vencimiento (si se proporciona).
+Usa transaction.atomic() para garantizar que la creación de objetos sea atómica y evitar inconsistencias.
+Si todo es válido, crea un objeto de inventario junto con sus relaciones (DetalleTecnico y DatosComplementarios).'''
 @login_required
 @never_cache
 def agregarInventario(request, id_subcategoria):
@@ -354,6 +106,11 @@ def agregarInventario(request, id_subcategoria):
 #vencimiento.strip(): Se asegura que cualquier valor ingresado para vencimiento no tenga espacios en blanco.
 #En Vencimiento: Si el campo está vacío, se guarda como None, Si el formato no es válido, se muestra un mensaje de error claro.
 
+'''inventario_general
+
+Carga todas las categorías, junto con sus subcategorías y los ítems relacionados (incluyendo las tablas relacionadas DetalleTecnico y DatosComplementarios).
+Usa prefetch_related para optimizar las consultas a la base de datos y evitar múltiples consultas innecesarias.
+Devuelve un contexto que incluye las categorías y subcategorías con sus ítems.'''
 @never_cache #Esto evita que el navegador guarde el estado previo del formulario
 def inventario_general(request):
     # Cargar categorías con sus subcategorías e ítems (incluyendo las tablas (clases) relacionadas)
@@ -368,6 +125,10 @@ def inventario_general(request):
     })
 
 #Vista solamente para el boton que dice "Ver Inventario General"
+'''verInventarioGeneral
+
+Similar a inventario_general, pero específicamente diseñado para una vista que muestra un inventario general con las mismas relaciones y optimizaciones.
+Sirve como vista para el botón "Ver Inventario General".'''
 @never_cache #Esto evita que el navegador guarde el estado previo del formulario
 def verInventarioGeneral(request):
     # Cargar categorías con sus subcategorías e ítems (incluyendo las tablas (clases) relacionadas)
@@ -381,6 +142,14 @@ def verInventarioGeneral(request):
         "Categorias": categorias,
     })
 
+'''editarInventario
+
+Permite editar un ítem específico del inventario junto con sus relaciones (DetalleTecnico y DatosComplementarios).
+Valida que los campos obligatorios (nombre, cantidad_disponible, y vencimiento, si se proporciona) sean correctos y consistentes.
+Verifica que el nuevo nombre no esté duplicado en el inventario general.
+Asegura que la cantidad disponible sea un número mayor o igual a 0.
+Usa transaction.atomic() para garantizar la consistencia en las actualizaciones.
+Actualiza los datos del inventario y sus relaciones, mostrando mensajes de éxito o error según corresponda.'''
 @never_cache 
 def editarInventario(request, id_inventario):
     # Obtiene el objeto del inventario y sus relaciones
@@ -391,7 +160,7 @@ def editarInventario(request, id_inventario):
     if request.method == "POST":
         try:
             with transaction.atomic():
-                # Validar y actualizar `nombre tanto si esta vacio como si esta repetido`
+                # Validar y actualizar nombre tanto si esta vacio como si esta repetido
                 nombre = request.POST.get("nombre", "").strip()
                 if not nombre:
                     messages.error(request, "El campo 'Nombre' es obligatorio.")
@@ -411,7 +180,7 @@ def editarInventario(request, id_inventario):
                     })
                 inventario.nombre = nombre
 
-                # Validar y actualizar `cantidad_disponible, campo siempre debe existir y ser igual a 0 o mayor`
+                # Validar y actualizar cantidad_disponible, campo siempre debe existir y ser igual a 0 o mayor
                 cantidad_disponible = request.POST.get("cantidad_disponible", "").strip()
                 if not cantidad_disponible:
                     messages.error(request, "El campo 'Cantidad Disponible' es obligatorio.")
@@ -435,7 +204,7 @@ def editarInventario(request, id_inventario):
                     })
                 inventario.cantidad_disponible = cantidad_disponible
 
-                # Validar y actualizar `vencimiento que se envie de forma aceptada por el navegador (formato correcto)`
+                # Validar y actualizar vencimiento que se envie de forma aceptada por el navegador (formato correcto)
                 vencimiento = request.POST.get("vencimiento", "").strip()
                 if vencimiento:
                     try:
@@ -492,6 +261,11 @@ def editarInventario(request, id_inventario):
         "datos_complementarios": datos_complementarios,
     })
 
+'''eliminarInventario
+
+Permite eliminar un ítem específico del inventario.
+Elimina en cascada las relaciones asociadas (DetalleTecnico y DatosComplementarios).
+Muestra un mensaje de éxito si la eliminación se realiza correctamente o un mensaje de error si ocurre algún problema.'''
 @never_cache
 def eliminarInventario(request, id_inventario):
     try:
@@ -505,4 +279,3 @@ def eliminarInventario(request, id_inventario):
         messages.error(request, f"Error al eliminar el item: {e}")
 
     return redirect("inventario_general")
-
