@@ -1,3 +1,4 @@
+<!--interfaz del admin. plantilla para administrar tabla de recursos solicitados-->
 {% extends "base.html" %}
 {% block title %}Ítems Solicitados{% endblock %}
 {% block body %}
@@ -24,7 +25,7 @@
             {% for item in items_solicitados %}
             <tr>
                 <td>{{ item.inventario.nombre}}</td>
-                <td>{{ item.cantidad_utilizada }}</td>
+                <td>{{ item.cantidad_utilizada }} {{ item.unidad_medida }}</td>
                 <td>{{ item.fecha_uso }}</td>
             </tr>
             {% empty %}

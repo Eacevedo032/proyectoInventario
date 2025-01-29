@@ -1,3 +1,4 @@
+<!-- plantilla para usuario sin privilegios -->
 {% extends "./base.html" %}
 {% block title %}Reservación de Laboratorio{% endblock %}
 {% block body %}
@@ -70,10 +71,28 @@
                                 <!-- Aquí se cargarán los ítems según la categoría seleccionada -->
                             </select>
                         </div>                        
-                        <div class="col-12 col-md-6 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
                             <label for="cantidad_utilizada" class="text-center w-100">Cantidad a Utilizar:</label>
                             <input type="number" name="cantidad_utilizada" step="0.01" class="form-control" required>
                         </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <label for="unidad_medida" class="text-center w-100">Unidad de Medida:</label>
+                            <select name="unidad_medida" class="form-control" required>
+                                <option value="unidades">unidades</option>
+                                <option value="kg">kg</option>
+                                <option value="g">g</option>
+                                <option value="mg">mg</option>
+                                <option value="t">t</option>
+                                <option value="L">L</option>
+                                <option value="mL">mL</option>
+                                <option value="cm³">cm³</option>
+                                <option value="m³">m³</option>
+                                <option value="mm">mm</option>
+                                <option value="cm">cm</option>
+                                <option value="m">m</option>
+                                <option value="km">km</option>
+                            </select>
+                        </div>                                         
                     </div>
                     <div class="form-group row justify-content-center mt-4">
                         <button type="submit" class="btn btn-success me-2">Guardar</button>
@@ -107,7 +126,7 @@
                     <tr>
                         <td>{{ solicitud.inventario.nombre }}</td>
                         <td>{{ solicitud.solicitud.laboratorio }}</td>
-                        <td>{{ solicitud.cantidad_utilizada }}</td>
+                        <td>{{ solicitud.cantidad_utilizada }} {{ solicitud.unidad_medida}}</td>
                         <td>{{ solicitud.fecha_uso }}</td>
                     </tr>
                     {% empty %}

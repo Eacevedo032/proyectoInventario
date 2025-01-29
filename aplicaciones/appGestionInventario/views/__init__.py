@@ -3,3 +3,4 @@ from .categorias import *
 from .subcategorias import *
 from .inventario import *
 from .Usuarios import *
+from .registrar_cambio_inventario import *

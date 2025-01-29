@@ -4,8 +4,13 @@ from django.utils import timezone
 from itertools import groupby
 from django.shortcuts import get_object_or_404, redirect, render
 from aplicaciones.appGestionInventario.models import HistorialInventario, SolicitudLaboratorio, HorarioLaboratorio, UsoItemLaboratorio
+from django.contrib.auth.models import User
 from django.contrib import messages  # Importa para mostrar mensajes en la interfaz
 from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_unidades
 
 #views solo para opciones de administrador
 # Vista para administrar las solicitudes de laboratorio con ítems solicitados
@@ -38,68 +43,97 @@ def ver_items_solicitud(request, solicitud_id):
         'items_solicitados': items_solicitados
     })
 
-# Vista para aprobar solicitudes y actualizar inventario
+# Vista para aprobar solicitudes
+@csrf_exempt
 def aprobar_solicitud(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id)
     if solicitud.estado == 'aprobada':
         messages.error(request, 'Esta solicitud ya fue aprobada.')
         return redirect('administracion_laboratorios')
 
-    try:
-        solicitud.full_clean()
-    except ValidationError as e:
-        for field, error_list in e.message_dict.items():
-            for error in error_list:
-                messages.error(request, error)
-                solicitud.estado = 'rechazada'
-        solicitud.save()
-        return redirect('administracion_laboratorios')
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        descripcion = data.get('descripcion')
+        
+        if not descripcion:
+            messages.error(request, 'La descripción es requerida.')
+            return redirect('administracion_laboratorios')
 
-    # Verificamos si el laboratorio está disponible
-    conflictos = HorarioLaboratorio.objects.filter(
-        laboratorio=solicitud.laboratorio,
-        fecha_reserva=solicitud.fecha_reserva,
-        hora_inicio__lt=solicitud.hora_fin,
-        hora_fin__gt=solicitud.hora_inicio,
-    )
+        try:
+            solicitud.full_clean()
+        except ValidationError as e:
+            for field, error_list in e.message_dict.items():
+                for error in error_list:
+                    messages.error(request, error)
+                    solicitud.estado = 'rechazada'
+            solicitud.save()
+            return redirect('administracion_laboratorios')
 
-    if conflictos.exists():
-        messages.error(request, 'El laboratorio ya está reservado en el horario solicitado.')
-        return redirect('administracion_laboratorios')
-
-    # Si no hay conflictos, procedemos a aprobar la solicitud.
-    solicitud.estado = 'aprobada'
-
-    with transaction.atomic():
-        items_solicitados = UsoItemLaboratorio.objects.filter(solicitud=solicitud)
-
-        for item in items_solicitados:
-            inventario_item = item.inventario  # Cambiado a 'inventario'
-
-            if Decimal(inventario_item.cantidad_disponible) >= Decimal(item.cantidad_utilizada):
-                inventario_item.cantidad_disponible = Decimal(inventario_item.cantidad_disponible) - Decimal(item.cantidad_utilizada) 
-                inventario_item.save()
-
-                HistorialInventario.objects.create(
-                    inventario=inventario_item,
-                    cantidad_cambiada=item.cantidad_utilizada,
-                    fecha_cambio=timezone.now(),
-                    tipo_cambio='salida'
-                )
-            else:
-                messages.error(request, f"No hay suficiente cantidad de {inventario_item.nombre} en inventario.")
-                return redirect('administracion_laboratorios')
-
-        # Registrar horario de ocupación
-        HorarioLaboratorio.objects.create(
+        conflictos = HorarioLaboratorio.objects.filter(
             laboratorio=solicitud.laboratorio,
             fecha_reserva=solicitud.fecha_reserva,
-            hora_inicio=solicitud.hora_inicio,
-            hora_fin=solicitud.hora_fin,
+            hora_inicio__lt=solicitud.hora_fin,
+            hora_fin__gt=solicitud.hora_inicio,
         )
 
-        solicitud.save()
-        messages.success(request, 'La solicitud ha sido aprobada exitosamente.')
+        if conflictos.exists():
+            messages.error(request, 'El laboratorio ya está reservado en el horario solicitado.')
+            return redirect('administracion_laboratorios')
+
+        solicitud.estado = 'aprobada'
+
+        with transaction.atomic():
+            items_solicitados = UsoItemLaboratorio.objects.filter(solicitud=solicitud)
+
+            for item in items_solicitados:
+                inventario_item = item.inventario
+                unidad_inventario = inventario_item.unidad_medida
+                unidad_solicitada = item.unidad_medida
+                cantidad_anterior = inventario_item.cantidad_disponible
+
+                if unidad_inventario != unidad_solicitada:
+                    try:
+                        cantidad_solicitada_convertida = convertir_unidades(
+                            Decimal(item.cantidad_utilizada),
+                            unidad_origen=unidad_solicitada,
+                            unidad_destino=unidad_inventario,
+                            densidad=inventario_item.densidad if hasattr(inventario_item, 'densidad') else None
+                        )
+                    except ValueError as e:
+                        messages.error(request, f"Error al convertir unidades: {str(e)}")
+                        return redirect('administracion_laboratorios')
+                else:
+                    cantidad_solicitada_convertida = Decimal(item.cantidad_utilizada)
+
+                if Decimal(inventario_item.cantidad_disponible) >= cantidad_solicitada_convertida:
+                    inventario_item.cantidad_disponible -= cantidad_solicitada_convertida
+                    inventario_item.save()
+
+                    HistorialInventario.objects.create(
+                        inventario=inventario_item,
+                        cantidad_cambiada=cantidad_solicitada_convertida,
+                        unidad_medida=item.unidad_medida,
+                        cantidad_anterior=cantidad_anterior,
+                        fecha_cambio=timezone.now(),
+                        tipo_cambio='salida',
+                        modificado_por=request.user,
+                        descripcion=descripcion
+                    )
+                else:
+                    messages.error(request, f"No hay suficiente cantidad de {inventario_item.nombre} en inventario.")
+                    return redirect('administracion_laboratorios')
+
+            HorarioLaboratorio.objects.create(
+                laboratorio=solicitud.laboratorio,
+                fecha_reserva=solicitud.fecha_reserva,
+                hora_inicio=solicitud.hora_inicio,
+                hora_fin=solicitud.hora_fin,
+            )
+
+            solicitud.save()
+            messages.success(request, 'La solicitud ha sido aprobada exitosamente.')
+        return redirect('administracion_laboratorios')
+
     return redirect('administracion_laboratorios')
 
 # Vista para rechazar solicitudes

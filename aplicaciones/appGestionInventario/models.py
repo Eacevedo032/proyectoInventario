@@ -51,10 +51,12 @@ class Inventario(models.Model):
     subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE, null=True)
     nombre = models.CharField(max_length=100, unique=True, null=False)
     descripcion = models.TextField(blank=True, null=True)
-    cantidad_disponible = models.FloatField(
-         default=0.0,
-        validators=[MinValueValidator(0.0)],
-        verbose_name="Cantidad Disponible"
+    cantidad_disponible = models.DecimalField(
+    max_digits=10, 
+    decimal_places=2, 
+    default=0.00, 
+    validators=[MinValueValidator(0.0)],
+    verbose_name="Cantidad Disponible"
     )
     unidad_medida = models.CharField(max_length=50, null=True, blank=True)
     lote = models.CharField(max_length=36, blank=True, null=True)
@@ -187,6 +189,7 @@ class UsoItemLaboratorio(models.Model):
     inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE)
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     cantidad_utilizada = models.DecimalField(max_digits=10, decimal_places=2)
+    unidad_medida = models.CharField(max_length=50, null=True, blank=True)
     fecha_uso = models.DateField()
 
     class Meta:
@@ -200,9 +203,21 @@ class UsoItemLaboratorio(models.Model):
 # Tabla Historial de Inventario
 class HistorialInventario(models.Model):
     inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE)
+    cantidad_anterior = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True) 
     cantidad_cambiada = models.DecimalField(max_digits=10, decimal_places=2)
+    unidad_medida = models.CharField(max_length=50, null=True, blank=True)
     fecha_cambio = models.DateField()
     tipo_cambio = models.CharField(max_length=50)
+    modificado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    descripcion = models.TextField(null=True, blank=True)
+
+    def cantidad_final(self):
+        """Calcula la cantidad final después del cambio."""
+        if self.tipo_cambio == "entrada":
+            return self.cantidad_anterior + self.cantidad_cambiada
+        elif self.tipo_cambio == "salida":
+            return self.cantidad_anterior - self.cantidad_cambiada
+        return self.cantidad_anterior  # En caso de error
 
     def __str__(self):
         return f"{self.item.nombre} - {self.tipo_cambio} - {self.cantidad_cambiada} - {self.fecha_cambio}"

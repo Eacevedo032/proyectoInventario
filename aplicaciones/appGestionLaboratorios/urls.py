@@ -13,7 +13,6 @@ urlpatterns = [
     path('obtener_subcategorias/<int:categoria_id>/', views.obtener_subcategorias, name='obtener_subcategorias'),
     path('obtener_items/<int:categoria_id>/<int:subcategoria_id>/', views.obtener_items, name='obtener_items'),
 
-
     # URLs para usuarios admin
     path('administracionLaboratorios/', views.administracionLaboratorios, name='administracion_laboratorios'),
     path('ver-items-solicitud/<int:solicitud_id>/', views.ver_items_solicitud, name='ver_items_solicitud'),

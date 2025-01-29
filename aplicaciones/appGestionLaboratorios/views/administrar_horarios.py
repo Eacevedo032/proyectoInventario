@@ -4,6 +4,7 @@ from aplicaciones.appGestionInventario.models import HorarioLaboratorio
 from django.contrib import messages  # Importa para mostrar mensajes en la interfaz
 from datetime import date
 from django.utils.dateparse import parse_date
+from django.db.models import Q
 
 #configuraciones para el horario de laboratorios desde admin
 @login_required

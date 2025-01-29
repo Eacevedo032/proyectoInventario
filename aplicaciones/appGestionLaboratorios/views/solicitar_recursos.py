@@ -11,17 +11,19 @@ from django.utils.dateparse import parse_date
 def solicitar_recursos(request):
     if request.method == 'POST':
         solicitud_id = request.POST.get('solicitud')
-        inventario_id = request.POST.get('inventario')  # Cambiado a 'inventario'
+        inventario_id = request.POST.get('inventario')
         usuario_id = request.POST.get('usuario')
         cantidad_utilizada = request.POST.get('cantidad_utilizada')
+        unidad_medida = request.POST.get('unidad_medida') 
         fecha_uso = request.POST.get('fecha_uso')
 
         # Crear instancia de UsoItemLaboratorio
         uso_item = UsoItemLaboratorio(
             solicitud_id=solicitud_id,
-            inventario_id=inventario_id,  # Cambiado a 'inventario_id'
+            inventario_id=inventario_id,
             usuario_id=usuario_id,
             cantidad_utilizada=cantidad_utilizada,
+            unidad_medida=unidad_medida, 
             fecha_uso=fecha_uso
         )
         uso_item.save()
