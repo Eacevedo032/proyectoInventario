@@ -1,31 +1,69 @@
-{% extends "./base.html" %}
+{% extends "base.html" %}
+{% load static %}
 
 {% block title %}Inicio{% endblock %}
 
 {% block body %}
 
-<!-- Estilos personalizados para el fondo y tarjetas -->
+<!-- Mensajes -->
+{% if messages %}
+<div class="alert alert-dismissible alert-success">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+</div>
+{% endif %}
+
 <style>
+  :root {
+    --primary-color: #34495e;
+    --secondary-color: #3498db;
+    --light-color: #ecf0f1;
+    --dark-bg-color: rgba(0, 0, 0, 0.7);
+    --white: #ffffff;
+    --gradient-bg: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+  }
+
   body {
-    background: linear-gradient(135deg, #74b9ff, #92bbba);
-    color: #ffffff;
-    font-family: 'Arial', sans-serif;
+    background: var(--gradient-bg);
+    color: var(--primary-color);
+    font-family: 'San Francisco', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 
   .hero {
+    position: relative;
     text-align: center;
     padding: 50px 20px;
+    background-color: var(--dark-bg-color);
+    color: var(--white);
+  }
+
+  .hero::before {
+    content: '';
+    background: url('{% static "img/inicio.jpg" %}') no-repeat center center/cover;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0.4;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
   }
 
   .hero h1 {
     font-size: 3rem;
     font-weight: bold;
-    text-shadow: 2px 2px #0984e3;
+    text-shadow: 2px 2px var(--primary-color);
+    margin-top: 20px;
   }
 
   .hero p {
     font-size: 1.2rem;
-    margin-top: 10px;
+    margin-top: 20px;
   }
 
   .section-title {
@@ -34,140 +72,233 @@
     font-size: 2rem;
     font-weight: bold;
     text-transform: uppercase;
-    color: #2d3436;
-  }
-
-  .card {
+    color: var(--primary-color);
+    padding: 20px;
+    background-color: var(--light-color);
     border-radius: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    margin: 15px;
-    transition: transform 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
 
-  .card:hover {
+  .list-group-item, .card, .function-card {
+    background-color: var(--white);
+    color: var(--primary-color);
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .list-group-item:hover, .card:hover, .function-card:hover {
     transform: translateY(-10px);
-  }
-
-  .card-header {
-    background-color: #00cec9;
-    color: #ffffff;
-    font-weight: bold;
-    padding: 10px;
-    text-align: center;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-  }
-
-  .card-body {
-    padding: 15px;
-    color: #2d3436;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
   }
 
   .btn-custom {
-    background-color: #0984e3;
-    color: #ffffff;
+    background-color: var(--secondary-color);
+    color: var(--white);
     border: none;
     margin-top: 10px;
     transition: background-color 0.3s;
   }
 
   .btn-custom:hover {
-    background-color: #74b9ff;
+    background-color: #2980b9;
+  }
+
+  .footer-logo-container {
+    text-align: center;
+  }
+  
+  .footer-logo-container img {
+    max-width: 300px;
+    padding: 5px 0;
+  }
+
+  .footer-content-container {
+    background-color: rgb(5, 10, 90);
+    color: var(--white);
+    padding: 5px 0;
+    text-align: center;
+  }
+
+  .footer-content-container .footer-text {
+    font-size: 1.2rem;
+  }
+
+  .footer-content-container {
+    color: var(--white);
+    margin: 0 10px;
+    text-decoration: none;
+    font-size: 1.1rem;
   }
 </style>
 
-<!-- Contenido de la página -->
+{% if user.is_staff or user.is_superuser %}
 <div class="container py-5">
-  <!-- Encabezado Principal -->
-  <div class="text-center">
-    <h1 class="display-4">Bienvenido al Sistema de Gestión de Inventario y Laboratorios</h1>
-    <p class="lead">Este software está diseñado para facilitar la administración de los recursos y laboratorios de la carrera de Ingeniería en Biotecnología Industrial en UNP</p>
+  <div class="text-center hero">
+    <div class="hero-content">
+      <h1 class="display-4">Bienvenido al Sistema de Gestión de Inventario y Laboratorios</h1>
+      <p class="lead">Este software está diseñado para facilitar la administración de los recursos y laboratorios de la carrera de Ingeniería en Biotecnología Industrial en UNP</p>
+    </div>
   </div>
 
   <!-- Funciones principales -->
-  <h2 class="section-title">Funciones principales:</h2>
+  <h2 class="section-title">Descripción General de las Funciones</h2>
+  <div class="card-static">
+    <p>
+      <strong>Gestión de Inventario General:</strong> El usuario administrador llevará un control detallado del Inventario de los laboratorios de Biotecnología.
+    </p>
+    <p>
+      <strong>Gestión de usuarios registrados:</strong> Permite al usuario aprobar o denegar un usuario registrado.    </p>
+    <p>
+      <strong>Administración de Laboratorios:</strong> Manejo de la disponibilidad de los laboratorios, así como la aprobación o negación del uso de recursos de Inventario.
+    </p>
+    <p>
+      <strong>Generación de Reportes:</strong> En esa sección se refleja y exporta un informe describiendo el uso de los laboratorios y el consumo de recursos.
+    </p>
+    <p>
+      <strong>Sección por añadirse:</strong> Descripción por añadirse.
+    </p>
+    <p>
+      <strong>Panel de Adminsitración:</strong> Esta opción nos dirige al panel de administración donde los administradores llevan un mejor control del sistema.
+    </p>
+  </div>     
+  
+  <p class="mt-4 text-center" style="font-style: italic; color: #2c3e50; font-size: 1.4rem; margin-top: 20px; padding: 15px; background-color: #eaf2f8; border: 2px solid #95a5a6; border-radius: 10px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;">
+    Por favor, selecciona una opción en el siguiente menú para comenzar
+  </p>
+  
+  <h2 class="section-title">Opciones principales</h2>
   <div class="row">
-    <div class="col-lg-6 col-md-6 col-sm-12">
-      <ul class="list-group">
-        <li class="list-group-item">Reserva de laboratorios y equipos.</li>
-        {% if user.is_staff or user.is_superuser %}
-        <li class="list-group-item">Gestión y control de inventario.</li>
-        {% endif %}
-        <li class="list-group-item">Solicitud y aprobación de recursos.</li>
-        <li class="list-group-item">Control de horarios y acceso restringido.</li>
-      </ul>
+    <div class="col-md-4">
+      <div class="card text-center">
+        <div class="card-header"><strong>Gestionar Inventario</strong></div>
+        <div class="card-body">
+          <p>Gestiona eficazmente los recursos de Inventario</p>
+          <a href="{% url 'gestionCategoria' %}" class="btn btn-custom btn-block">Ir a la Opción</a>
+        </div>
+      </div>
     </div>
-    <div class="col-lg-6 col-md-6 col-sm-12 d-none d-md-block">
-      {% load static %}
-      <img src="{% static 'img/inicio.jpg' %}" class="img-fluid rounded" alt="Laboratorio">
+    <div class="col-md-4">
+      <div class="card text-center">
+        <div class="card-header"><strong>Gestionar Usuarios</strong></div>
+        <div class="card-body">
+          <p>Acepta, deniega registros de usuarios y elimina usuarios aprobados</p>
+          <a href="{% url 'approve_users' %}" class="btn btn-custom btn-block">Ir a la Opción</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center">
+        <div class="card-header"><strong>Administrar Laboratorios</strong></div>
+        <div class="card-body">
+          <p>Organiza la disponibilidad de los laboratorios y solicitudes de uso de recursos</p>
+          <a href="{% url 'administracion_laboratorios' %}" class="btn btn-custom btn-block">Ir a la Opción</a>
+        </div>
+      </div>
     </div>
   </div>
-
-  <p class="mt-4">Por favor, selecciona una opción en el menú para comenzar.</p>
-
-  <!-- Sección de Gestión de Laboratorios -->
-  <h2 class="section-title">Gestión de Laboratorios</h2>
+  
+  <h2 class="section-title">Control General</h2>
   <div class="row">
     <div class="col-md-4">
-      <div class="card">
-        <div class="card-header">Laboratorios Disponibles</div>
+      <div class="card text-center">
+        <div class="card-header"><strong>Por detallarse...</strong></div>
         <div class="card-body">
-          Consulta el estado y disponibilidad de los laboratorios.
-          <a href="#" class="btn btn-custom btn-block">Ver Disponibilidad</a>
+          <p>Por detallarse...</p>
+          <a href="#" class="btn btn-custom btn-block">Ir a la Opción</a>
         </div>
       </div>
     </div>
     <div class="col-md-4">
-      <div class="card">
-        <div class="card-header">Tiempos de Inactividad</div>
+      <div class="card text-center">
+        <div class="card-header"><strong>Generar Reportes</strong></div>
         <div class="card-body">
-          Supervisa los tiempos de mantenimiento y actividades programadas.
-          <a href="#" class="btn btn-custom btn-block">Ver Tiempos</a>
+          <p>Consulta en reporte el uso de laboratorios y productos de inventario</p>
+          <a href="{% url 'listar_reportes' %}" class="btn btn-custom btn-block">Uso de Laboratorio</a>
+          <a href="#" class="btn btn-custom btn-block">Por detallarse...</a>
         </div>
       </div>
     </div>
     <div class="col-md-4">
-      <div class="card">
-        <div class="card-header">Reservas de Laboratorio</div>
+      <div class="card text-center">
+        <div class="card-header"><strong>Panel Administrativo</strong></div>
         <div class="card-body">
-          Administra y organiza reservas para proyectos y prácticas.
-          <a href="#" class="btn btn-custom btn-block">Gestionar Reservas</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Sección de Gestión de Inventario -->
-  <h2 class="section-title">Gestión de Inventario</h2>
-  <div class="row">
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-header">Inventario General</div>
-        <div class="card-body">
-          Consulta y organiza todos los ítems del inventario.
-          <a href="#" class="btn btn-custom btn-block">Ver Inventario</a>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-header">Agregar Ítem</div>
-        <div class="card-body">
-          Añade nuevos ítems al inventario de manera rápida y sencilla.
-          <a href="#" class="btn btn-custom btn-block">Agregar Ítem</a>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-header">Reportes</div>
-        <div class="card-body">
-          Genera reportes detallados sobre el inventario.
-          <a href="#" class="btn btn-custom btn-block">Generar Reporte</a>
+          <p>Dirígete al panel administrativo del sistema para ajustes más específicos</p>
+          <a href="/admin/" class="btn btn-custom btn-block">Ir a la Opción</a>
         </div>
       </div>
     </div>
   </div>
 </div>
 
+{% else %}
+<div class="container py-5">
+  <div class="text-center hero">
+    <div class="hero-content">
+      <h1 class="display-4">Bienvenido al Sistema de Solicitudes de Laboratorios y Recursos de Inventario </h1>
+      <p class="lead">Este software está diseñado para la realización de solicitudes de uso de laboratorios, así como de recursos y herramientas para actividades académicas de la carrera de Ingeniería en Biotecnología Industrial en UNP</p>
+    </div>
+  </div>
+
+  <!-- Funciones principales -->
+  <h2 class="section-title">Descripción General de las Funciones</h2>
+  <div class="card-static">
+    <p>
+      <strong>Reservación de Laboratorios</strong> Solicita el uso de los laboratorios de Biotecnología, esto pasará a aprobación del administrador.
+    </p>
+    <p>
+      <strong>Solicitar recursos:</strong> Facilita la solicitud de recursos y herramientas propias de la carrera a ocupar, en base al laboratorio reservado.
+    </p>
+    <p>
+      <strong>Por añadirse...:</strong> Por añadirse...
+    </p>
+  </div>
+
+  <p class="mt-4 text-center" style="font-style: italic; color: #2c3e50; font-size: 1.4rem; margin-top: 20px; padding: 15px; background-color: #eaf2f8; border: 2px solid #95a5a6; border-radius: 10px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;">
+    Por favor, selecciona una opción en el siguiente menú para comenzar
+  </p>
+  
+  <h2 class="section-title">Solicita laboratorios y recursos</h2>
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card text-center">
+        <div class="card-header"><strong>Reservación de Laboratorios</strong></div>
+        <div class="card-body">
+          <p>Solicita la disposición de los laboratorios con fines académicos</p>
+          <a href="{% url 'reservar_laboratorio' %}" class="btn btn-custom btn-block">Ir a la Opción</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center">
+        <div class="card-header"><strong>Solicitar Recursos</strong></div>
+        <div class="card-body">
+          <p>Requiere herramientas, utensilios y productos para las actividades en los laboratorios</p>
+          <a href="{% url 'solicitar_recursos' %}" class="btn btn-custom btn-block">Ir a la Opción</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center">
+        <div class="card-header"><strong>Por añadirse...</strong></div>
+        <div class="card-body">
+          <p>Por añadirse...</p>
+          <a href="#" class="btn btn-custom btn-block">Ir a la Opción</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  <br>
+  <br>
+  
+<div class="footer-logo-container">
+  <img src="{% static 'img/logoUNP1.png' %}">
+</div>
+
+<div class="footer-content-container">
+  <div class="footer-text">© 2025 | Universidad Nacional Politecnica </br>
+  "Todos los derechos reservados"
+</div>
 {% endblock %}

@@ -1,6 +1,7 @@
 from django.urls import path, include
 from aplicaciones.appGestionInventario.views import views
-from aplicaciones.appGestionInventario.views import inicio
+from django.contrib.auth.views import LogoutView
+from .views import CustomLoginView
 
 urlpatterns = [
     path('', views.inicio, name='inicio'),
@@ -31,7 +32,9 @@ urlpatterns = [
     #urls para las configuraciones de cuentas de usuario
     path('accounts/', include('django.contrib.auth.urls')),
     path('register/', views.register_user, name='register'),
-    path('approve-users/', views.approve_users, name='approve_users')
+    path('approve-users/', views.approve_users, name='approve_users'),
+    path('login/', CustomLoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
 ]
 #La primer parte del path define el URL, la siguiente asocia el URL con la vista, el tercero
 # le da un nombre único para reutilizarlo dentro del código

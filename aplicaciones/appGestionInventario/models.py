@@ -24,6 +24,7 @@ class DeniedUser(models.Model):
 
     def __str__(self):
         return f"{self.username} (Denegado por: {self.created_by.username if self.created_by else 'Desconocido'})"
+    
 
 # Tabla Categoria
 class Categoria(models.Model):

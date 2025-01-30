@@ -15,18 +15,45 @@
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 {% endif %}
-
-<div class="container my-5">
+<!-- Est sección junto con el script de JS manejan el evento donde se puede mostrar una descripción al darle clic al enlace 
+<a href="#" id="toggle-info">Más Información aquí</a> es un enlace que alterna el contenido.
+<div id="info-section" class="d-none"> este contiene las descripciones y está oculto por defecto.
+el Script de JavaScript. Maneja el evento de clic para mostrar/ocultar el contenido y cambiar el texto entre "Más Información aquí" y "Menos Información". 
+-->
+<div class="container my-2">
     <h1 class="text-center mb-4">Gestión de Usuarios</h1>
-    <p class="lead text-center">Esta sección aprueba, deniega o deja pendiente cada registro que hace el usuario tras
-        confirmación del administrador</p>
+    <p class="lead text-center">
+        Esta sección aprueba, deniega o deja pendiente cada registro que efectúan los usuarios. 
+        <a href="#" id="toggle-info" class="text-primary text-decoration-none">Más Información aquí.</a>
+    </p>
+    <div id="info-section" class="text-left text-muted d-none">
+        <p><strong>✔Pendientes de Verificar:</strong> Usuarios registrados que aún no han sido aprobados ni denegados.</p>
+        <p class="ms-5"><strong>Botón "Aprobar":</strong> Activa al usuario automáticamente para que pueda acceder al sistema como usuario no administrador.</p>
+        <p class="ms-5"><strong>Botón "Denegar":</strong> Elimina el registro de usuario. El usuario ni siquiera existirá.</p>
+        <p><strong>✔ Usuarios Aprobados:</strong> Aquellos que han sido activados y tienen acceso al sistema.</p>
+        <p class="ms-5"><strong>Botón "Borrar usuario":</strong> Borra al usuario de la lista de usuarios aprobados en la Base de Datos, pero aún seguirá estando activo en el sistema. Para mayor ajuste debe dirigirse al Panel Administrativo.</p>
+        <p class="ms-5"><strong>Botón "Eliminar usuario":</strong> Borra al usuario de la lista de usuarios aprobados en la Base de Datos, también elimina al usuario permanentemente del sistema.</p>
+        <p class="ms-5"><strong>Botón "Borrar a Todos los Usuarios Aprobados":</strong> Borra a todos los usuarios aprobados en la Base de Datos, pero siempre seguirán estando activos. Para mayor ajuste debe dirigirse al Panel Administrativo.</p>
+        <p><strong>✔ Usuarios Denegados:</strong> Registros de usuarios rechazados por no cumplir los requisitos. Su registros están eliminados.</p>
+        <p class="ms-5"><strong>Botón "Borrar usuario":</strong> El usuario no existe en el sistema ya que fue denegado. Esta botón únicamente borra al usuario de la lista de usuarios denegados en la Base de Datos.</p>
+        <p class="ms-5"><strong>Botón "Borrar a Todos los Usuarios Denegados":</strong> Los usuarios no existen en el sistema ya que sus registros de usuario fueron denegados, por ende, eliminados. Este botón solamente borra a todos los usuarios denegados en la Base de Datos.</p>  
+    </div>
+
+    <script>
+        document.getElementById("toggle-info").addEventListener("click", function(event) {
+            event.preventDefault();
+            let infoSection = document.getElementById("info-section");
+            infoSection.classList.toggle("d-none");
+            this.textContent = infoSection.classList.contains("d-none") ? "Más Información aquí." : "Menos Información.";
+        });
+    </script>
 
     <div class="row g-4">
         <!-- Pendientes por aprobar -->
         <div class="col-12 col-md-4">
             <div class="card">
                 <div class="card-header text-center bg-warning text-white">
-                    <h2 class="h5 mb-0">Pendientes por Aprobar</h2>
+                    <h2 class="h5 mb-0">Pendientes de Verificar</h2>
                 </div>
                 <div class="card-body">
                     {% if pending_users %}
@@ -36,13 +63,13 @@
                             <div>
                                 <p class="mb-0 font-weight-bold">{{ user.username }}</p>
                                 <p class="text-muted">{{ user.email }}</p>
+                                <p class="text-muted">Registrado el: {{ user.date_joined|date:"d M Y H:i" }}</p> <!--El modelo User predeterminado de Django incluye un campo date_joined, el cual almacena la fecha de creación del usuario -->
                             </div>
-                            <div>
+                            <div class="d-flex flex-wrap gap-2">
                                 <form method="post" class="d-inline">
                                     {% csrf_token %}
                                     <input type="hidden" name="user_id" value="{{ user.id }}">
-                                    <button type="submit" name="action" value="approve"
-                                        class="btn btn-success btn-sm me-2">
+                                    <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">
                                         Aprobar
                                     </button>
                                 </form>
@@ -78,23 +105,23 @@
                             <div>
                                 <p class="mb-0 font-weight-bold">{{ user.user.username }}</p>
                                 <p class="text-muted">{{ user.user.email }}</p>
-                                <p class="text-muted">Aprobado: {{ user.date_approved|date:"d M Y H:i" }}</p>
+                                <p class="text-muted">Aprobado el: {{ user.date_approved|date:"d M Y H:i" }}</p>
                                 <p class="text-muted">Por: {{ user.created_by.username }}</p>
                             </div>
                             <form method="post" class="d-inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="approved_user_id" value="{{ user.id }}">
                                 <button type="submit" name="action" value="delete_approved"
-                                    class="btn btn-danger btn-sm">
-                                    Borrar registro
+                                    class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro? Esta acción borrará a este usuario de la lista de usuarios aprobados en la Base de Datos, pero aún seguirá estando activo en el sistema. Ingrese al Panel Administrativo en caso de ser necesario.')">
+                                    Borrar usuario
                                 </button>
                             </form>
                             <form method="post" class="d-inline ms-2"> <!--ms-2 al segundo botón para agregar margen entre los dos. -->
                                 {% csrf_token %}
                                 <input type="hidden" name="user_id" value="{{ user.user.id }}">
                                 <button type="submit" name="action" value="delete_approved_user"
-                                    class="btn btn-danger btn-sm">
-                                    Borrar usuario
+                                    class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro? Esta acción borrará a este usuario de la lista de usuarios aprobados en la Base de Datos, también eliminará al usuario permanentemente del sistema.')">
+                                    Eliminar usuario
                                 </button>
                             </form>
                         </li>
@@ -104,8 +131,8 @@
                         {% csrf_token %}
                         <button type="submit" name="action" value="clear_approved"
                             class="btn btn-secondary btn-sm w-100"
-                            onclick="return confirm('¿Estás seguro de que deseas limpiar el historial de usuarios aprobados? Esta acción no se puede deshacer.')">
-                            Limpiar Historial
+                            onclick="return confirm('¿Estás seguro? Esta acción borrará a todos los usuarios aprobados en la Base de Datos, pero siempre seguirán estando activos. Ingrese al Panel Administrativo en caso de ser necesario.')">
+                            Borrar a Todos los Usuarios Aprobados
                         </button>
                     </form>
                     {% else %}
@@ -129,14 +156,14 @@
                             <div>
                                 <p class="mb-0 font-weight-bold">{{ user.username }}</p>
                                 <p class="text-muted">{{ user.email }}</p>
-                                <p class="text-muted">Denegado: {{ user.date_denied|date:"d M Y H:i" }}</p>
+                                <p class="text-muted">Denegado el: {{ user.date_denied|date:"d M Y H:i" }}</p>
                                 <p class="text-muted">Por: {{ user.created_by.username }}</p>
                             </div>
                             <form method="post" class="d-inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="user_id" value="{{ user.id }}">
-                                <button type="submit" name="action" value="delete_denied" class="btn btn-danger btn-sm">
-                                    Borrar registro
+                                <button type="submit" name="action" value="delete_denied" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro? Este usuario no existe en el sistema ya que fue denegado previamente. Esta acción únicamente borrará al usuario de la lista de usuarios denegados en la Base de Datos.')">
+                                Borrar usuario
                                 </button>
                             </form>
                         </li>
@@ -145,8 +172,8 @@
                     <form method="POST" class="mt-3">
                         {% csrf_token %}
                         <button type="submit" name="action" value="clear_denied" class="btn btn-secondary btn-sm w-100"
-                            onclick="return confirm('¿Estás seguro de que deseas limpiar el historial de usuarios denegados? Esta acción no se puede deshacer.')">
-                            Limpiar Historial
+                            onclick="return confirm('¿Seguro? Estos usuarios no existen en el sistema ya que sus registros de usuario fueron denegados, por ende, eliminados. Esta acción borrará a todos los usuarios denegados en la Base de Datos.')">
+                            Borrar a Todos los Usuarios Denegados
                         </button>
                     </form>
                     {% else %}

@@ -20,8 +20,10 @@
 <body>
     {% if user.is_authenticated %}
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand tex-center" href="#">
-         <span class="Gris" style="font-size: larger">¡Hola, {{ user.username }}!</span> <!-- Esto muestra un Hola, y el nombre de usuario logueado -->
+        <a class="navbar-brand text-center">
+            <span class="text-white bg-primary px-1 py-1 rounded-pill shadow-sm" style="font-size: 1.2rem; font-weight: bold;">
+                ¡Hola, {{ user.username }}!
+            </span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
             aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,48 +31,55 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
             <div class="navbar-nav ms-auto">
-                <a class="nav-item nav-link active" href="{% url 'inicio' %}">Inicio</a>
+                <a class="nav-item nav-link fw-bold" href="{% url 'inicio' %}">Inicio</a>
                 {% if user.is_staff or user.is_superuser %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'administracion_laboratorios' %}">Administrar Laboratorios</a>
-                </li>
-
-                <li class="nav-item">
-                <a class="nav-item nav-link" href="{% url 'approve_users' %}">Gestión de Usuarios</a>
-                </li>
                 
-                <li class="nav-item dropdown">
-                    <a class="nav-item nav-link" href="{% url 'gestionCategoria' %}">Gestión de Inventario</a>
-
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                          Generar Reportes
-                        </a>
-                        <ul class="dropdown-menu">
-                          <li><a class="nav-item nav-link" href="{% url 'listar_reportes' %}">Uso de Laboratorio</a></li>
-                          <li><a class="dropdown-item" href="#">Another action</a></li>
-                          <li><hr class="dropdown-divider"></li>
-                          <li><a class="dropdown-item" href="#">Something else here</a></li>
-                        </ul>
-                      </li>
+                <li class="nav-item dropdown"> 
+                    <a class="nav-item nav-link fw-bold" href="{% url 'gestionCategoria' %}">Gestionar Inventario</a>
+                </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/">Panel Administrativo</a> <!-- Dirige al panel de django -->
+                    <a class="nav-item nav-link fw-bold" href="{% url 'approve_users' %}">Gestionar Usuarios</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-item nav-link fw-bold" href="{% url 'administracion_laboratorios' %}">Administrar Laboratorios</a>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-item nav-link fw-bold dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Generar Reportes
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'listar_reportes' %}">Uso de Laboratorio</a></li>
+                    </ul>
+                </li>
+
+                <!-- Estilo de "Uso de Laboratorio" -->
+                <style>
+                    .dropdown-menu a:hover {
+                        background-color: #007bff; /* Fondo azul */
+                        color: white; /* Texto blanco */
+                    }
+                </style>
+
+                <li class="nav-item">
+                    <a class="nav-item nav-link fw-bold" href="/admin/">Panel Administrativo</a> <!-- Dirige al panel de django -->
                 </li>
 
                 {% else %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'reservar_laboratorio' %}">Reservación de Laboratorios</a>
+                    <a class="nav-item nav-link fw-bold" href="{% url 'reservar_laboratorio' %}">Reservación de Laboratorios</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'solicitar_recursos' %}">Solicitar recursos</a>
+                    <a class="nav-item nav-link fw-bold" href="{% url 'solicitar_recursos' %}">Solicitar recursos</a>
                 </li>
                 {% endif %}
 
                 <!-- Botón de Cerrar Sesión -->
                 <form action="{% url 'logout' %}" method="post" style="display:inline;">
                     {% csrf_token %}
-                    <button class="btn btn-danger ms-3" type="submit">
+                    <button class="btn btn-danger ms-3" type="submit"  onclick="return confirm('¿Estás seguro de que deseas cerrar tu sesión? Esto te dirigirá directamente al Inicio de Sesión principal.')">
                         <i class="bi bi-box-arrow-right"></i> <!-- Icono de salida -->
                         Cerrar sesión
                     </button>

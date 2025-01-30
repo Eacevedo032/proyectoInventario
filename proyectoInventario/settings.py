@@ -147,7 +147,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_ROOT = os.path.join(BASE_DIR)  # Ruta donde están las imágenes
 MEDIA_URL = '/reportes_fotos/'  # URL para acceder a las imágenes
 
-# redireccion de login a inicio en settings.py
+'''redireccion de login a inicio en settings.py
 LOGIN_REDIRECT_URL = 'inicio'
 LOGOUT_REDIRECT_URL = '/accounts/login'
+'''
+
+LOGIN_URL = 'login'  # Ahora se usa la nueva vista personalizada
+LOGIN_REDIRECT_URL = 'inicio'  # Ajusta al nombre correcto de tu home
+LOGOUT_REDIRECT_URL = 'login'  # Redirige a login después de cerrar sesión
 

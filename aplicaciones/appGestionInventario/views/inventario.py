@@ -6,9 +6,6 @@ from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 from aplicaciones.appGestionInventario.models import Categoria, SubCategoria, Inventario, DetalleTecnico, DatosComplementarios
 
-
-
-
 '''agregarInventario
 
 Permite agregar un nuevo ítem al inventario de una subcategoría específica.
