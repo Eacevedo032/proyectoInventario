@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<h2>Historial de Inventarios Guardados</h2>
+
+{% if historiales %}
+    <ul class="list-group">
+        {% for historial in historiales %}
+            <li class="list-group-item">
+                <a href="{% url 'detalle_inventario_guardado' historial.pk %}">
+                    Inventario guardado el {{ historial.fecha_guardado|date:"Y-m-d H:i:s" }}
+                </a>
+                <p>Guardado por: {{ historial.usuario.username }} ({{ historial.usuario.email }})</p>
+                <p>Descripción: {{ inventario_guardado.descripcion }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No hay inventarios guardados.</p>
+{% endif %}
+
+<a href="{% url 'inventario_general' %}" class="btn btn-secondary mt-3">Volver al Inventario General</a>
+{% endblock %}

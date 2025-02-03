@@ -17,7 +17,11 @@
         <thead>
             <tr>
                 <th>Ítem</th>
+                <th>Categoría</th>
+                <th>Subcategoría</th>
                 <th>Cantidad Solicitada</th>
+                <th>Cantidad en Inventario a la fecha de la solicitud</th>
+                <th>Cantidad actual en Inventario</th>
                 <th>Fecha de Uso</th>
             </tr>
         </thead>
@@ -25,7 +29,11 @@
             {% for item in items_solicitados %}
             <tr>
                 <td>{{ item.inventario.nombre}}</td>
+                <td>{{ item.inventario.categoria.nombre_categoria }}</td>
+                <td>{{ item.inventario.subcategoria.nombre }}</td>
                 <td>{{ item.cantidad_utilizada }} {{ item.unidad_medida }}</td>
+                <td>{{ item.cantidad_disponible_momento }} {{ item.unidad_medida_momento }}</td>
+                <td>{{ item.inventario.cantidad_disponible }} {{ item.inventario.unidad_medida }}</td>
                 <td>{{ item.fecha_uso }}</td>
             </tr>
             {% empty %}

@@ -3,8 +3,10 @@ from django.db import transaction
 from django.contrib import messages
 from datetime import datetime
 from django.views.decorators.cache import never_cache
-from django.contrib.auth.decorators import login_required
-from aplicaciones.appGestionInventario.models import Categoria, SubCategoria, Inventario, DetalleTecnico, DatosComplementarios
+from django.contrib.auth.decorators import login_required,  user_passes_test
+from aplicaciones.appGestionInventario.models import Categoria, SubCategoria, Inventario, DetalleTecnico, DatosComplementarios, GuardadoInventarioGeneral
+from django.utils.timezone import localtime
+from django.utils.timezone import now
 
 '''agregarInventario
 
@@ -99,7 +101,7 @@ def agregarInventario(request, id_subcategoria):
 
 
 #Se uso transaction.atomic() para garantizar que todo el proceso de creación de objetos sea atómico, 
-# evitando inconsistencias en caso de error.
+# evitando inconsistencias en caso de error (si algo falla, se revierte todo).
 #vencimiento.strip(): Se asegura que cualquier valor ingresado para vencimiento no tenga espacios en blanco.
 #En Vencimiento: Si el campo está vacío, se guarda como None, Si el formato no es válido, se muestra un mensaje de error claro.
 
@@ -110,8 +112,8 @@ Usa prefetch_related para optimizar las consultas a la base de datos y evitar m�
 Devuelve un contexto que incluye las categorías y subcategorías con sus ítems.'''
 @never_cache #Esto evita que el navegador guarde el estado previo del formulario
 def inventario_general(request):
-    # Cargar categorías con sus subcategorías e ítems (incluyendo las tablas (clases) relacionadas)
-    categorias = Categoria.objects.prefetch_related( #prefetch_related asegura que todos los datos relacionados se carguen de manera eficiente, evitando múltiples consultas innecesarias
+    # Cargar categorías con sus subcategorías e ítems (incluyendo las relaciones OneToOne)
+    categorias = Categoria.objects.prefetch_related(
         'subcategoria_set__inventario_set__detalle_tecnico',
         'subcategoria_set__inventario_set__datos_complementarios'
     )
@@ -276,3 +278,42 @@ def eliminarInventario(request, id_inventario):
         messages.error(request, f"Error al eliminar el item: {e}")
 
     return redirect("inventario_general")
+
+#Guardar Inventario General pasado
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def guardar_inventario_general(request):
+    if request.method == 'POST':
+        descripcion_usuario = request.POST.get('descripcion', '').strip()
+        fecha_hora_actual = localtime(now())
+        
+        # Si el usuario no escribió nada, usamos la descripción automática
+        if not descripcion_usuario:
+            descripcion_usuario = f"Sin descripción."
+        
+        GuardadoInventarioGeneral.objects.create(
+            descripcion=descripcion_usuario,
+            fecha_guardado=fecha_hora_actual,
+            usuario=request.user
+        )
+        
+        messages.success(request, "¡Inventario general guardado exitosamente!")
+        return redirect('inventario_general')
+    
+    return redirect('inventario_general')
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def historial_inventario_general(request):
+    historiales = GuardadoInventarioGeneral.objects.all().order_by('-fecha_guardado')
+    return render(request, "historial_inventario_general.html", {"historiales": historiales})
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def detalle_inventario_guardado(request, pk):
+    inventario_guardado = get_object_or_404(GuardadoInventarioGeneral, pk=pk)
+    return render(request, "detalle_inventario_guardado.html", {"inventario_guardado": inventario_guardado})
+
+

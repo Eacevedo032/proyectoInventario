@@ -17,15 +17,21 @@ def solicitar_recursos(request):
         unidad_medida = request.POST.get('unidad_medida') 
         fecha_uso = request.POST.get('fecha_uso')
 
-        # Crear instancia de UsoItemLaboratorio
+        # Obtener el inventario antes de modificarlo
+        inventario = get_object_or_404(Inventario, id_inventario=inventario_id)  
+
+        # Crear instancia de UsoItemLaboratorio con las relaciones correctas
         uso_item = UsoItemLaboratorio(
             solicitud_id=solicitud_id,
-            inventario_id=inventario_id,
+            inventario=inventario,
             usuario_id=usuario_id,
             cantidad_utilizada=cantidad_utilizada,
             unidad_medida=unidad_medida, 
-            fecha_uso=fecha_uso
+            fecha_uso=fecha_uso,
+            cantidad_disponible_momento=inventario.cantidad_disponible,  # Estado actual del inventario
+            unidad_medida_momento=inventario.unidad_medida,
         )
+
         uso_item.save()
         messages.success(request, 'La solicitud de recursos se ha creado exitosamente.')
         return redirect('solicitar_recursos')
@@ -35,7 +41,7 @@ def solicitar_recursos(request):
 
     solicitudes_recursos = UsoItemLaboratorio.objects.filter(
         usuario=request.user
-    ).select_related('inventario', 'solicitud').order_by('solicitud__laboratorio')
+    ).select_related('inventario', 'solicitud').order_by('solicitud__laboratorio') 
 
     solicitudes_por_laboratorio = {
         laboratorio: list(items)

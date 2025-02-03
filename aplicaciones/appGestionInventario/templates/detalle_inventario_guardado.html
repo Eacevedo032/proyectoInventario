@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<h2>Detalles del Inventario Guardado</h2>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Fecha de Guardado: {{ inventario_guardado.fecha_guardado|date:"Y-m-d H:i:s" }}</h5>
+        <p class="card-text"><strong>Descripción:</strong> {{ inventario_guardado.descripcion }}</p>
+        <p class="card-text"><strong>Guardado por:</strong> {{ inventario_guardado.usuario.username }} ({{ inventario_guardado.usuario.email }})</p>
+    </div>
+</div>
+
+<a href="{% url 'historial_inventario_general' %}" class="btn btn-secondary mt-3">Volver al Historial</a>
+{% endblock %}

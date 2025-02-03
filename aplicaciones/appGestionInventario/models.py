@@ -1,10 +1,10 @@
-from datetime import timezone
 from django.db import models
 from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.timezone import now
 
 # Tabla para manejar los usuarios aprobados y denegados
 class ApprovedUser(models.Model):
@@ -48,8 +48,8 @@ class Inventario(models.Model):
     #on delete cascade  asegura que, al eliminar una subcategoría, todos los ítems relacionados 
     #también se eliminen automáticamente.
     id_inventario = models.AutoField(primary_key=True, unique=True)
-    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, null=True)
-    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE, null=True)
+    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
+    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE)
     nombre = models.CharField(max_length=100, unique=True, null=False)
     descripcion = models.TextField(blank=True, null=True)
     cantidad_disponible = models.DecimalField(
@@ -73,8 +73,8 @@ class Inventario(models.Model):
 
 class DetalleTecnico(models.Model):
     inventario = models.OneToOneField(Inventario, on_delete=models.CASCADE, related_name="detalle_tecnico")
-    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, null=True)
-    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE, null=True)
+    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
+    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE)
     marca_caracteristica = models.TextField(blank=True, null=True)
     num_cat = models.TextField(blank=True, null=True)
     num_serie = models.TextField(blank=True, null=True)
@@ -88,8 +88,8 @@ class DetalleTecnico(models.Model):
 
 class DatosComplementarios(models.Model):
     inventario = models.OneToOneField(Inventario, on_delete=models.CASCADE, related_name="datos_complementarios")
-    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, null=True)
-    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE, null=True)
+    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
+    subcategoria = models.ForeignKey(SubCategoria, on_delete=models.CASCADE)
     presentacion = models.TextField(blank=True, null=True)
     accesorios = models.TextField(blank=True, null=True)
     medidas = models.TextField(blank=True, null=True)
@@ -99,6 +99,15 @@ class DatosComplementarios(models.Model):
 
     def __str__(self):
         return f"Datos complementarios para {self.inventario.nombre}"
+
+#Guarda un Inventario General
+class GuardadoInventarioGeneral(models.Model):
+    descripcion = models.TextField()
+    fecha_guardado = models.DateTimeField(default=now)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.descripcion} - Guardado por {self.usuario.username} ({self.usuario.email}) el {self.fecha_guardado.strftime('%Y-%m-%d %H:%M:%S')}"
 
 #control de horarios en los laboratorios
 class HorarioLaboratorio(models.Model):
@@ -193,6 +202,17 @@ class UsoItemLaboratorio(models.Model):
     unidad_medida = models.CharField(max_length=50, null=True, blank=True)
     fecha_uso = models.DateField()
 
+    # Guardar cantidad disponible en el momento de la solicitud
+    cantidad_disponible_momento = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    unidad_medida_momento = models.CharField(max_length=50, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        """ Antes de guardar, almacena la cantidad disponible en ese momento """
+        if not self.cantidad_disponible_momento:
+            self.cantidad_disponible_momento = self.inventario.cantidad_disponible
+            self.unidad_medida_momento = self.inventario.unidad_medida
+        super().save(*args, **kwargs)
+
     class Meta:
         indexes = [
             models.Index(fields=['fecha_uso'], name='idx_fecha_uso'),
@@ -233,8 +253,5 @@ class ReporteUsoLaboratorio(models.Model):
 
     def __str__(self):
         return f"Reporte para {self.solicitud.laboratorio} - {self.solicitud.usuario.username}"
-
-
-
 
 

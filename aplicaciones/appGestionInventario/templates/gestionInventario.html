@@ -34,6 +34,7 @@
                         <div class="col-6 col-md-3 mb-3">
                             <label for="unidad_medida" class="text-center w-100">Unidad de Medida:</label>
                             <select name="unidad_medida" class="form-control" required>
+                                <option value="" selected disabled hidden>Seleccione una unidad</option> <!--Hace que el usuario escoja la opción adecuada y no una por defecto-->
                                 <option value="unidades">unidades</option>
                                 <option value="kg">kg</option>
                                 <option value="g">g</option>
@@ -48,7 +49,7 @@
                                 <option value="m">m</option>
                                 <option value="km">km</option>
                             </select>
-                        </div> 
+                        </div>                        
 
                     <label for="descripcion">Descripción:</label>
                     <textarea name="descripcion" id="descripcion" class="form-control"></textarea>

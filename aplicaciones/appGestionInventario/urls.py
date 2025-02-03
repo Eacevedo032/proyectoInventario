@@ -23,6 +23,9 @@ urlpatterns = [
     path('verInventarioGeneral/', views.verInventarioGeneral, name='verInventarioGeneral'),
     path("editarInventario/<int:id_inventario>/", views.editarInventario, name="editarInventario"),
     path("eliminarInventario/<int:id_inventario>/", views.eliminarInventario, name="eliminarInventario"),
+    path('guardar_inventario_general/', views.guardar_inventario_general, name='guardar_inventario_general'),
+    path('historial_inventario/', views.historial_inventario_general, name='historial_inventario_general'),
+    path('historial_inventario/<int:pk>/', views.detalle_inventario_guardado, name='detalle_inventario_guardado'),
     path("agregarInventario/<int:id_subcategoria>/", views.agregarInventario, name="agregarInventario"),#URL para agregar Inventario
     #Podría dejar este path ultimo sin parametro (id_subcategoria) cuando se use un formulario genérico donde el usuario seleccione la subcategoría manualmente.
 
