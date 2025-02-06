@@ -1,14 +1,95 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<h2>Detalles del Inventario Guardado</h2>
+<h3><span style="color: blue;">Nombre del Inventario Guardado:</span> {{ inventario_guardado.nombre }}</h3>
 
-<div class="card">
+<div class="card mb-3">
     <div class="card-body">
-        <h5 class="card-title">Fecha de Guardado: {{ inventario_guardado.fecha_guardado|date:"Y-m-d H:i:s" }}</h5>
-        <p class="card-text"><strong>Descripción:</strong> {{ inventario_guardado.descripcion }}</p>
-        <p class="card-text"><strong>Guardado por:</strong> {{ inventario_guardado.usuario.username }} ({{ inventario_guardado.usuario.email }})</p>
+        <p><strong>Fecha de Guardado:</strong> {{ inventario_guardado.fecha_guardado|date:"Y-m-d H:i:s" }}</p>
+        <p><strong>Descripción:</strong> {{ inventario_guardado.descripcion }}</p>
+        <p><strong>Guardado por:</strong> {{ inventario_guardado.usuario.username }} ({{ inventario_guardado.usuario.email }})</p>
     </div>
+</div>
+
+<h3>Sus Categorías, Subcategorías e Ítems</h3>
+<div class="accordion" id="categoriasAccordion">
+    {% for categoria in categorias_guardadas %}
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="heading{{ categoria.id }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ categoria.id }}" aria-expanded="false" aria-controls="collapse{{ categoria.id }}">
+                {{ categoria.nombre_categoria }}
+            </button>
+        </h2>
+        <div id="collapse{{ categoria.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ categoria.id }}" data-bs-parent="#categoriasAccordion">
+            <div class="accordion-body">
+                {% for subcategoria in categoria.subcategorias_guardadas_list %}
+                <br>
+                <h5>{{ subcategoria.nombre }}</h5>
+                {% if subcategoria.inventarios_guardados_list %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nombre</th>
+                                <th>Cantidad Disponible</th>
+                                <th>Unidad Medida</th>
+                                <th>Descripción</th>
+                                <th>Vencimiento (A-M-D)</th>
+                                <th>Lote</th>
+                                <th>Observaciones</th>
+                                <th>Num Serie</th>
+                                <th>Num Cat</th>
+                                <th>Marca/Características</th>
+                                <th>Códigos</th>
+                                <th>Artículos</th>
+                                <th>Modelo</th>
+                                <th>Colores</th>
+                                <th>Capacidades</th>
+                                <th>Accesorios</th>
+                                <th>Medidas</th>
+                                <th>Presentación</th>
+                                <th>Info Adicional</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in subcategoria.inventarios_guardados_list %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ item.nombre }}</td>
+                                <td>{{ item.cantidad_disponible|floatformat:2 }}</td>
+                                <td>{{ item.unidad_medida|default:"-" }}</td>
+                                <td>{{ item.descripcion|default:"-" }}</td>
+                                <td>{{ item.vencimiento|date:"Y-m-d"|default:"-" }}</td>
+                                <td>{{ item.lote|default:"-" }}</td>
+                                <td>{{ item.observaciones|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.num_serie|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.num_cat|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.marca_caracteristica|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.codigo|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.articulo|default:"-" }}</td>
+                                <td>{{ item.detalle_tecnico.modelo|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.colores|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.capacidad|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.accesorios|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.medidas|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.presentacion|default:"-" }}</td>
+                                <td>{{ item.datos_complementarios.informacionAdicional|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center">No hay ítems en esta subcategoría.</p>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p>No hay categorías guardadas.</p>
+    {% endfor %}
 </div>
 
 <a href="{% url 'historial_inventario_general' %}" class="btn btn-secondary mt-3">Volver al Historial</a>

@@ -4,7 +4,8 @@ from django.contrib import messages
 from datetime import datetime
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required,  user_passes_test
-from aplicaciones.appGestionInventario.models import Categoria, SubCategoria, Inventario, DetalleTecnico, DatosComplementarios, GuardadoInventarioGeneral
+from aplicaciones.appGestionInventario.models import Categoria, SubCategoria, Inventario, DetalleTecnico, DatosComplementarios
+from aplicaciones.appGestionInventario.models import GuardadoInventarioGeneral, CategoriaGuardada, SubCategoriaGuardada, InventarioGuardado, DetalleTecnicoGuardado, DatosComplementariosGuardados
 from django.utils.timezone import localtime
 from django.utils.timezone import now
 
@@ -280,29 +281,79 @@ def eliminarInventario(request, id_inventario):
     return redirect("inventario_general")
 
 #Guardar Inventario General pasado
-@login_required
-@user_passes_test(lambda u: u.is_superuser)
+#Guardar Inventario General pasado
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def guardar_inventario_general(request):
     if request.method == 'POST':
-        descripcion_usuario = request.POST.get('descripcion', '').strip()
+        nombre = request.POST.get('nombre', 'Sin nombre.')
+        descripcion_usuario = request.POST.get('descripcion', 'Sin descripción.').strip()
         fecha_hora_actual = localtime(now())
-        
-        # Si el usuario no escribió nada, usamos la descripción automática
-        if not descripcion_usuario:
-            descripcion_usuario = f"Sin descripción."
-        
-        GuardadoInventarioGeneral.objects.create(
+
+        # Crear el registro principal de guardado
+        guardado = GuardadoInventarioGeneral.objects.create(
+            nombre=nombre,
             descripcion=descripcion_usuario,
             fecha_guardado=fecha_hora_actual,
             usuario=request.user
         )
-        
+
+        # Guardar categorías sin duplicar
+        for categoria in Categoria.objects.all():
+            categoria_guardada, _ = CategoriaGuardada.objects.get_or_create(
+                guardado=guardado,
+                nombre_categoria=categoria.nombre_categoria,
+                descripcion=categoria.descripcion
+            )
+
+            # Guardar subcategorías sin duplicar
+            for subcategoria in SubCategoria.objects.filter(categoria=categoria):
+                subcategoria_guardada, _ = SubCategoriaGuardada.objects.get_or_create(
+                    categoria_guardada=categoria_guardada,
+                    nombre=subcategoria.nombre
+                )
+
+                # Guardar ítems sin duplicar
+                for item in Inventario.objects.filter(subcategoria=subcategoria):
+                    inventario_guardado, _ = InventarioGuardado.objects.get_or_create(
+                        subcategoria_guardada=subcategoria_guardada,
+                        nombre=item.nombre,
+                        descripcion=item.descripcion,
+                        cantidad_disponible=item.cantidad_disponible,
+                        unidad_medida=item.unidad_medida,
+                        lote=item.lote,
+                        vencimiento=item.vencimiento,
+                        observaciones=item.observaciones
+                    )
+
+                    # Guardar detalle técnico si existe
+                    if hasattr(item, 'detalle_tecnico'):
+                        DetalleTecnicoGuardado.objects.get_or_create(
+                            inventario_guardado=inventario_guardado,
+                            marca_caracteristica=item.detalle_tecnico.marca_caracteristica,
+                            num_cat=item.detalle_tecnico.num_cat,
+                            num_serie=item.detalle_tecnico.num_serie,
+                            modelo=item.detalle_tecnico.modelo,
+                            codigo=item.detalle_tecnico.codigo,
+                            articulo=item.detalle_tecnico.articulo
+                        )
+
+                    # Guardar datos complementarios si existen
+                    if hasattr(item, 'datos_complementarios'):
+                        DatosComplementariosGuardados.objects.get_or_create(
+                            inventario_guardado=inventario_guardado,
+                            presentacion=item.datos_complementarios.presentacion,
+                            accesorios=item.datos_complementarios.accesorios,
+                            medidas=item.datos_complementarios.medidas,
+                            colores=item.datos_complementarios.colores,
+                            capacidad=item.datos_complementarios.capacidad,
+                            informacionAdicional=item.datos_complementarios.informacionAdicional
+                        )
+
         messages.success(request, "¡Inventario general guardado exitosamente!")
-        return redirect('inventario_general')
-    
-    return redirect('inventario_general')
+        return redirect('verInventarioGuardar')
+
+    return redirect('verInventarioGuardar')
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -314,6 +365,46 @@ def historial_inventario_general(request):
 @user_passes_test(lambda u: u.is_superuser)
 def detalle_inventario_guardado(request, pk):
     inventario_guardado = get_object_or_404(GuardadoInventarioGeneral, pk=pk)
-    return render(request, "detalle_inventario_guardado.html", {"inventario_guardado": inventario_guardado})
+    categorias_guardadas = inventario_guardado.categorias_guardadas.all()
 
+    for categoria in categorias_guardadas:
+        subcategorias = categoria.subcategorias_guardadas.all()
+        for subcategoria in subcategorias:
+            # Asegurémonos de que esta línea esté trayendo los ítems correctamente
+            subcategoria.inventarios_guardados_list = subcategoria.inventarios_guardados.all()
+            print(f"Subcategoría: {subcategoria.nombre}, Ítems: {subcategoria.inventarios_guardados_list}")
 
+        categoria.subcategorias_guardadas_list = subcategorias
+
+    return render(request, "detalle_inventario_guardado.html", {
+        "inventario_guardado": inventario_guardado,
+        "categorias_guardadas": categorias_guardadas
+    })
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser) # Permite el acceso solo a usuarios con privilegios de superusuario (administradores).
+def eliminarInventarioGuardado(request, id_guardado):
+    try:
+        # Obtiene el objeto del guardado usando 'id' se usa simplemente para referirse al objeto que se encontró, podría ser otro nombre incluso
+        guardado = get_object_or_404(GuardadoInventarioGeneral, id=id_guardado) # get_object_or_404: Busca el objeto GuardadoInventarioGeneral con el id igual a id_guardado, sino devuelve un error 404
+
+        # Elimina el guardado, aplicando el borrado en cascada si está configurado en el modelo
+        guardado.delete()
+        messages.success(request, "¡Inventario guardado eliminado exitosamente!")
+    except Exception as e:
+        messages.error(request, f"Error al eliminar el inventario guardado: {e}")
+
+    return redirect("historial_inventario_general")
+
+#Vista del Inventario General donde estarán las opciones de las vistas de arriba
+def verInventarioGuardar(request):
+    # Cargar categorías con sus subcategorías e ítems (incluyendo las tablas (clases) relacionadas)
+    categorias = Categoria.objects.prefetch_related( #prefetch_related asegura que todos los datos relacionados se carguen de manera eficiente, evitando múltiples consultas innecesarias
+        'subcategoria_set__inventario_set__detalle_tecnico',
+        'subcategoria_set__inventario_set__datos_complementarios'
+    )
+
+    # Pasar las categorías al contexto
+    return render(request, "verInventarioGuardar.html", {
+        "Categorias": categorias,
+    })

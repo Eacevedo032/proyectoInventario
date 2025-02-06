@@ -3,87 +3,103 @@
 {% block title %}Gestión de Subcategorías{% endblock %}
 
 {% block body %}
-<div class="row">
-    <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3">
-        {% if messages %}
-        <div class="alert alert-dismissible alert-success">
-            {% for message in messages %}
-            <strong class="text-dark">{{ message }}</strong>
-            {% endfor %}
-        </div>
-        {% endif %}
-        <h2 class="text-center" style="padding: 0.7%; color: blue;">Agregar Nueva Subcategoría</h2>
-        <div class="card py-2">
-            <div class="card-body">
-                <form action="{% url 'agregarSubcategoria' categoria.id_categoria %}" method="POST">
-                    {% csrf_token %}
-                    <div class="form-group mb-3">
-                        <input type="text" name="txtNombreSubcategoria" class="form-control"
-                            placeholder="Nombre de la Subcategoría" required>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-success btn-block text-white w-100">Guardar</button>
-                    </div>
-                </form>
+
+{% if messages %}
+<div class="alert alert-dismissible alert-success">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="container">
+    <div class="row">
+        <!-- Sección Izquierda: Agregar Subcategoría y Control de Inventario -->
+        <div class="col-md-4">
+            <h2 class="text-center" style="padding: 0.7%; color: blue;">Agregar Nueva Subcategoría</h2>
+            <div class="card py-2">
+                <div class="card-body">
+                    <form action="{% url 'agregarSubcategoria' categoria.id_categoria %}" method="POST">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            <input type="text" name="txtNombreSubcategoria" class="form-control"
+                                placeholder="Nombre de la Subcategoría" required>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit"
+                                class="btn btn-success btn-block text-white w-100">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Control de Inventario General -->
+            <div class="card text-center mt-3">
+                <div class="card-header"><strong>Control de Inventario General</strong></div>
+                <div class="card-body">
+                    <p>Esta opción permite actualizar o eliminar ítems del Inventario General</p>
+                    <a href="{% url 'inventario_general' %}" class="btn btn-info btn-block">Ir a la Opción</a>
+                </div>
             </div>
         </div>
-        
-        <!-- Botón para Control de Inventario General -->
-        <div class="mt-3" style="margin: 0 15px;"> <!-- Usamos mt-3 para margen superior y margen lateral similar al card -->
-            <a href="{% url 'inventario_general' %}" class="btn btn-info btn-sm btn-block text-center w-100">
-                Control de Inventario General
-            </a>
-        </div>
-        
-    </div>
-    <div class="col-sm-12 col-md-6 col-lg-8 col-xl-9">
-        <h2>Listado de Subcategorías para: {{ categoria.nombre_categoria }}</h2>
-        <div class="table-responsive py-2">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Ítem</th>
-                        <th>Nombre de Subcategoría</th>
-                        <th>Opciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for subcategoria in subcategorias %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ subcategoria.nombre }}</td>
-                        <td>
-                            <div class="d-flex justify-content-center align-items-center gap-2">
-                                <a href="{% url 'editarSubcategoria' subcategoria.id_subcategoria %}"
-                                    class="btn btn-primary btn-sm">
-                                    Editar
-                                </a>
-                                <a href="{% url 'eliminarSubcategoria' subcategoria.id_subcategoria %}"
-                                    class="btn btn-danger btn-sm" onclick="return doubleConfirmSubcategoria();"
-                                    title="Eliminar Subcategoría">
-                                    Eliminar
-                                </a>
-                                <a href="{% url 'agregarInventario' subcategoria.id_subcategoria %}"
-                                    class="btn btn-success btn-sm">
-                                    Agregar al Inventario
-                                </a>
-                                <script>
-                                    function doubleConfirmSubcategoria() {
-                                        var firstConfirm = confirm("¿Estás seguro de que deseas eliminar esta subcategoría?");
-                                        if (firstConfirm) {
-                                            var secondConfirm = confirm("¡Esto es irreversible! ¿Estás seguro?");
-                                            return secondConfirm;
-                                        }
-                                        return false;
-                                    }
-                                </script>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+        <!-- Sección Derecha: Lista de Subcategorías -->
+        <div class="col-md-8">
+            <h2>Listado de Subcategorías para: {{ categoria.nombre_categoria }}</h2>
+            <div class="table-responsive py-2">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Ítem</th>
+                            <th>Nombre de Subcategoría</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subcategoria in subcategorias %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ subcategoria.nombre }}</td>
+                            <td>
+                                <div class="d-flex justify-content-center align-items-center gap-2">
+                                    <a href="{% url 'editarSubcategoria' subcategoria.id_subcategoria %}"
+                                        class="btn btn-primary btn-sm">
+                                        Editar
+                                    </a>
+                                    <a href="{% url 'eliminarSubcategoria' subcategoria.id_subcategoria %}"
+                                        class="btn btn-danger btn-sm" onclick="return doubleConfirmSubcategoria();"
+                                        title="Eliminar Subcategoría">
+                                        Eliminar
+                                    </a>
+                                    <a href="{% url 'agregarInventario' subcategoria.id_subcategoria %}"
+                                        class="btn btn-success btn-sm">
+                                        Agregar al Inventario
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    function doubleConfirmSubcategoria() {
+        var firstConfirm = confirm("¿Estás seguro de que deseas eliminar esta subcategoría?");
+        if (firstConfirm) {
+            var secondConfirm = confirm("¡Esto es irreversible! ¿Estás seguro?");
+            return secondConfirm;
+        }
+        return false;
+    }
+</script>
+
 {% endblock %}
+
+<!-- dentro de un row
+col-12: Ocupa el 100% en móviles.
+col-md-4: Ocupa el 33% en pantallas medianas o más grandes.
+col-md-8: Ocupa el 67% en pantallas medianas o más grandes. -->

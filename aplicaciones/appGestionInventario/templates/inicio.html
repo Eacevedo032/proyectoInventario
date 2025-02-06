@@ -8,9 +8,9 @@
 <!-- Mensajes -->
 {% if messages %}
 <div class="alert alert-dismissible alert-success">
-    {% for message in messages %}
-    <strong class="text-dark">{{ message }}</strong>
-    {% endfor %}
+  {% for message in messages %}
+  <strong class="text-dark">{{ message }}</strong>
+  {% endfor %}
 </div>
 {% endif %}
 
@@ -79,7 +79,9 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
 
-  .list-group-item, .card, .function-card {
+  .list-group-item,
+  .card,
+  .function-card {
     background-color: var(--white);
     color: var(--primary-color);
     border: none;
@@ -88,7 +90,9 @@
     transition: transform 0.3s, box-shadow 0.3s;
   }
 
-  .list-group-item:hover, .card:hover, .function-card:hover {
+  .list-group-item:hover,
+  .card:hover,
+  .function-card:hover {
     transform: translateY(-10px);
     box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
   }
@@ -108,7 +112,7 @@
   .footer-logo-container {
     text-align: center;
   }
-  
+
   .footer-logo-container img {
     max-width: 300px;
     padding: 5px 0;
@@ -138,7 +142,8 @@
   <div class="text-center hero">
     <div class="hero-content">
       <h1 class="display-4">Bienvenido al Sistema de Gestión de Inventario y Laboratorios</h1>
-      <p class="lead">Este software está diseñado para facilitar la administración de los recursos y laboratorios de la carrera de Ingeniería en Biotecnología Industrial en UNP</p>
+      <p class="lead">Este software está diseñado para facilitar la administración de los recursos y laboratorios de la
+        carrera de Ingeniería en Biotecnología Industrial en UNP</p>
     </div>
   </div>
 
@@ -146,28 +151,35 @@
   <h2 class="section-title">Descripción General de las Funciones</h2>
   <div class="card-static">
     <p>
-      <strong>Gestión de Inventario General:</strong> El usuario administrador llevará un control detallado del Inventario de los laboratorios de Biotecnología.
+      <strong>Gestión de Inventario General:</strong> El usuario administrador llevará un control detallado del
+      Inventario de los laboratorios de Biotecnología.
     </p>
     <p>
-      <strong>Gestión de usuarios registrados:</strong> Permite al usuario aprobar o denegar un usuario registrado.    </p>
-    <p>
-      <strong>Administración de Laboratorios:</strong> Manejo de la disponibilidad de los laboratorios, así como la aprobación o negación del uso de recursos de Inventario.
+      <strong>Gestión de usuarios registrados:</strong> Permite al usuario aprobar o denegar un usuario registrado.
     </p>
     <p>
-      <strong>Generación de Reportes:</strong> En esa sección se refleja y exporta un informe describiendo el uso de los laboratorios y el consumo de recursos.
+      <strong>Administración de Laboratorios:</strong> Manejo de la disponibilidad de los laboratorios, así como la
+      aprobación o negación del uso de recursos de Inventario.
     </p>
     <p>
-      <strong>Sección por añadirse:</strong> Descripción por añadirse.
+      <strong>Generación de Reportes:</strong> En esa sección se refleja y exporta un informe describiendo el uso de los
+      laboratorios y el consumo de recursos.
     </p>
     <p>
-      <strong>Panel de Adminsitración:</strong> Esta opción nos dirige al panel de administración donde los administradores llevan un mejor control del sistema.
+      <strong>Guardar Inventario:</strong> Acá se guarda el Inventario General cuando el administrador lo desee, sin
+      afectar el Inventario General en curso.
     </p>
-  </div>     
-  
-  <p class="mt-4 text-center" style="font-style: italic; color: #2c3e50; font-size: 1.4rem; margin-top: 20px; padding: 15px; background-color: #eaf2f8; border: 2px solid #95a5a6; border-radius: 10px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;">
+    <p>
+      <strong>Panel de Adminsitración:</strong> Esta opción nos dirige al panel de administración donde los
+      administradores llevan un mejor control del sistema.
+    </p>
+  </div>
+
+  <p class="mt-4 text-center"
+    style="font-style: italic; color: #2c3e50; font-size: 1.4rem; margin-top: 20px; padding: 15px; background-color: #eaf2f8; border: 2px solid #95a5a6; border-radius: 10px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;">
     Por favor, selecciona una opción en el siguiente menú para comenzar
   </p>
-  
+
   <h2 class="section-title">Opciones principales</h2>
   <div class="row">
     <div class="col-md-4">
@@ -198,34 +210,24 @@
       </div>
     </div>
   </div>
-  
-  <h2 class="section-title">Control General</h2>
-  <div class="row">
-    <div class="col-md-4">
+
+  <h2 class="section-title">Control Detallado</h2>
+  <div class="row mt-3 justify-content-center">
+    <div class="col-md-6">
       <div class="card text-center">
-        <div class="card-header"><strong>Por detallarse...</strong></div>
-        <div class="card-body">
-          <p>Por detallarse...</p>
-          <a href="#" class="btn btn-custom btn-block">Ir a la Opción</a>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card text-center">
-        <div class="card-header"><strong>Generar Reportes</strong></div>
+        <div class="card-header"><strong>Generar reportes</strong></div>
         <div class="card-body">
           <p>Consulta en reporte el uso de laboratorios y productos de inventario</p>
-          <a href="{% url 'listar_reportes' %}" class="btn btn-custom btn-block">Uso de Laboratorio</a>
-          <a href="#" class="btn btn-custom btn-block">Por detallarse...</a>
+          <a href="{% url 'listar_reportes' %}" class="btn btn-custom btn-block">Ir a la Opción</a>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
       <div class="card text-center">
-        <div class="card-header"><strong>Panel Administrativo</strong></div>
+        <div class="card-header"><strong>Guardar Inventario</strong></div>
         <div class="card-body">
-          <p>Dirígete al panel administrativo del sistema para ajustes más específicos</p>
-          <a href="/admin/" class="btn btn-custom btn-block">Ir a la Opción</a>
+          <p>Esta opción guarda el Inventario General en cualquier momento</p>
+          <a href="{% url 'guardar_inventario_general' %}" class="btn btn-custom btn-block">Ir a la Opción</a>
         </div>
       </div>
     </div>
@@ -237,7 +239,9 @@
   <div class="text-center hero">
     <div class="hero-content">
       <h1 class="display-4">Bienvenido al Sistema de Solicitudes de Laboratorios y Recursos de Inventario </h1>
-      <p class="lead">Este software está diseñado para la realización de solicitudes de uso de laboratorios, así como de recursos y herramientas para actividades académicas de la carrera de Ingeniería en Biotecnología Industrial en UNP</p>
+      <p class="lead">Este software está diseñado para la realización de solicitudes de uso de laboratorios, así como de
+        recursos y herramientas para actividades académicas de la carrera de Ingeniería en Biotecnología Industrial en
+        UNP</p>
     </div>
   </div>
 
@@ -245,32 +249,32 @@
   <h2 class="section-title">Descripción General de las Funciones</h2>
   <div class="card-static">
     <p>
-      <strong>Reservación de Laboratorios</strong> Solicita el uso de los laboratorios de Biotecnología, esto pasará a aprobación del administrador.
+      <strong>Reservación de Laboratorios</strong> Solicita el uso de los laboratorios de Biotecnología, esto pasará a
+      aprobación del administrador.
     </p>
     <p>
-      <strong>Solicitar recursos:</strong> Facilita la solicitud de recursos y herramientas propias de la carrera a ocupar, en base al laboratorio reservado.
-    </p>
-    <p>
-      <strong>Por añadirse...:</strong> Por añadirse...
+      <strong>Solicitar recursos:</strong> Facilita la solicitud de recursos y herramientas propias de la carrera a
+      ocupar, en base al laboratorio reservado.
     </p>
   </div>
 
-  <p class="mt-4 text-center" style="font-style: italic; color: #2c3e50; font-size: 1.4rem; margin-top: 20px; padding: 15px; background-color: #eaf2f8; border: 2px solid #95a5a6; border-radius: 10px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;">
+  <p class="mt-4 text-center"
+    style="font-style: italic; color: #2c3e50; font-size: 1.4rem; margin-top: 20px; padding: 15px; background-color: #eaf2f8; border: 2px solid #95a5a6; border-radius: 10px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;">
     Por favor, selecciona una opción en el siguiente menú para comenzar
   </p>
-  
+
   <h2 class="section-title">Solicita laboratorios y recursos</h2>
-  <div class="row">
-    <div class="col-md-4">
+  <div class="row mt-3 justify-content-center">
+    <div class="col-md-6">
       <div class="card text-center">
         <div class="card-header"><strong>Reservación de Laboratorios</strong></div>
         <div class="card-body">
-          <p>Solicita la disposición de los laboratorios con fines académicos</p>
+          <p>Solicita la disposición de los laboratorios de Biotecnología con fines académicos</p>
           <a href="{% url 'reservar_laboratorio' %}" class="btn btn-custom btn-block">Ir a la Opción</a>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
       <div class="card text-center">
         <div class="card-header"><strong>Solicitar Recursos</strong></div>
         <div class="card-body">
@@ -279,26 +283,18 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card text-center">
-        <div class="card-header"><strong>Por añadirse...</strong></div>
-        <div class="card-body">
-          <p>Por añadirse...</p>
-          <a href="#" class="btn btn-custom btn-block">Ir a la Opción</a>
-        </div>
-      </div>
-    </div>
   </div>
-  {% endif %}
-  <br>
-  <br>
-  
+</div>
+{% endif %}
+<br>
+<br>
+
 <div class="footer-logo-container">
   <img src="{% static 'img/logoUNP1.png' %}">
 </div>
 
 <div class="footer-content-container">
   <div class="footer-text">© 2025 | Universidad Nacional Politecnica </br>
-  "Todos los derechos reservados"
-</div>
-{% endblock %}
+    "Todos los derechos reservados"
+  </div>
+  {% endblock %}

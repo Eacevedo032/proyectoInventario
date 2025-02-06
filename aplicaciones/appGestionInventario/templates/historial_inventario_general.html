@@ -1,17 +1,33 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<h2>Historial de Inventarios Guardados</h2>
+
+<!-- Mensajes -->
+{% if messages %}
+<div class="alert alert-dismissible alert-success">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+</div>
+{% endif %}
+
+<h2 class="text-center">Historial de Inventarios Guardados</h2>
 
 {% if historiales %}
     <ul class="list-group">
         {% for historial in historiales %}
             <li class="list-group-item">
+            <h4>{{ historial.nombre }}</h4>
                 <a href="{% url 'detalle_inventario_guardado' historial.pk %}">
-                    Inventario guardado el {{ historial.fecha_guardado|date:"Y-m-d H:i:s" }}
+                    <h5>Ver aquí.</h5>
                 </a>
-                <p>Guardado por: {{ historial.usuario.username }} ({{ historial.usuario.email }})</p>
-                <p>Descripción: {{ inventario_guardado.descripcion }}</p>
+                <p><strong>Guardado el:</strong> {{ historial.fecha_guardado|date:"Y-m-d | H:i:s" }}</p>
+                <p><strong>Guardado por:</strong> {{ historial.usuario.username }} ({{ historial.usuario.email }})</p>
+                <p><strong>Descripción:</strong> {{ historial.descripcion }}</p>   
+
+                <a href="{% url 'eliminarInventarioGuardado' id_guardado=historial.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este inventario guardado?');">
+                    Eliminar
+                </a>
             </li>
         {% endfor %}
     </ul>

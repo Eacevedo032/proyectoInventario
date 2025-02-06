@@ -1,6 +1,6 @@
 {% extends "./base.html" %}
 
-{% block title %} Control de Inventario General {% endblock %}
+{% block title %} Visualización del Inventario General {% endblock %}
 
 {% block body %}
 
@@ -13,9 +13,75 @@
 </div>
 {% endif %}
 
+
 <div class="row">
     <div class="col-12">
         <h1 class="text-center" style="color: blue; padding-bottom: 1rem;">Inventario General</h1>
+        <div class="row mt-3 justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card text-center">
+                    <div class="card-header"><strong>Guardar Inventario</strong></div>
+                    <div class="card-body">
+                        <p>Esta opción guarda un estado del Inventario General al momento en que se indica.</p>
+
+                        <!-- Botón para abrir el modal -->
+                        <button type="button" class="btn btn-info btn-block" data-bs-toggle="modal"
+                            data-bs-target="#guardarInventarioModal">
+                            Guardar Inventario
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta 2 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card text-center">
+                    <div class="card-header"><strong>Ver Inventarios Guardados</strong></div>
+                    <div class="card-body">
+                        <p>Lista de Inventarios Generales Guardados y sus Detalles</p>
+                        <a href="{% url 'historial_inventario_general' %}" class="btn btn-info btn-block">Ver
+                            Inventarios Guardados</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para Guardar Inventario -->
+        <div class="modal fade" id="guardarInventarioModal" tabindex="-1" aria-labelledby="guardarInventarioModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="{% url 'guardar_inventario_general' %}">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="guardarInventarioModalLabel">
+                                Guardar Inventario General</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="nombre" class="form-label">Nombre descriptivo del
+                                    Inventario</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre"
+                                    placeholder="Ingrese el nombre que le dará al guardado" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="descripcion" class="form-label">Descripción
+                                    (opcional)</label>
+                                <textarea class="form-control" id="descripcion" name="descripcion" rows="3"
+                                    placeholder="Añade una descripción del guardado..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <br>
         <!-- Pestañas de Navegación -->
         <ul class="nav nav-tabs" id="inventoryTab" role="tablist">
             <!-- Pestaña "Ver Todo" -->
@@ -58,10 +124,11 @@
                 <h3 class="text-center" style="color: blue;">Categoría: {{ categoria.nombre_categoria }}</h3>
 
                 {% if categoria.subcategoria_set.exists %}
-                {% for subcategoria in categoria.subcategoria_set.all %}
-                <br>
+                {% for subcategoria in categoria.subcategoria_set.all %} <br>
                 <h4 style="color: green;">Subcategoría: {{ subcategoria.nombre }}</h4>
 
+
+                <!-- Tabla de ítems de la subcategoría -->
                 <div class="table-responsive py-2">
                     <table class="table table-striped">
                         <thead>
@@ -71,7 +138,7 @@
                                 <th>Cantidad Disponible</th>
                                 <th>Unidad Medida</th>
                                 <th>Descripción</th>
-                                <th>Vencimiento (año, mes, día)</th>
+                                <th>Vencimiento(año,mes,día)</th>
                                 <th>Lote</th>
                                 <th>Observaciones</th>
                                 <th>Num Serie</th>
@@ -86,7 +153,6 @@
                                 <th>Medidas</th>
                                 <th>Presentación</th>
                                 <th>Info Adicional</th>
-                                <th colspan="2">Opciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -100,48 +166,35 @@
                                 <td>{{ item.vencimiento|date:"Y-m-d"|default:"-" }}</td>
                                 <td>{{ item.lote|default:"-" }}</td>
                                 <td>{{ item.observaciones|default:"-" }}</td>
-
-                                <!-- Detalle Técnico -->
                                 <td>{{ item.detalle_tecnico.num_serie|default:"-" }}</td>
                                 <td>{{ item.detalle_tecnico.num_cat|default:"-" }}</td>
                                 <td>{{ item.detalle_tecnico.marca_caracteristica|default:"-" }}</td>
                                 <td>{{ item.detalle_tecnico.codigo|default:"-" }}</td>
                                 <td>{{ item.detalle_tecnico.articulo|default:"-" }}</td>
                                 <td>{{ item.detalle_tecnico.modelo|default:"-" }}</td>
-
-                                <!-- Datos Complementarios -->
                                 <td>{{ item.datos_complementarios.colores|default:"-" }}</td>
                                 <td>{{ item.datos_complementarios.capacidad|default:"-" }}</td>
                                 <td>{{ item.datos_complementarios.accesorios|default:"-" }}</td>
                                 <td>{{ item.datos_complementarios.medidas|default:"-" }}</td>
                                 <td>{{ item.datos_complementarios.presentacion|default:"-" }}</td>
                                 <td>{{ item.datos_complementarios.informacionAdicional|default:"-" }}</td>
-
-                                <!-- Opciones -->
-                                <td>
-                                    <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <a href="{% url 'editarInventario' item.id_inventario %}"
-                                            class="btn btn-primary btn-sm">Actualizar</a>
-                                        <a href="{% url 'eliminarInventario' item.id_inventario %}"
-                                            class="btn btn-danger btn-sm"
-                                            onclick="return doubleConfirm('¿Estás seguro de que deseas eliminar este ítem?');">Eliminar</a>
-                                    </div>
-                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="21" class="text-center">No hay ítems en esta subcategoría.</td>
+                                <td colspan="20" class="text-center">No hay ítems en esta subcategoría.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+
                 {% endfor %}
                 {% else %}
                 <p>No hay subcategorías en esta categoría.</p>
                 {% endif %}
                 {% empty %}
                 <p class="text-center" style="color: red;">Aún no se ha agregado nada al Inventario.</p>
+                <!--En el empty(en caso de no haber datos) se muestra el mensaje -->
                 {% endfor %}
             </div>
 
@@ -181,7 +234,6 @@
                                 <th>Medidas</th>
                                 <th>Presentación</th>
                                 <th>Info Adicional</th>
-                                <th colspan="2">Opciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -207,58 +259,25 @@
                                 <td>{{ item.datos_complementarios.medidas|default:"-" }}</td>
                                 <td>{{ item.datos_complementarios.presentacion|default:"-" }}</td>
                                 <td>{{ item.datos_complementarios.informacionAdicional|default:"-" }}</td>
-                                <td>
-                                    <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <!--d-flex justify-content-center esto pone centrado si es center, final si es end y start inicio-->
-                                        <a href="{% url 'editarInventario' item.id_inventario %}"
-                                            class="btn btn-primary btn-sm">Actualizar</a>
-
-                                        <a href="{% url 'eliminarInventario' item.id_inventario %}"
-                                            class="btn btn-danger btn-sm"
-                                            onclick="return doubleConfirm('¿Estás seguro de que deseas eliminar este ítem?');">Eliminar</a>
-
-                                        <!-- El siguiente es un script usando JS para validar doblemente la eliminación-->
-                                        <script>
-                                            function doubleConfirm() {
-                                                // Primera confirmación
-                                                var firstConfirm = confirm("¿Estás seguro de que deseas eliminar este Item del Inventario?");
-                                                if (firstConfirm) {
-                                                    // Segunda confirmación
-                                                    var secondConfirm = confirm("¡Esto es irreversible! ¿Estás seguro?");
-                                                    if (secondConfirm) {
-                                                        // Si ambos son confirmados, procedemos con la eliminación
-                                                        return true;
-                                                    } else {
-                                                        // Si la segunda confirmación es cancelada, no hace nada
-                                                        return false;
-                                                    }
-                                                } else {
-                                                    // Si la primera confirmación es cancelada, no hace nada
-                                                    return false;
-                                                }
-                                            }
-                                        </script>
-                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="20" class="text-center">No hay ítems en esta subcategoría.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="21" class="text-center">No hay ítems en esta subcategoría.</td>
-                </tr>
+
                 {% endfor %}
-                </tbody>
-                </table>
+                {% else %}
+                <p>No hay subcategorías en esta categoría.</p>
+                {% endif %}
+
             </div>
-
             {% endfor %}
-            {% else %}
-            <p>No hay subcategorías en esta categoría.</p>
-            {% endif %}
-
         </div>
-        {% endfor %}
     </div>
-</div>
 </div>
 
 <!-- Formato de CSS para la tabla -->
