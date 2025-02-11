@@ -48,12 +48,26 @@
                     </div>
 
                     <!-- Unidad de Medida -->
-                    <div class="form-group mb-3">
-                        <label for="unidad_medida">Unidad de Medida:</label>
-                        <input type="text" id="unidad_medida" name="unidad_medida"
-                            value="{{ inventario.unidad_medida }}" class="form-control"
-                        >
-                    </div>
+<div class="form-group mb-3">
+    <label for="unidad_medida">Unidad de Medida:</label>
+    <select name="unidad_medida" id="unidad_medida" class="form-control" required>
+        <option value="" selected disabled hidden>Seleccione una unidad</option>
+        <option value="unidades" {% if inventario.unidad_medida == "unidades" %}selected{% endif %}>unidades</option>
+        <option value="kg" {% if inventario.unidad_medida == "kg" %}selected{% endif %}>kg</option>
+        <option value="g" {% if inventario.unidad_medida == "g" %}selected{% endif %}>g</option>
+        <option value="mg" {% if inventario.unidad_medida == "mg" %}selected{% endif %}>mg</option>
+        <option value="lb" {% if inventario.unidad_medida == "lb" %}selected{% endif %}>lb</option>
+        <option value="L" {% if inventario.unidad_medida == "L" %}selected{% endif %}>L</option>
+        <option value="mL" {% if inventario.unidad_medida == "mL" %}selected{% endif %}>mL</option>
+        <option value="cm³" {% if inventario.unidad_medida == "cm³" %}selected{% endif %}>cm³</option>
+        <option value="m³" {% if inventario.unidad_medida == "m³" %}selected{% endif %}>m³</option>
+        <option value="gal" {% if inventario.unidad_medida == "gal" %}selected{% endif %}>gal</option>
+        <option value="mm" {% if inventario.unidad_medida == "mm" %}selected{% endif %}>mm</option>
+        <option value="cm" {% if inventario.unidad_medida == "cm" %}selected{% endif %}>cm</option>
+        <option value="m" {% if inventario.unidad_medida == "m" %}selected{% endif %}>m</option>
+        <option value="in" {% if inventario.unidad_medida == "in" %}selected{% endif %}>pulg</option>
+    </select>
+</div>
 
                     <!-- Descripción -->
                     <div class="form-group mb-3">

@@ -9,8 +9,9 @@ from django.contrib import messages  # Importa para mostrar mensajes en la inter
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 import json
-
 from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_unidades
+from decimal import Decimal
+from django.http import JsonResponse
 
 #views solo para opciones de administrador
 # Vista para administrar las solicitudes de laboratorio con ítems solicitados
@@ -47,27 +48,34 @@ def ver_items_solicitud(request, solicitud_id):
 @csrf_exempt
 def aprobar_solicitud(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id)
+
     if solicitud.estado == 'aprobada':
-        messages.error(request, 'Esta solicitud ya fue aprobada.')
-        return redirect('administracion_laboratorios')
+        return JsonResponse({
+            'success': False,
+            'message': 'Esta solicitud ya fue aprobada.'
+        })
 
     if request.method == 'POST':
         data = json.loads(request.body)
         descripcion = data.get('descripcion')
-        
+
         if not descripcion:
-            messages.error(request, 'La descripción es requerida.')
-            return redirect('administracion_laboratorios')
+            return JsonResponse({
+                'success': False,
+                'message': 'La descripción es requerida.'
+            })
 
         try:
             solicitud.full_clean()
         except ValidationError as e:
+            errors = []
             for field, error_list in e.message_dict.items():
                 for error in error_list:
-                    messages.error(request, error)
-                    solicitud.estado = 'rechazada'
-            solicitud.save()
-            return redirect('administracion_laboratorios')
+                    errors.append(error)
+            return JsonResponse({
+                'success': False,
+                'message': 'Errores de validación: ' + ', '.join(errors)
+            })
 
         conflictos = HorarioLaboratorio.objects.filter(
             laboratorio=solicitud.laboratorio,
@@ -77,64 +85,83 @@ def aprobar_solicitud(request, solicitud_id):
         )
 
         if conflictos.exists():
-            messages.error(request, 'El laboratorio ya está reservado en el horario solicitado.')
-            return redirect('administracion_laboratorios')
+            return JsonResponse({
+                'success': False,
+                'message': 'El laboratorio ya está reservado en el horario solicitado.'
+            })
 
         solicitud.estado = 'aprobada'
 
-        with transaction.atomic():
-            items_solicitados = UsoItemLaboratorio.objects.filter(solicitud=solicitud)
+        try:
+            with transaction.atomic():
+                items_solicitados = UsoItemLaboratorio.objects.filter(solicitud=solicitud)
 
-            for item in items_solicitados:
-                inventario_item = item.inventario
-                unidad_inventario = inventario_item.unidad_medida
-                unidad_solicitada = item.unidad_medida
-                cantidad_anterior = inventario_item.cantidad_disponible
+                for item in items_solicitados:
+                    inventario_item = item.inventario
+                    unidad_inventario = inventario_item.unidad_medida
+                    unidad_solicitada = item.unidad_medida
+                    cantidad_anterior = Decimal(str(inventario_item.cantidad_disponible))
 
-                if unidad_inventario != unidad_solicitada:
-                    try:
-                        cantidad_solicitada_convertida = convertir_unidades(
-                            Decimal(item.cantidad_utilizada),
-                            unidad_origen=unidad_solicitada,
-                            unidad_destino=unidad_inventario,
-                            densidad=inventario_item.densidad if hasattr(inventario_item, 'densidad') else None
+                    if unidad_inventario != unidad_solicitada:
+                        try:
+                            cantidad_solicitada_convertida = convertir_unidades(
+                                Decimal(str(item.cantidad_utilizada)),
+                                unidad_origen=unidad_solicitada,
+                                unidad_destino=unidad_inventario,
+                            )
+                        except ValueError as e:
+                            return JsonResponse({
+                                'success': False,
+                                'message': f"Error al convertir unidades: {str(e)}"
+                            })
+                    else:
+                        cantidad_solicitada_convertida = Decimal(str(item.cantidad_utilizada))
+
+                    if cantidad_anterior >= cantidad_solicitada_convertida:
+                        inventario_item.cantidad_disponible = cantidad_anterior - cantidad_solicitada_convertida
+                        inventario_item.save()
+
+                        HistorialInventario.objects.create(
+                            inventario=inventario_item,
+                            cantidad_cambiada=cantidad_solicitada_convertida,
+                            unidad_medida=item.unidad_medida,
+                            cantidad_anterior=cantidad_anterior,
+                            fecha_cambio=timezone.now(),
+                            tipo_cambio='salida',
+                            modificado_por=request.user,
+                            descripcion=descripcion
                         )
-                    except ValueError as e:
-                        messages.error(request, f"Error al convertir unidades: {str(e)}")
-                        return redirect('administracion_laboratorios')
-                else:
-                    cantidad_solicitada_convertida = Decimal(item.cantidad_utilizada)
+                    else:
+                        return JsonResponse({
+                            'success': False,
+                            'message': f"No hay suficiente cantidad de {inventario_item.nombre} en inventario."
+                        })
 
-                if Decimal(inventario_item.cantidad_disponible) >= cantidad_solicitada_convertida:
-                    inventario_item.cantidad_disponible -= cantidad_solicitada_convertida
-                    inventario_item.save()
+                HorarioLaboratorio.objects.create(
+                    laboratorio=solicitud.laboratorio,
+                    fecha_reserva=solicitud.fecha_reserva,
+                    hora_inicio=solicitud.hora_inicio,
+                    hora_fin=solicitud.hora_fin,
+                )
 
-                    HistorialInventario.objects.create(
-                        inventario=inventario_item,
-                        cantidad_cambiada=cantidad_solicitada_convertida,
-                        unidad_medida=item.unidad_medida,
-                        cantidad_anterior=cantidad_anterior,
-                        fecha_cambio=timezone.now(),
-                        tipo_cambio='salida',
-                        modificado_por=request.user,
-                        descripcion=descripcion
-                    )
-                else:
-                    messages.error(request, f"No hay suficiente cantidad de {inventario_item.nombre} en inventario.")
-                    return redirect('administracion_laboratorios')
+                solicitud.save()
+                messages.success(request, 'La solicitud ha sido aprobada exitosamente.')
 
-            HorarioLaboratorio.objects.create(
-                laboratorio=solicitud.laboratorio,
-                fecha_reserva=solicitud.fecha_reserva,
-                hora_inicio=solicitud.hora_inicio,
-                hora_fin=solicitud.hora_fin,
-            )
+                return JsonResponse({
+                    'success': True,
+                    'message': 'La solicitud ha sido aprobada exitosamente.'
+                })
 
-            solicitud.save()
-            messages.success(request, 'La solicitud ha sido aprobada exitosamente.')
-        return redirect('administracion_laboratorios')
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f"Error inesperado al aprobar la solicitud: {str(e)}"
+            })
 
-    return redirect('administracion_laboratorios')
+    return JsonResponse({
+        'success': False,
+        'message': 'Método no permitido.'
+    })
 
 # Vista para rechazar solicitudes
 def rechazar_solicitud(request, solicitud_id):

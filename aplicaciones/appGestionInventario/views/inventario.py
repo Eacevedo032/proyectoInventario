@@ -358,7 +358,7 @@ def guardar_inventario_general(request):
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def historial_inventario_general(request):
-    historiales = GuardadoInventarioGeneral.objects.all().order_by('-fecha_guardado')
+    historiales = GuardadoInventarioGeneral.objects.all().order_by('-fecha_guardado') #Las fechas más recientes se muestran primero
     return render(request, "historial_inventario_general.html", {"historiales": historiales})
 
 @login_required

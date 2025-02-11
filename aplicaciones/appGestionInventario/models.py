@@ -134,7 +134,7 @@ class InventarioGuardado(models.Model):
     subcategoria_guardada = models.ForeignKey(SubCategoriaGuardada, on_delete=models.CASCADE, related_name='inventarios_guardados')
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True, null=True)
-    cantidad_disponible = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cantidad_disponible = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     unidad_medida = models.CharField(max_length=50, null=True, blank=True)
     lote = models.CharField(max_length=36, blank=True, null=True)
     vencimiento = models.DateField(blank=True, null=True)
@@ -303,7 +303,7 @@ class HistorialInventario(models.Model):
         return self.cantidad_anterior  # En caso de error
 
     def __str__(self):
-        return f"{self.item.nombre} - {self.tipo_cambio} - {self.cantidad_cambiada} - {self.fecha_cambio}"
+        return f"{self.inventario.nombre} - {self.tipo_cambio} - {self.cantidad_cambiada} - {self.fecha_cambio}"
 
 # Tabla Reportes
 class ReporteUsoLaboratorio(models.Model):

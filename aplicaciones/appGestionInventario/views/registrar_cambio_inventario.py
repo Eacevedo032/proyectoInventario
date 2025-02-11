@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.models import User
 from decimal import Decimal
+from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_unidades
 
 @login_required
 def registrar_cambio_inventario(request):
@@ -43,12 +44,28 @@ def registrar_cambio_inventario(request):
         inventario_item = get_object_or_404(Inventario, id_inventario=inventario_id)
         cantidad_anterior = inventario_item.cantidad_disponible
 
+        # Verifica la unidad de medida base del inventario
+        unidad_base = inventario_item.unidad_medida  
+
+        # Si la unidad ingresada y la unidad base son "unidades", no es necesario convertir
+        if unidad_medida == "unidades" and unidad_base == "unidades":
+            cantidad_convertida = cantidad_cambiada  # Mantiene la misma cantidad sin conversión, la asigno para las conversiones
+        else:
+            try:
+                print(f"Unidad ingresada: {unidad_medida}, Unidad base en inventario: {unidad_base}")
+                print(f"Intentando convertir {cantidad_cambiada} de {unidad_medida} a {unidad_base}")
+        
+                cantidad_convertida = convertir_unidades(cantidad_cambiada, unidad_medida, unidad_base)
+            except ValueError as e:
+                messages.error(request, f"Error en la conversión de unidades: {str(e)}")
+                return redirect("registrar_cambio_inventario")
+
         with transaction.atomic():
             if tipo_cambio == "entrada":
-                inventario_item.cantidad_disponible += cantidad_cambiada
+                inventario_item.cantidad_disponible += cantidad_convertida  # cantidad_convertida para operaciones de conversión
             elif tipo_cambio == "salida":
-                if inventario_item.cantidad_disponible >= cantidad_cambiada:
-                    inventario_item.cantidad_disponible -= cantidad_cambiada
+                if inventario_item.cantidad_disponible >= cantidad_convertida:  
+                    inventario_item.cantidad_disponible -= cantidad_convertida  
                 else:
                     messages.error(request, f"No hay suficiente cantidad de {inventario_item.nombre} en inventario.")
                     return redirect("registrar_cambio_inventario")
@@ -57,8 +74,8 @@ def registrar_cambio_inventario(request):
             HistorialInventario.objects.create(
                 inventario=inventario_item,
                 cantidad_anterior=cantidad_anterior,
-                cantidad_cambiada=cantidad_cambiada,
-                unidad_medida=unidad_medida,
+                cantidad_cambiada=cantidad_convertida,  # Guarda la cantidad ya convertida
+                unidad_medida=unidad_base,  # Guarda en la unidad base
                 fecha_cambio=timezone.now().date(),
                 tipo_cambio=tipo_cambio,
                 modificado_por=request.user,
@@ -73,4 +90,3 @@ def registrar_cambio_inventario(request):
         'historial': historial,
         'usuarios': usuarios,
     })
-

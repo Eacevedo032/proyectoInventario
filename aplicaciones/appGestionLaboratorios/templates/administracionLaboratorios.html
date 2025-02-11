@@ -3,6 +3,16 @@
 {% block title %}Gestión de Reservaciones{% endblock %}
 {% block body %}
 
+{% if messages %}
+<div class="alert-container">
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 <style>
     .btn-disabled {
         background-color: grey !important;
@@ -13,15 +23,6 @@
 </style>
 
 <div class="container my-5">
-
-    {% if messages %}
-    <div class="alert alert-dismissible alert-success">
-        {% for message in messages %}
-        <strong class="text-dark">{{ message }}</strong>
-        {% endfor %}
-    </div>
-    {% endif %}
-
     <h1 class="text-center mb-4">Administración de Solicitudes de Laboratorios</h1>
 
     <div class="d-flex justify-content-start mb-4">
@@ -65,12 +66,28 @@
                         <td>
                             <div class="btn-group" role="group" aria-label="Acciones de solicitud">
                                 <a href="{% url 'ver_items_solicitud' solicitud.id %}" class="btn btn-info btn-sm me-2">Ver Ítems</a>
-                                    <a href="javascript:abrirModal('{{ solicitud.id }}');" class="btn btn-primary btn-sm me-2">Aprobar</a>
-                                <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-sm me-2 btn-danger 
-                                       {% if solicitud.estado == 'aprobada' %} btn-disabled {% endif %}">Rechazar</a>
-                                <a href="{% url 'solicitud_pendiente' solicitud.id %}" class="btn btn-sm btn-warning
-                                       {% if solicitud.estado == 'aprobada' %} btn-disabled {% endif %}">Pendiente</a>
-                            </div>
+                            
+                                <!-- Botón Aprobar: Se deshabilita si la solicitud ya está aprobada o rechazada -->
+                                <a href="javascript:abrirModal('{{ solicitud.id }}');" 
+                                   class="btn btn-primary btn-sm me-2 
+                                          {% if solicitud.estado == 'aprobada' or solicitud.estado == 'rechazada' %} btn-disabled {% endif %}">
+                                    Aprobar
+                                </a>
+                            
+                                <!-- Botón Rechazar: Se deshabilita si la solicitud ya está aprobada o rechazada -->
+                                <a href="{% url 'rechazar_solicitud' solicitud.id %}" 
+                                   class="btn btn-sm me-2 btn-danger 
+                                          {% if solicitud.estado == 'aprobada' or solicitud.estado == 'rechazada' %} btn-disabled {% endif %}">
+                                    Rechazar
+                                </a>
+                            
+                                <!-- Botón Pendiente: Se deshabilita si la solicitud ya está aprobada o rechazada -->
+                                <a href="{% url 'solicitud_pendiente' solicitud.id %}" 
+                                   class="btn btn-sm btn-warning 
+                                          {% if solicitud.estado == 'aprobada' or solicitud.estado == 'rechazada' %} btn-disabled {% endif %}">
+                                    Pendiente
+                                </a>
+                            </div>                            
                         </td>
                     </tr>
                     {% endif %}
@@ -98,7 +115,7 @@
             <div class="modal-body">
                 <form id="descripcionForm">
                     <div class="form-group">
-                        <label for="descripcion">Descripción del Cambio en inventario:</label>
+                        <label for="descripcion">Descripción de la aprobación de uso de ítems:</label>
                         <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required></textarea>
                     </div>
                     <button type="button" class="btn btn-primary" id="guardarDescripcion">Guardar Descripción</button>
@@ -115,27 +132,34 @@
     }
 
     document.getElementById('guardarDescripcion').addEventListener('click', function() {
-        let descripcion = document.getElementById('descripcion').value;
-        if (descripcion) {
-            fetch("{% url 'aprobar_solicitud' 0 %}".replace('0', solicitudId), {
-
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}',
-                },
-                body: JSON.stringify({ descripcion: descripcion }),
-            }).then(response => {
-                if (response.ok) {
-                    window.location.href = '{% url "administracion_laboratorios" %}';
-                } else {
-                    alert('Error al guardar la descripción');
-                }
-            });
-        } else {
-            alert('Por favor, ingrese una descripción.');
-        }
-    });
+    let descripcion = document.getElementById('descripcion').value;
+    if (descripcion) {
+        fetch("{% url 'aprobar_solicitud' 0 %}".replace('0', solicitudId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: JSON.stringify({ descripcion: descripcion }),
+        })
+        .then(response => response.json())  // Convertir la respuesta a JSON
+        .then(data => {
+            if (data.success) {
+                // Redirigir a la página de administración
+                window.location.href = '{% url "administracion_laboratorios" %}';
+            } else {
+                // Mostrar mensaje de error si la aprobación falló
+                alert(data.message || 'Error al aprobar la solicitud');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error de conexión');
+        });
+    } else {
+        alert('Por favor, ingrese una descripción.');
+    }
+});
 </script>
 
 {% endblock %}
