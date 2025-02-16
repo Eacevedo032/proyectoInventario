@@ -1,0 +1,46 @@
+<!-- plantilla para usuario sin privilegios -->
+{% extends "./base.html" %}
+{% block title %}Reservación de Laboratorio{% endblock %}
+{% block body %}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Editar Recurso</h2>
+
+    {% if messages %}
+    <ul class="list-group mb-3">
+        {% for message in messages %}
+        <li class="list-group-item {% if message.tags %} {{ message.tags }} {% endif %}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="cantidad_utilizada" class="form-label">Cantidad Utilizada:</label>
+            <input type="text" id="cantidad_utilizada" name="cantidad_utilizada" class="form-control" value="{{ uso_item.cantidad_utilizada }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="unidad_medida" class="form-label">Unidad de Medida:</label>
+            <input type="text" id="unidad_medida" name="unidad_medida" class="form-control" value="{{ uso_item.unidad_medida }}">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Actualizar</button>
+    </form>
+
+    <a href="{% url 'solicitar_recursos' %}" class="btn btn-secondary mt-3">Volver a solicitudes de recursos</a>
+</div>
+
+<script>
+    function replaceCommaWithDot() {
+        var cantidadInput = document.getElementById('cantidad_utilizada');
+        cantidadInput.value = cantidadInput.value.replace(',', '.');
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        var form = document.querySelector('form');
+        form.addEventListener('submit', replaceCommaWithDot);
+    });
+</script>
+{% endblock %}

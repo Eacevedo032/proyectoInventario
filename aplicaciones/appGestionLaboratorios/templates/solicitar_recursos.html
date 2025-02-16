@@ -12,7 +12,6 @@
 {% endif %}
 
 <div class="container mt-5 d-flex justify-content-center">
-
     <div class="card" style="width: 100%; max-width: 800px;">
         <div class="card-header text-center">
             <h5 class="mt-4">Solicitar Ítems del Inventario</h5>
@@ -105,42 +104,134 @@
     </div>
 </div>
 
-<h2 class="mt-5">Mis Solicitudes De Recursos</h2>
-
-{% for laboratorio, solicitudes in solicitudes_por_laboratorio.items %}
-<div class="card my-3">
-    <div class="card-header">
-        <h5>{{ laboratorio }}</h5>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Ítem</th>
-                        <th>Laboratorio</th>
-                        <th>Cantidad a utilizar</th>
-                        <th>Fecha de uso</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for solicitud in solicitudes %}
-                    <tr>
-                        <td>{{ solicitud.inventario.nombre }}</td>
-                        <td>{{ solicitud.solicitud.laboratorio }}</td>
-                        <td>{{ solicitud.cantidad_utilizada }} {{ solicitud.unidad_medida}}</td>
-                        <td>{{ solicitud.fecha_uso }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4">No tienes solicitudes de reservación para este laboratorio.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="container mt-5">
+    <h2 class="mt-5">Mis Solicitudes De Recursos</h2>
+    <!-- Resumen de solicitudes -->
+    <div class="row mb-4">
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Solicitudes pendientes</h5>
+                    <p class="card-text">{{ solicitudes_pendientes }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Solicitudes aprobadas</h5>
+                    <p class="card-text">{{ solicitudes_aprobadas }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Solicitudes rechazadas</h5>
+                    <p class="card-text">{{ solicitudes_rechazadas }}</p>
+                </div>
+            </div>
         </div>
     </div>
-</div>
-{% endfor %}
 
+    <!-- Filtros avanzados -->
+    <form method="get" action="{% url 'solicitar_recursos' %}" class="mb-4">
+        <div class="row g-3">
+            <div class="col-12 col-md-4">
+                <label for="fecha">Fecha:</label>
+                <input type="date" id="fecha" name="fecha" class="form-control" value="{{ request.GET.fecha }}">
+            </div>
+            <div class="col-12 col-md-4">
+                <label for="laboratorio">Laboratorio:</label>
+                <select id="laboratorio" name="laboratorio" class="form-control">
+                    <option value="">Todos</option>
+                    {% for lab in laboratorios %}
+                    <option value="{{ lab.laboratorio }}" {% if request.GET.laboratorio == lab.laboratorio %}selected{% endif %}>
+                        {{ lab.laboratorio }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                <a href="{% url 'solicitar_recursos' %}" class="btn btn-secondary w-100 mt-2">Limpiar filtros</a>
+            </div>
+        </div>
+    </form>
+
+<!-- Botón para mostrar/ocultar historial completo -->
+<div class="text-center mb-4">
+    <a href="?page={{ request.GET.page }}&mostrar_historial={% if request.GET.mostrar_historial == 'true' %}false{% else %}true{% endif %}&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}" class="btn btn-info">
+        {% if request.GET.mostrar_historial == 'true' %}
+            Ocultar Historial Completo
+        {% else %}
+            Mostrar Historial Completo
+        {% endif %}
+    </a>
+</div>
+
+<!-- Tabla de solicitudes -->
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Ítem</th>
+                <th>Laboratorio</th>
+                <th>Cantidad a utilizar</th>
+                <th>Fecha de uso</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for solicitud in page_obj %}
+            <tr>
+                <td>{{ solicitud.inventario.nombre }}</td>
+                <td>{{ solicitud.solicitud.laboratorio }}</td>
+                <td>{{ solicitud.cantidad_utilizada }} {{ solicitud.unidad_medida }}</td>
+                <td>{{ solicitud.fecha_uso|date:"Y-m-d" }}</td>
+                <td>
+                    {% if solicitud.solicitud.estado == 'pendiente' %}
+                    <a href="{% url 'editar_recurso' solicitud.id %}" class="btn btn-warning">Editar</a>
+                    <a href="{% url 'eliminar_recurso' solicitud.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
+                    {% elif solicitud.solicitud.estado == 'rechazada' %}
+                    <a href="{% url 'eliminar_recurso' solicitud.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
+                    {% else %}
+                    <button class="btn btn-secondary" disabled>Editar</button>
+                    <button class="btn btn-danger" disabled>Eliminar</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No tienes solicitudes de reservación.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Paginación -->
+<nav aria-label="Paginación">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Primera</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Anterior</a>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+            <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Siguiente</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Última</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
 {% endblock %}

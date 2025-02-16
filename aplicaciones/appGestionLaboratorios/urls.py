@@ -4,10 +4,13 @@ from aplicaciones.appGestionLaboratorios.views import views
 urlpatterns = [
     # URLs para formulario y tabla de laboratorio
     path('reservar_laboratorio/', views.reservar_laboratorio, name='reservar_laboratorio'),
-     path('eliminar_solicitud/<int:solicitud_id>/', views.eliminar_solicitud, name='eliminar_solicitud'),
+    path('editar_laboratorio/<int:solicitud_id>/', views.editar_laboratorio, name='editar_laboratorio'),
+    path('eliminar_solicitud/<int:solicitud_id>/', views.eliminar_solicitud, name='eliminar_solicitud'),
 
     # URLs para formulario y tabla de recursos
     path('solicitar_recursos/', views.solicitar_recursos, name='solicitar_recursos'),
+    path('editar_recurso/<int:uso_id>/', views.editar_recurso, name='editar_recurso'),
+    path('eliminar_recurso/<int:uso_id>/', views.eliminar_recurso, name='eliminar_recurso'),
     
     #Urls para llamar a las categorias a las que pertenece cada recurso del inventario
     path('obtener_subcategorias/<int:categoria_id>/', views.obtener_subcategorias, name='obtener_subcategorias'),
@@ -19,7 +22,7 @@ urlpatterns = [
     path('aprobar_solicitud/<int:solicitud_id>/', views.aprobar_solicitud, name='aprobar_solicitud'),
     path('rechazar_solicitud/<int:solicitud_id>/', views.rechazar_solicitud, name='rechazar_solicitud'),
     path('solicitud_pendiente/<int:solicitud_id>/', views.solicitud_pendiente, name='solicitud_pendiente'),
-
+    
     #Urls para horarios de laboratorio
     path('listar_horarios/', views.listar_horarios, name='listar_horarios'),
     path('editar_horario/<int:horario_id>/', views.editar_horario, name='editar_horario'),

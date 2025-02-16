@@ -1,4 +1,3 @@
-<!-- plantilla para usuario sin privilegios -->
 {% extends "./base.html" %}
 {% block title %}Reservación de Laboratorio{% endblock %}
 {% block body %}
@@ -12,7 +11,7 @@
         </div>
     {% endif %}
 
-    <h1 class="text-center mb-4">Gestión de Solicitudes</h1>
+    <h1 class="text-center mb-4">Gestión de Solicitudes de laboratorio</h1>
 
     <!-- Formulario de reservación de laboratorio -->
     <form method="post">
@@ -40,61 +39,151 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="card-footer text-center">
-            <button type="submit" class="btn btn-primary">Solicitar Reservación</button>
+            <div class="card-footer text-center">
+                <button type="submit" class="btn btn-primary">Solicitar Reservación</button>
+            </div>
         </div>
     </form>
 
-<h2>Mis Solicitudes de Reservación</h2>
-<div class="table-responsive">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Laboratorio</th>
-                <th>Fecha de Solicitud</th>
-                <th>Hora de Inicio</th>
-                <th>Hora de Fin</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for solicitud in solicitudes %}
-            <tr>
-                <td>{{ solicitud.laboratorio }}</td>
-                <td>{{ solicitud.fecha_reserva }}</td>
-                <td>{{ solicitud.hora_inicio }}</td>
-                <td>{{ solicitud.hora_fin }}</td>
-                <td>
-                    <span class="badge 
-                    {% if solicitud.estado == 'aprobada' %}bg-success
-                    {% elif solicitud.estado == 'rechazada' %}bg-danger
-                    {% elif solicitud.estado == 'pendiente' %}bg-warning
-                    {% endif %}">
-                    {{ solicitud.estado }}
-                    </span>
-                </td>
-                <td>
-                    {% if solicitud.estado == 'aprobada' %}
-                        N/A
-                    {% else %}
-                        <form method="post" action="{% url 'eliminar_solicitud' solicitud.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                        </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6">No tienes solicitudes de reservación.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Resumen de solicitudes -->
+    <div class="row mb-4">
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Solicitudes Pendientes</h5>
+                    <p class="card-text">{{ solicitudes_pendientes }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Solicitudes Aprobadas</h5>
+                    <p class="card-text">{{ solicitudes_aprobadas }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Solicitudes Rechazadas</h5>
+                    <p class="card-text">{{ solicitudes_rechazadas }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros avanzados -->
+    <form method="get" action="{% url 'reservar_laboratorio' %}" class="mb-4">
+        <div class="row g-3">
+            <div class="col-12 col-md-4">
+                <label for="laboratorio">Laboratorio:</label>
+                <select id="laboratorio" name="laboratorio" class="form-control">
+                    <option value="">Todos</option>
+                    {% for lab in laboratorios %}
+                    <option value="{{ lab.laboratorio }}" {% if request.GET.laboratorio == lab.laboratorio %}selected{% endif %}>
+                        {{ lab.laboratorio }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-4">
+                <label for="fecha">Fecha:</label>
+                <input type="date" id="fecha" name="fecha" class="form-control" value="{{ request.GET.fecha }}">
+            </div>
+            <div class="col-12 col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                <a href="{% url 'reservar_laboratorio' %}" class="btn btn-secondary w-100 mt-2">Limpiar filtros</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Botón para mostrar/ocultar historial -->
+    <div class="text-center mb-4">
+        <a href="?page={{ request.GET.page }}&mostrar_historial={% if request.GET.mostrar_historial == 'true' %}false{% else %}true{% endif %}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}"
+           class="btn btn-info">
+            {% if request.GET.mostrar_historial == 'true' %}
+                Ocultar Historial Antiguo
+            {% else %}
+                Mostrar Historial Completo
+            {% endif %}
+        </a>
+    </div>
+
+    <!-- Tabla de solicitudes -->
+    <h2>Mis Solicitudes de Reservación</h2>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Laboratorio</th>
+                    <th>Fecha de Solicitud</th>
+                    <th>Hora de Inicio</th>
+                    <th>Hora de Fin</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for solicitud in page_obj %}
+                <tr>
+                    <td>{{ solicitud.laboratorio }}</td>
+                    <td>{{ solicitud.fecha_reserva }}</td>
+                    <td>{{ solicitud.hora_inicio }}</td>
+                    <td>{{ solicitud.hora_fin }}</td>
+                    <td>
+                        <span class="badge 
+                        {% if solicitud.estado == 'aprobada' %}bg-success
+                        {% elif solicitud.estado == 'rechazada' %}bg-danger
+                        {% elif solicitud.estado == 'pendiente' %}bg-warning
+                        {% endif %}">
+                        {{ solicitud.estado }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if solicitud.estado == 'pendiente' %}
+                        <a href="{% url 'editar_laboratorio' solicitud.id %}" class="btn btn-warning">Editar</a>
+                        <a href="{% url 'eliminar_solicitud' solicitud.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
+                        {% elif solicitud.estado == 'rechazada' %}
+                        <a href="{% url 'eliminar_solicitud' solicitud.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
+                        {% else %}
+                        <button class="btn btn-secondary" disabled>Editar</button>
+                        <button class="btn btn-danger" disabled>Eliminar</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">No tienes solicitudes de reservación.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Primera</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Anterior</a>
+            </li>
+            {% endif %}
+            <li class="page-item disabled">
+                <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Siguiente</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Última</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
 </div>
-
 {% endblock %}
-

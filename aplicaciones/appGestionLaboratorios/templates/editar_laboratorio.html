@@ -1,0 +1,41 @@
+{% extends "./base.html" %}
+{% block title %}Editar Reserva de Laboratorio{% endblock %}
+{% block body %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Editar Reserva de Laboratorio</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="row justify-content-center">
+                    <div class="form-group col-md-4 mb-3">
+                        <label for="laboratorio">Laboratorio:</label>
+                        <select id="laboratorio" name="laboratorio" class="form-control" required>
+                            <option value="">Selecciona un laboratorio</option>
+                            <option value="Laboratorio Planta Alta" {% if solicitud.laboratorio == "Laboratorio Planta Alta" %}selected{% endif %}>Laboratorio Planta Alta</option>
+                            <option value="Laboratorio Planta Baja" {% if solicitud.laboratorio == "Laboratorio Planta Baja" %}selected{% endif %}>Laboratorio Planta Baja</option>
+                            <option value="Laboratorio Microbial" {% if solicitud.laboratorio == "Laboratorio Microbial" %}selected{% endif %}>Laboratorio Microbial</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 mb-3">
+                        <label for="fecha_reserva">Fecha de Reserva:</label>
+                        <input type="date" id="fecha_reserva" name="fecha_reserva" class="form-control" value="{{ solicitud.fecha_reserva|date:'Y-m-d' }}" required>
+                    </div>
+                    <div class="form-group col-md-4 mb-3">
+                        <label for="hora_inicio">Hora de Inicio:</label>
+                        <input type="time" id="hora_inicio" name="hora_inicio" class="form-control" value="{{ solicitud.hora_inicio|time:'H:i' }}" required>
+                    </div>
+                    <div class="form-group col-md-4 mb-3">
+                        <label for="hora_fin">Hora de Fin:</label>
+                        <input type="time" id="hora_fin" name="hora_fin" class="form-control" value="{{ solicitud.hora_fin|time:'H:i' }}" required>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                <a href="{% url 'reservar_laboratorio' %}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
