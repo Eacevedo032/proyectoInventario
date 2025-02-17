@@ -20,16 +20,65 @@
         pointer-events: none;
         color: white !important;
     }
+    .badge {
+        font-size: 0.9em;
+        padding: 0.5em 0.75em;
+    }
+    .bg-success { background-color: #28a745; }
+    .bg-warning { background-color: #ffc107; }
+    .bg-danger { background-color: #dc3545; }
 </style>
 
 <div class="container my-5">
     <h1 class="text-center mb-4">Administración de Solicitudes de Laboratorios</h1>
 
-    <div class="d-flex justify-content-start mb-4">
+     <!-- Botones de Acción -->
+     <div class="d-flex justify-content-start mb-4">
         <a href="{% url 'agregar_horario' %}" class="btn btn-success btn-sm me-2">Añadir Horario</a>
         <a href="{% url 'listar_horarios' %}" class="btn btn-success btn-sm ms-2">Ver Horarios</a>
     </div>
 
+    <!-- Filtros y Búsqueda -->
+    <form method="GET" class="mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <select name="estado" class="form-control">
+                    <option value="">Todos los Estados</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="aprobada">Aprobada</option>
+                    <option value="rechazada">Rechazada</option>
+                </select>
+            </div>
+            <!-- Filtro por laboratorio -->
+            <div class="col-md-3">
+                <select name="laboratorio" class="form-control">
+                    <option value="">Todos los Laboratorios</option>
+                    <option value="Planta Baja">Laboratorio Planta Baja</option>
+                    <option value="Planta Alta">Laboratorio Planta Alta</option>
+                    <option value="Microbial">Laboratorio Microbial</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="usuario" class="form-control" placeholder="Filtrar por usuario">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Botón para mostrar/ocultar historial completo -->
+    <div class="text-center mb-4">
+        <a href="?page={{ request.GET.page }}&mostrar_historial={% if request.GET.mostrar_historial == 'true' %}false{% else %}true{% endif %}&estado={{ request.GET.estado }}&laboratorio={{ request.GET.laboratorio }}&usuario={{ request.GET.usuario }}" class="btn btn-info">
+            {% if request.GET.mostrar_historial == 'true' %}
+                Ocultar Historial Completo
+            {% else %}
+                Mostrar Historial Completo
+            {% endif %}
+        </a>
+    </div>
+
+    <!-- Tabla de Solicitudes -->
     {% for usuario, solicitudes in solicitudes_por_usuario.items %}
     <div class="card mb-4">
         <div class="card-header">
@@ -40,6 +89,7 @@
             <table class="table table-bordered table-hover">
                 <thead class="thead-dark">
                     <tr>
+                        <th><input type="checkbox" id="select-all"></th>
                         <th scope="col">ID</th>
                         <th scope="col">Usuario ID</th>
                         <th scope="col">Fecha de Solicitud</th>
@@ -53,8 +103,8 @@
                 </thead>
                 <tbody>
                     {% for solicitud in solicitudes %}
-                    {% if solicitud.estado == 'aprobada' or solicitud.estado == 'pendiente' %}
                     <tr>
+                        <td><input type="checkbox" name="solicitud" value="{{ solicitud.id }}"></td>
                         <td>{{ solicitud.id }}</td>
                         <td>{{ solicitud.usuario_id }}</td>
                         <td>{{ solicitud.fecha_solicitud }}</td>
@@ -62,35 +112,35 @@
                         <td>{{ solicitud.fecha_reserva }}</td>
                         <td>{{ solicitud.hora_inicio }}</td>
                         <td>{{ solicitud.hora_fin }}</td>
-                        <td>{{ solicitud.estado }}</td>
                         <td>
-                            <div class="btn-group" role="group" aria-label="Acciones de solicitud">
+                            <span class="badge 
+                                {% if solicitud.estado == 'aprobada' %}bg-success
+                                {% elif solicitud.estado == 'pendiente' %}bg-warning
+                                {% else %}bg-danger{% endif %}">
+                                {{ solicitud.estado }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
                                 <a href="{% url 'ver_items_solicitud' solicitud.id %}" class="btn btn-info btn-sm me-2">Ver Ítems</a>
-                            
-                                <!-- Botón Aprobar: Se deshabilita si la solicitud ya está aprobada o rechazada -->
                                 <a href="javascript:abrirModal('{{ solicitud.id }}');" 
                                    class="btn btn-primary btn-sm me-2 
-                                          {% if solicitud.estado == 'aprobada' or solicitud.estado == 'rechazada' %} btn-disabled {% endif %}">
+                                          {% if solicitud.estado != 'pendiente' %} btn-disabled {% endif %}">
                                     Aprobar
                                 </a>
-                            
-                                <!-- Botón Rechazar: Se deshabilita si la solicitud ya está aprobada o rechazada -->
                                 <a href="{% url 'rechazar_solicitud' solicitud.id %}" 
-                                   class="btn btn-sm me-2 btn-danger 
-                                          {% if solicitud.estado == 'aprobada' or solicitud.estado == 'rechazada' %} btn-disabled {% endif %}">
+                                   class="btn btn-danger btn-sm me-2 
+                                          {% if solicitud.estado != 'pendiente' %} btn-disabled {% endif %}">
                                     Rechazar
                                 </a>
-                            
-                                <!-- Botón Pendiente: Se deshabilita si la solicitud ya está aprobada o rechazada -->
                                 <a href="{% url 'solicitud_pendiente' solicitud.id %}" 
-                                   class="btn btn-sm btn-warning 
-                                          {% if solicitud.estado == 'aprobada' or solicitud.estado == 'rechazada' %} btn-disabled {% endif %}">
+                                   class="btn btn-warning btn-sm 
+                                          {% if solicitud.estado != 'pendiente' %} btn-disabled {% endif %}">
                                     Pendiente
                                 </a>
-                            </div>                            
+                            </div>                                                                            
                         </td>
                     </tr>
-                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
@@ -100,6 +150,31 @@
         </div>
     </div>
     {% endfor %}
+
+    <!-- Paginación -->
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Primera</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Anterior</a>
+            </li>
+            {% endif %}
+            <li class="page-item disabled">
+                <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Siguiente</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Última</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>    
 </div>
 
 <!-- Modal para Descripción -->
