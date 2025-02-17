@@ -38,10 +38,12 @@
                 <td>
                     {% if item.solicitud.estado == 'pendiente' %}
                     <a href="{% url 'editar_recurso' item.id %}" class="btn btn-warning">Editar</a>
+                    <a href="{% url 'eliminar_recurso' item.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro de eliminar este ítem?');">Eliminar</a>
                     {% else %}
                     <button class="btn btn-secondary" disabled>Editar</button>
+                    <button class="btn btn-secondary" disabled>Eliminar</button>
                     {% endif %}
-                </td>
+                </td>                
             </tr>
             {% empty %}
             <tr>

@@ -35,14 +35,19 @@ def solicitar_recursos(request):
             messages.error(request, "La cantidad ingresada no es válida.")
             return redirect('solicitar_recursos')
 
-        # Hacemos la conversión de la cantidad a la unidad del inventario
+        # Hacemos la conversión de la cantidad a la unidad del inventario para que tenga lógica
         try:
-            cantidad_convertida = convertir_unidades(cantidad_utilizada_decimal, unidad_medida, inventario.unidad_medida)
+            # Si la unidad es "unidades"
+            if unidad_medida == "unidades":
+               cantidad_convertida = cantidad_utilizada_decimal
+            else:
+               cantidad_convertida = convertir_unidades(cantidad_utilizada_decimal, unidad_medida, inventario.unidad_medida)
         except ValueError:
-            messages.error(request, f"No se pueden convertir {unidad_medida} a {inventario.unidad_medida}.")
+            messages.error(request, f"No se pueden convertir {unidad_medida} a {inventario.unidad_medida}. "
+                                    "Solicite items cuyas unidades de medida tengan lógica con las medidas de Inventario.")
             return redirect('solicitar_recursos')
-
-        # Verificamos si la cantidad solicitada es mayor que la disponible
+        
+        # Verificamos si la cantidad solicitada es mayor que la disponible (cantidad ya convertida o no)
         if cantidad_convertida > inventario.cantidad_disponible:
             messages.error(request, "La cantidad solicitada es mayor a la existente en Inventario.")
             return redirect('solicitar_recursos')
@@ -81,7 +86,7 @@ def solicitar_recursos(request):
 
     # Ocultar solicitudes aprobadas antiguas (más de 30 días)
     fecha_actual = datetime.now().date()
-    fecha_limite = fecha_actual - timedelta(days=7)  # Mostrar solo las aprobadas en los últimos 30 días
+    fecha_limite = fecha_actual - timedelta(days=30)  # Mostrar solo las aprobadas en los últimos 30 días
 
     # Si el usuario no ha activado "mostrar historial completo", ocultar las aprobadas antiguas
     if request.GET.get('mostrar_historial') != 'true':

@@ -12,6 +12,8 @@ from aplicaciones.appGestionInventario.models import SolicitudLaboratorio, UsoIt
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_unidades
+
 def administracionLaboratorios(request):
     estado = request.GET.get('estado')
     laboratorio = request.GET.get('laboratorio')
