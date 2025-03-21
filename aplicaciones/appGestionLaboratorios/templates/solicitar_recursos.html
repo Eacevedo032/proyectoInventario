@@ -48,7 +48,7 @@
                     <div class="form-group row align-items-center justify-content-center">
                         <div class="col-12 col-md-6 mb-3">
                             <label for="categoria" class="text-center w-100">Categoría:</label>
-                            <select name="categoria" id="categoria" class="form-control" required onchange="actualizarItems()">
+                            <select name="categoria" id="categoria" class="form-control" required onchange="actualizarSubcategorias()">
                                 <option value="">Selecciona una categoría</option>
                                 {% for categoria in categorias %}
                                 <option value="{{ categoria.id_categoria }}">{{ categoria.nombre_categoria }}</option>
@@ -58,8 +58,9 @@
                         <div class="col-12 col-md-6 mb-3">
                             <label for="subcategoria" class="text-center w-100">Subcategoría:</label>
                             <select name="subcategoria" id="subcategoria" class="form-control" required onchange="actualizarItems()">
+                                <option value="">Selecciona una subcategoría</option>
                                 {% for subcategoria in subcategorias %}
-                                <option value="{{ subcategoria.id_subcategoria }}">{{ subcategoria.nombre }}</option>
+                                <option value="{{ subcategoria.id_subcategoria }}" data-categoria="{{ subcategoria.categoria.id_categoria }}">{{ subcategoria.nombre }}</option>
                                 {% endfor %}
                             </select>
                         </div> 
@@ -68,7 +69,10 @@
                         <div class="col-12 col-md-6 mb-3">
                             <label for="item" class="text-center w-100">Ítem:</label>
                             <select name="inventario" id="item" class="form-control" required>
-                                <!-- Aquí se cargarán los ítems según la categoría seleccionada -->
+                                <option value="">Selecciona un ítem</option>
+                                {% for item in items %}
+                                <option value="{{ item.id }}" data-subcategoria="{{ item.subcategoria.id_subcategoria }}">{{ item.nombre }} (Cantidad: {{ item.cantidad_existente }} {{ item.unidad_medida }})</option>
+                                {% endfor %}
                             </select>
                         </div>                        
                         <div class="col-6 col-md-3 mb-3">

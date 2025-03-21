@@ -1,6 +1,9 @@
 from decimal import Decimal
 
 def convertir_unidades(cantidad, unidad_origen, unidad_destino):
+    if unidad_origen == unidad_destino:
+        return cantidad  # Si las unidades son iguales, devolver la misma cantidad sin conversión.
+
     # Diccionarios de conversiones (todos los valores son Decimal)
     conversiones_masa = {
         "kg": Decimal('1.0'),

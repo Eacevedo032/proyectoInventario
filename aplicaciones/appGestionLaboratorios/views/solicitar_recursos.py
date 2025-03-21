@@ -35,13 +35,9 @@ def solicitar_recursos(request):
             messages.error(request, "La cantidad ingresada no es válida.")
             return redirect('solicitar_recursos')
 
-        # Hacemos la conversión de la cantidad a la unidad del inventario para que tenga lógica
+        # Hacemos la conversión de la cantidad solo si las unidades son diferentes
         try:
-            # Si la unidad es "unidades"
-            if unidad_medida == "unidades":
-               cantidad_convertida = cantidad_utilizada_decimal
-            else:
-               cantidad_convertida = convertir_unidades(cantidad_utilizada_decimal, unidad_medida, inventario.unidad_medida)
+            cantidad_convertida = convertir_unidades(cantidad_utilizada_decimal, unidad_medida, inventario.unidad_medida)
         except ValueError:
             messages.error(request, f"No se pueden convertir {unidad_medida} a {inventario.unidad_medida}. "
                                     "Solicite items cuyas unidades de medida tengan lógica con las medidas de Inventario.")
