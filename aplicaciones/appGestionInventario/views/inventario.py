@@ -565,150 +565,426 @@ def exportar_inventario_excel(request, pk):
 
 # EXPORTAR A PDF
 
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.units import inch
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.utils.timezone import localtime
 import pytz
 
 @login_required
 def exportar_inventario_pdf(request, pk):
     inventario = get_object_or_404(GuardadoInventarioGeneral, pk=pk)
-    
-    # Obtener todas las categorías/subcategorías con sus ítems
     categorias = CategoriaSubcategoriaSnapshot.objects.filter(
         guardado=inventario
     ).order_by('nombre_categoria', 'nombre_subcategoria').prefetch_related(
         'items_snapshot'
     )
-    
+
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'inventario_{inventario.nombre}.pdf'
     
-    # Configuración horizontal con márgenes reducidos
     doc = SimpleDocTemplate(
         response,
         pagesize=landscape(letter),
-        leftMargin=20,
-        rightMargin=20,
-        topMargin=30,
-        bottomMargin=30
+        leftMargin=0.3*inch,
+        rightMargin=0.3*inch,
+        topMargin=0.4*inch,
+        bottomMargin=0.4*inch
     )
     
     elements = []
     styles = getSampleStyleSheet()
-    
-    # Estilos personalizados
+
     styles.add(ParagraphStyle(
-        name='TitleCentered',
-        fontSize=14,
+        name='Titulo',
+        fontSize=12,
+        leading=14,
         alignment=TA_CENTER,
-        spaceAfter=15,
         textColor=colors.HexColor('#2c3e50'),
-        fontName='Helvetica-Bold'
+        fontName='Helvetica-Bold',
+        spaceAfter=8
     ))
     
     styles.add(ParagraphStyle(
-        name='CategoryHeader',
-        fontSize=11,
-        textColor=colors.HexColor('#3498db'),
-        spaceAfter=8,
-        fontName='Helvetica-Bold'
+        name='TextoNormal',
+        fontSize=6,
+        leading=7,
+        alignment=TA_LEFT,
+        textColor=colors.black,
+        wordWrap='CJK'
     ))
     
-    # Fecha local corregida para Nicaragua
+    styles.add(ParagraphStyle(
+        name='CabeceraTabla',
+        fontSize=7,
+        leading=8,
+        alignment=TA_CENTER,
+        textColor=colors.white,
+        fontName='Helvetica-Bold',
+        wordWrap='CJK'
+    ))
+
     tz = pytz.timezone('America/Managua')
     fecha_local = localtime(inventario.fecha_guardado, timezone=tz)
     
-    # Título principal
-    elements.append(Paragraph(f"INVENTARIO: {inventario.nombre}", styles['TitleCentered']))
+    elements.append(Paragraph(f"INVENTARIO: {inventario.nombre}", styles['Titulo']))
     elements.append(Paragraph(
-        f"Fecha: {fecha_local.strftime('%d/%m/%Y %H:%M')} (Hora Nicaragua)", 
+        f"Generado el {fecha_local.strftime('%d/%m/%Y %H:%M')} (Hora Nicaragua)",
         ParagraphStyle(
-            name='DateStyle',
-            fontSize=9,
+            name='Fecha',
+            fontSize=8,
             alignment=TA_CENTER,
-            spaceAfter=15
+            spaceAfter=16
         )
     ))
-    elements.append(Spacer(1, 15))
-    
-    # Columnas a mostrar (puedes ajustar según necesidad)
+
     columnas = [
-        'Subcategoría', 'Item', 'Descripción', 'Cantidad', 'Unidad',
-        'Lote', 'Vencimiento', 'N° Serie', 'Marca', 'Artículo',
-        'Color', 'Modelo', 'Código', 'Presentación'
+        'Categoría', 'Subcategoría', 'Item', 'Descripción',
+        'Cantidad', 'Unidad', 'Lote', 'Vencimiento',
+        'Observaciones', 'N° Serie', 'Marca', 'Artículo',
+        'Color', 'Modelo', 'Código', 'Presentación',
+        'Accesorios', 'Medidas', 'Capacidad', 'Información Adicional'
     ]
     
-    # Anchos de columna optimizados
-    col_widths = [70, 80, 100, 40, 40, 50, 60, 60, 60, 50, 40, 50, 50, 70]
-    
-    # Por cada categoría
-    for cat in categorias:
-        # Encabezado de categoría
+    anchos = [
+        0.8*inch, 0.9*inch, 1.0*inch, 1.2*inch,
+        0.5*inch, 0.5*inch, 0.6*inch, 0.7*inch,
+        0.9*inch, 0.7*inch, 0.7*inch, 0.7*inch,
+        0.5*inch, 0.7*inch, 0.6*inch, 0.9*inch,
+        0.8*inch, 0.7*inch, 0.7*inch, 1.1*inch
+    ]
+
+    for i, cat in enumerate(categorias):
         elements.append(Paragraph(
             f"CATEGORÍA: {cat.nombre_categoria}",
-            styles['CategoryHeader']
+            ParagraphStyle(
+                name='Categoria',
+                fontSize=8,
+                textColor=colors.HexColor('#0066cc'),
+                fontName='Helvetica-Bold',
+                spaceAfter=6,
+                keepWithNext=True
+            )
         ))
+
+        data = [columnas]
         
-        # Tabla de ítems
-        data = [columnas]  # Encabezados
-        
-        # Caso 1: Sin subcategorías
         if cat.nombre_subcategoria == "SIN SUBCATEGORÍAS":
-            data.append(['SIN SUBCATEGORÍAS', 'SIN ÍTEMS'] + [''] * (len(columnas) - 2))
+            row = [cat.nombre_categoria, 'SIN SUBCATEGORÍAS', 'SIN ÍTEMS'] + ['']*(len(columnas)-3)
+            data.append(row)
         else:
-            # Caso 2: Subcategoría sin ítems
             if not cat.items_snapshot.exists():
-                data.append([cat.nombre_subcategoria, 'SIN ÍTEMS'] + [''] * (len(columnas) - 2))
-            # Caso 3: Subcategoría con ítems
-            for item in cat.items_snapshot.all():
-                data.append([
-                    cat.nombre_subcategoria,
-                    item.nombre,
-                    item.descripcion or '-',
-                    str(item.cantidad_disponible),
-                    item.unidad_medida or '-',
-                    item.lote or '-',
-                    item.vencimiento.strftime('%d/%m/%Y') if item.vencimiento else '-',
-                    item.num_serie or '-',
-                    item.marca_caracteristica or '-',
-                    item.articulo or '-',
-                    item.colores or '-',
-                    item.modelo or '-',
-                    item.codigo or '-',
-                    item.presentacion or '-'
-                ])
+                row = [cat.nombre_categoria, cat.nombre_subcategoria, 'SIN ÍTEMS'] + ['']*(len(columnas)-3)
+                data.append(row)
+            else:
+                for item in cat.items_snapshot.all():
+                    row = [
+                        cat.nombre_categoria,
+                        cat.nombre_subcategoria,
+                        Paragraph(item.nombre or '-', styles['TextoNormal']),
+                        Paragraph(item.descripcion or '-', styles['TextoNormal']),
+                        str(item.cantidad_disponible),
+                        item.unidad_medida or '-',
+                        item.lote or '-',
+                        item.vencimiento.strftime('%d/%m/%Y') if item.vencimiento else '-',
+                        Paragraph(item.observaciones or '-', styles['TextoNormal']),
+                        item.num_serie or '-',
+                        item.marca_caracteristica or '-',
+                        item.articulo or '-',
+                        item.colores or '-',
+                        item.modelo or '-',
+                        item.codigo or '-',
+                        Paragraph(item.presentacion or '-', styles['TextoNormal']),
+                        Paragraph(item.accesorios or '-', styles['TextoNormal']),
+                        Paragraph(item.medidas or '-', styles['TextoNormal']),
+                        item.capacidad or '-',
+                        Paragraph(item.informacionAdicional or '-', styles['TextoNormal'])
+                    ]
+                    data.append(row)
+
+        tabla = Table(
+            data,
+            colWidths=anchos,
+            repeatRows=1
+        )
         
-        # Crear tabla para el PDF
-        t = Table(data, colWidths=col_widths, repeatRows=1)
-        
-        # Estilo de la tabla optimizado
-        table_style = TableStyle([
+        estilo = TableStyle([
             ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#34495e')),
             ('TEXTCOLOR', (0,0), (-1,0), colors.white),
             ('ALIGN', (0,0), (-1,0), 'CENTER'),
-            ('ALIGN', (1,1), (-1,-1), 'LEFT'),
             ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0,0), (-1,0), 8),
-            ('FONTSIZE', (0,1), (-1,-1), 7),
-            ('BOTTOMPADDING', (0,0), (-1,0), 8),
-            ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f9f9f9')),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.lightgrey),
+            ('FONTSIZE', (0,0), (-1,0), 6),
+            ('BOTTOMPADDING', (0,0), (-1,0), 4),
+            ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f8fafc')),
+            ('GRID', (0,0), (-1,-1), 0.3, colors.lightgrey),
             ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('WORDWRAP', (0,0), (-1,-1), True),
+            ('WORDWRAP', (0,0), (-1,-1), True)
         ])
         
-        # Alternar colores de fila
-        for i in range(1, len(data)):
-            bg_color = colors.white if i % 2 == 1 else colors.HexColor('#e9ecef')
-            table_style.add('BACKGROUND', (0,i), (-1,i), bg_color)
-        
-        t.setStyle(table_style)
-        elements.append(t)
-        elements.append(Spacer(1, 15))
+        tabla.setStyle(estilo)
+        elements.append(tabla)
+        elements.append(Spacer(1, 12))
+        if (i + 1) % 2 == 0:
+            elements.append(PageBreak())
+
+    doc.build(elements)
+    return response
+
+#EXPORTAR EXCEL DEL INVENTARIO ACTUAL
+
+@login_required
+def exportar_inventario_actual_excel(request):
+    # Obtener todos los items del inventario actual con sus relaciones
+    inventarios = Inventario.objects.select_related(
+        'categoria', 'subcategoria', 'detalle_tecnico', 'datos_complementarios'
+    ).all()
     
+    # Estructura de datos
+    data = []
+    for inv in inventarios:
+        # Acceder directamente a las relaciones OneToOne (sin .first())
+        detalle = inv.detalle_tecnico if hasattr(inv, 'detalle_tecnico') else None
+        complemento = inv.datos_complementarios if hasattr(inv, 'datos_complementarios') else None
+        
+        data.append({
+            # Información básica
+            'Categoría': inv.categoria.nombre_categoria,
+            'Subcategoría': inv.subcategoria.nombre,
+            'Item': inv.nombre,
+            'Descripción': inv.descripcion or '-',
+            'Cantidad': inv.cantidad_disponible,
+            'Unidad': inv.unidad_medida or '-',
+            'Lote': inv.lote or '-',
+            'Vencimiento': inv.vencimiento.strftime('%d/%m/%Y') if inv.vencimiento else '-',
+            'Observaciones': inv.observaciones or '-',
+            
+            # Detalles técnicos
+            'Marca': detalle.marca_caracteristica if detalle else '-',
+            'N° Serie': detalle.num_serie if detalle else '-',
+            'Modelo': detalle.modelo if detalle else '-',
+            'Código': detalle.codigo if detalle else '-',
+            'Artículo': detalle.articulo if detalle else '-',
+            
+            # Datos complementarios
+            'Presentación': complemento.presentacion if complemento else '-',
+            'Accesorios': complemento.accesorios if complemento else '-',
+            'Medidas': complemento.medidas if complemento else '-',
+            'Color': complemento.colores if complemento else '-',
+            'Capacidad': complemento.capacidad if complemento else '-',
+            'Info. Adicional': complemento.informacionAdicional if complemento else '-'
+        })
+    
+    # Crear DataFrame
+    df = pd.DataFrame(data)
+    
+    # Generar Excel
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Inventario Actual', index=False)
+        worksheet = writer.sheets['Inventario Actual']
+        
+        # Autoajustar columnas
+        for column in worksheet.columns:
+            max_length = max(len(str(cell.value)) for cell in column)
+            adjusted_width = (max_length + 2) if max_length < 50 else 50
+            worksheet.column_dimensions[column[0].column_letter].width = adjusted_width
+    
+    output.seek(0)
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=Inventario_Actual.xlsx'
+    return response
+
+#EXPORTAR PDF DEL INVENTARIO ACTUAL
+
+from django.utils import timezone
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.units import inch
+import pytz
+
+@login_required
+def exportar_inventario_actual_pdf(request):
+    # Obtener datos con relaciones
+    inventarios = Inventario.objects.select_related(
+        'categoria', 'subcategoria', 'detalle_tecnico', 'datos_complementarios'
+    ).order_by('categoria__nombre_categoria', 'subcategoria__nombre').all()
+    
+    # Configuración PDF para vista previa
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename=Inventario_Actual.pdf'  # 'inline' para abrir en navegador
+    
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=landscape(letter),
+        leftMargin=0.3*inch,
+        rightMargin=0.3*inch,
+        topMargin=0.4*inch,
+        bottomMargin=0.4*inch
+    )
+    
+    elements = []
+    styles = getSampleStyleSheet()
+
+    # Estilos personalizados
+    styles.add(ParagraphStyle(
+        name='Titulo',
+        fontSize=12,
+        leading=14,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#2c3e50'),
+        fontName='Helvetica-Bold',
+        spaceAfter=8
+    ))
+    
+    styles.add(ParagraphStyle(
+        name='TextoNormal',
+        fontSize=6.5,  # Tamaño reducido para más columnas
+        leading=7.5,
+        alignment=TA_LEFT,
+        textColor=colors.black,
+        wordWrap='LTR'
+    ))
+
+    # Cabecera
+    tz = pytz.timezone('America/Managua')
+    fecha_local = timezone.now().astimezone(tz)
+    
+    elements.append(Paragraph("INVENTARIO ACTUAL COMPLETO", styles['Titulo']))
+    elements.append(Paragraph(
+        f"Generado el {fecha_local.strftime('%d/%m/%Y %H:%M')} (Hora Nicaragua)",
+        ParagraphStyle(
+            name='Fecha',
+            fontSize=8,
+            alignment=TA_CENTER,
+            spaceAfter=12
+        )
+    ))
+
+    # Agrupar por categoría y subcategoría
+    categorias = {}
+    for inv in inventarios:
+        categoria_nombre = inv.categoria.nombre_categoria
+        subcategoria_nombre = inv.subcategoria.nombre
+        
+        if categoria_nombre not in categorias:
+            categorias[categoria_nombre] = {}
+        
+        if subcategoria_nombre not in categorias[categoria_nombre]:
+            categorias[categoria_nombre][subcategoria_nombre] = []
+        
+        categorias[categoria_nombre][subcategoria_nombre].append(inv)
+
+    # Definir columnas completas (similar al Excel)
+    columnas = [
+        'Subcategoría', 'Item', 'Descripción', 'Cantidad', 'Unidad',
+        'Lote', 'Vencimiento', 'N° Serie', 'Marca', 'Artículo',
+        'Color', 'Modelo', 'Código', 'Presentación',
+        'Accesorios', 'Medidas', 'Capacidad', 'Info. Adicional'
+    ]
+    
+    anchos = [
+        0.7*inch, 0.9*inch, 1.1*inch, 0.5*inch, 0.5*inch,
+        0.6*inch, 0.7*inch, 0.7*inch, 0.7*inch, 0.7*inch,
+        0.5*inch, 0.7*inch, 0.6*inch, 0.9*inch,
+        0.8*inch, 0.6*inch, 0.6*inch, 1.1*inch
+    ]
+
+    # Procesar por categoría
+    for i, (categoria_nombre, subcategorias) in enumerate(categorias.items()):
+        # Encabezado de categoría
+        elements.append(Paragraph(
+            f"CATEGORÍA: {categoria_nombre.upper()}",
+            ParagraphStyle(
+                name='Categoria',
+                fontSize=9,
+                textColor=colors.HexColor('#0066cc'),
+                fontName='Helvetica-Bold',
+                spaceAfter=6,
+                alignment=TA_LEFT
+            )
+        ))
+        
+        # Procesar subcategorías
+        for subcategoria_nombre, items in subcategorias.items():
+            # Preparar datos para la tabla
+            data = [columnas]  # Encabezados
+            
+            if not items:
+                data.append([subcategoria_nombre, 'SIN ÍTEMS'] + ['']*(len(columnas)-2))
+            else:
+                for inv in items:
+                    detalle = getattr(inv, 'detalle_tecnico', None)
+                    complemento = getattr(inv, 'datos_complementarios', None)
+                    
+                    data.append([
+                        subcategoria_nombre,
+                        Paragraph(inv.nombre or '-', styles['TextoNormal']),
+                        Paragraph(inv.descripcion or '-', styles['TextoNormal']),
+                        str(inv.cantidad_disponible),
+                        inv.unidad_medida or '-',
+                        inv.lote or '-',
+                        inv.vencimiento.strftime('%d/%m/%Y') if inv.vencimiento else '-',
+                        detalle.num_serie if detalle else '-',
+                        detalle.marca_caracteristica if detalle else '-',
+                        detalle.articulo if detalle else '-',
+                        complemento.colores if complemento else '-',
+                        detalle.modelo if detalle else '-',
+                        detalle.codigo if detalle else '-',
+                        Paragraph(complemento.presentacion if complemento else '-', styles['TextoNormal']),
+                        Paragraph(complemento.accesorios if complemento else '-', styles['TextoNormal']),
+                        Paragraph(complemento.medidas if complemento else '-', styles['TextoNormal']),
+                        complemento.capacidad if complemento else '-',
+                        Paragraph(complemento.informacionAdicional if complemento else '-', styles['TextoNormal'])
+                    ])
+            
+            # Crear tabla
+            tabla = Table(
+                data,
+                colWidths=anchos,
+                repeatRows=1
+            )
+            
+            estilo = TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#34495e')),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+                ('ALIGN', (0,0), (-1,0), 'CENTER'),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,0), 6),
+                ('BOTTOMPADDING', (0,0), (-1,0), 4),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f8fafc')),
+                ('GRID', (0,0), (-1,-1), 0.3, colors.lightgrey),
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('WORDWRAP', (0,0), (-1,-1), True)
+            ])
+            
+            # Filas alternadas
+            for row in range(1, len(data)):
+                estilo.add('BACKGROUND', (0,row), (-1,row), 
+                         colors.white if row % 2 == 0 else colors.HexColor('#f1f5f9'))
+            
+            tabla.setStyle(estilo)
+            elements.append(tabla)
+            elements.append(Spacer(1, 10))
+        
+        # Salto de página cada 2 categorías
+        if (i + 1) % 2 == 0 and (i + 1) < len(categorias):
+            elements.append(PageBreak())
+
+    # Generar PDF
     doc.build(elements)
     return response

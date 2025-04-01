@@ -23,10 +23,22 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand text-center">
             <span class="text-white bg-primary px-1 py-1 rounded-pill shadow-sm"
-                style="font-size: 1.2rem; font-weight: bold;">
+                style="font-size: 1rem; font-weight: bold;">
                 ¡Hola, {{ user.username }}!
             </span>
         </a>
+
+        <!-- Botón de ir al perfil de usuario con foto -->
+            <a class="nav-link fw-bold d-flex align-items-center" href="{% url 'editar_perfil' %}">
+                {% if user.userprofile.profile_picture %}
+                <img src="{{ user.userprofile.profile_picture.url }}" alt="Foto de perfil"
+                    class="rounded-circle" width="30" height="30">
+                {% else %}
+                <i class="bi bi-person-circle"></i>
+                {% endif %}
+                <span class="nav-item nav-link fw-bold">Mi Perfil</span>
+            </a>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
             aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -70,11 +82,12 @@
                 </style>
 
                 <li class="nav-item">
-                    <a class="nav-item nav-link fw-bold" href="{% url 'guardar_inventario_general' %}">Guardar Inventario</a>
+                    <a class="nav-item nav-link fw-bold" href="{% url 'guardar_inventario_general' %}">Guardar
+                        Inventario</a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-item nav-link fw-bold" href="/admin/">Panel Administrativo</a>
+                    <a class="nav-item nav-link fw-bold" href="/admin/">Panel</a>
                     <!-- Dirige al panel de django -->
                 </li>
 

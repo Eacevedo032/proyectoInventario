@@ -130,24 +130,20 @@ USE_TZ = True
 STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
-STATICFILES_DIRS = [ BASE_DIR ] # Donde se recopilarán los archivos estáticos durante la ejecución de 'collectstatic'
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
-# Ruta donde se almacenan los archivos subidos
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-MEDIA_ROOT = os.path.join(BASE_DIR)  # Ruta donde están las imágenes
-MEDIA_URL = '/reportes_fotos/'  # URL para acceder a las imágenes
+# Configuración de archivos estáticos
+STATICFILES_DIRS = [BASE_DIR]  
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
+# Configuración de archivos multimedia (imágenes subidas)
+MEDIA_URL = '/media/'  # URL base para acceder a archivos multimedia
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Carpeta donde se almacenarán los archivos subidos
 
+# Manteniendo las imágenes de reportes en su carpeta específica
+REPORTES_FOTOS_URL = '/reportes_fotos/'  
+REPORTES_FOTOS_ROOT = os.path.join(MEDIA_ROOT, 'reportes_fotos')  
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Ruta donde se almacenan los archivos subidos de fotos de reporte
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-MEDIA_ROOT = os.path.join(BASE_DIR)  # Ruta donde están las imágenes
-MEDIA_URL = '/reportes_fotos/'  # URL para acceder a las imágenes
 
 '''redireccion de login a inicio en settings.py
 LOGIN_REDIRECT_URL = 'inicio'

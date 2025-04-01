@@ -5,6 +5,22 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.timezone import now
+import os
+
+#Perfil de usuario
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+
+    def __str__(self):
+        return self.user.username
+
+    def delete_profile_picture(self):
+        """Elimina físicamente el archivo de imagen"""
+        if self.profile_picture:
+            if os.path.isfile(self.profile_picture.path):
+                os.remove(self.profile_picture.path)
+            self.profile_picture.delete(save=False)
 
 # Tabla para manejar los usuarios aprobados y denegados
 class ApprovedUser(models.Model):
@@ -304,5 +320,7 @@ class ReporteUsoLaboratorio(models.Model):
 
     def __str__(self):
         return f"Reporte para {self.solicitud.laboratorio} - {self.solicitud.usuario.username}"
+    
+from .signals import *
 
 
