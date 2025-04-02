@@ -16,6 +16,14 @@
 <div class="row">
     <div class="col-12">
         <h1 class="text-center" style="color: blue; padding-bottom: 1rem;">Inventario General</h1>
+        <div class="export-buttons mt-3">
+            <a href="{% url 'exportar_inventario_excel' %}" class="btn btn-success btn-sm">
+                <i class="bi bi-file-earmark-excel"></i> Excel
+            </a>
+            <a href="{% url 'exportar_inventario_pdf' %}" class="btn btn-danger btn-sm ml-2">
+                <i class="bi bi-file-earmark-pdf"></i> PDF
+            </a>
+        </div>
         <!-- Pestañas de Navegación -->
         <ul class="nav nav-tabs" id="inventoryTab" role="tablist">
             <!-- Pestaña "Ver Todo" -->

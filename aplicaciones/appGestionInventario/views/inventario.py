@@ -5,9 +5,10 @@ from datetime import datetime
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required,  user_passes_test
 from aplicaciones.appGestionInventario.models import Categoria, SubCategoria, Inventario, DetalleTecnico, DatosComplementarios
-from aplicaciones.appGestionInventario.models import GuardadoInventarioGeneral, CategoriaGuardada, SubCategoriaGuardada, InventarioGuardado, DetalleTecnicoGuardado, DatosComplementariosGuardados
+from aplicaciones.appGestionInventario.models import GuardadoInventarioGeneral, CategoriaSubcategoriaSnapshot, InventarioGuardado
 from django.utils.timezone import localtime
 from django.utils.timezone import now
+from django.core.paginator import Paginator
 
 '''agregarInventario
 
@@ -279,107 +280,137 @@ def eliminarInventario(request, id_inventario):
         messages.error(request, f"Error al eliminar el item: {e}")
 
     return redirect("inventario_general")
-
-#Guardar Inventario General pasado
+   
 #Guardar Inventario General pasado
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
+@transaction.atomic
 def guardar_inventario_general(request):
     if request.method == 'POST':
-        nombre = request.POST.get('nombre', 'Sin nombre.')
-        descripcion_usuario = request.POST.get('descripcion', 'Sin descripción.').strip()
-        fecha_hora_actual = localtime(now())
-
-        # Crear el registro principal de guardado
+        nombre = request.POST.get('nombre', 'Sin nombre')
+        descripcion_usuario = request.POST.get('descripcion', 'Sin descripción').strip()
+        
+        # Crear snapshot principal
         guardado = GuardadoInventarioGeneral.objects.create(
             nombre=nombre,
             descripcion=descripcion_usuario,
-            fecha_guardado=fecha_hora_actual,
             usuario=request.user
         )
-
-        # Guardar categorías sin duplicar
-        for categoria in Categoria.objects.all():
-            categoria_guardada, _ = CategoriaGuardada.objects.get_or_create(
-                guardado=guardado,
-                nombre_categoria=categoria.nombre_categoria,
-                descripcion=categoria.descripcion
+        
+        # Copiar estructura completa con prefetch para optimizar
+        categorias = Categoria.objects.all().prefetch_related(
+            Prefetch('subcategoria_set', 
+                   queryset=SubCategoria.objects.all().prefetch_related(
+                       Prefetch('inventario_set',
+                              queryset=Inventario.objects.select_related(
+                                  'detalle_tecnico',
+                                  'datos_complementarios'
+                              )
+                       )
+                   )
             )
-
-            # Guardar subcategorías sin duplicar
-            for subcategoria in SubCategoria.objects.filter(categoria=categoria):
-                subcategoria_guardada, _ = SubCategoriaGuardada.objects.get_or_create(
-                    categoria_guardada=categoria_guardada,
-                    nombre=subcategoria.nombre
+        )
+        
+        for categoria in categorias:
+            subcategorias = categoria.subcategoria_set.all()
+            
+            if not subcategorias.exists():
+                # Guardar categoría sin subcategorías
+                cat_snapshot = CategoriaSubcategoriaSnapshot.objects.create(
+                    guardado=guardado,
+                    nombre_categoria=categoria.nombre_categoria,
+                    descripcion_categoria=categoria.descripcion,
+                    nombre_subcategoria="SIN SUBCATEGORÍAS"
                 )
-
-                # Guardar ítems sin duplicar
-                for item in Inventario.objects.filter(subcategoria=subcategoria):
-                    inventario_guardado, _ = InventarioGuardado.objects.get_or_create(
-                        subcategoria_guardada=subcategoria_guardada,
-                        nombre=item.nombre,
-                        descripcion=item.descripcion,
-                        cantidad_disponible=item.cantidad_disponible,
-                        unidad_medida=item.unidad_medida,
-                        lote=item.lote,
-                        vencimiento=item.vencimiento,
-                        observaciones=item.observaciones
+            else:
+                for subcategoria in subcategorias:
+                    # Guardar subcategoría
+                    cat_snapshot = CategoriaSubcategoriaSnapshot.objects.create(
+                        guardado=guardado,
+                        nombre_categoria=categoria.nombre_categoria,
+                        descripcion_categoria=categoria.descripcion,
+                        nombre_subcategoria=subcategoria.nombre
                     )
-
-                    # Guardar detalle técnico si existe
-                    if hasattr(item, 'detalle_tecnico'):
-                        DetalleTecnicoGuardado.objects.get_or_create(
-                            inventario_guardado=inventario_guardado,
-                            marca_caracteristica=item.detalle_tecnico.marca_caracteristica,
-                            num_cat=item.detalle_tecnico.num_cat,
-                            num_serie=item.detalle_tecnico.num_serie,
-                            modelo=item.detalle_tecnico.modelo,
-                            codigo=item.detalle_tecnico.codigo,
-                            articulo=item.detalle_tecnico.articulo
+                    
+                    # Copiar todos los ítems con manejo seguro de campos relacionados
+                    for item in subcategoria.inventario_set.all():
+                        InventarioGuardado.objects.create(
+                            categoria_subcategoria=cat_snapshot,
+                            # Campos básicos
+                            nombre=item.nombre,
+                            descripcion=item.descripcion,
+                            cantidad_disponible=item.cantidad_disponible,
+                            unidad_medida=item.unidad_medida,
+                            lote=item.lote,
+                            vencimiento=item.vencimiento,
+                            observaciones=item.observaciones,
+                            # Campos técnicos (con manejo de relaciones)
+                            marca_caracteristica=getattr(item.detalle_tecnico, 'marca_caracteristica', ''),
+                            num_cat=getattr(item.detalle_tecnico, 'num_cat', ''),
+                            num_serie=getattr(item.detalle_tecnico, 'num_serie', ''),
+                            modelo=getattr(item.detalle_tecnico, 'modelo', ''),
+                            codigo=getattr(item.detalle_tecnico, 'codigo', ''),
+                            articulo=getattr(item.detalle_tecnico, 'articulo', ''),
+                            # Datos complementarios
+                            presentacion=getattr(item.datos_complementarios, 'presentacion', ''),
+                            accesorios=getattr(item.datos_complementarios, 'accesorios', ''),
+                            medidas=getattr(item.datos_complementarios, 'medidas', ''),
+                            colores=getattr(item.datos_complementarios, 'colores', ''),
+                            capacidad=getattr(item.datos_complementarios, 'capacidad', ''),
+                            informacionAdicional=getattr(item.datos_complementarios, 'informacionAdicional', '')
                         )
-
-                    # Guardar datos complementarios si existen
-                    if hasattr(item, 'datos_complementarios'):
-                        DatosComplementariosGuardados.objects.get_or_create(
-                            inventario_guardado=inventario_guardado,
-                            presentacion=item.datos_complementarios.presentacion,
-                            accesorios=item.datos_complementarios.accesorios,
-                            medidas=item.datos_complementarios.medidas,
-                            colores=item.datos_complementarios.colores,
-                            capacidad=item.datos_complementarios.capacidad,
-                            informacionAdicional=item.datos_complementarios.informacionAdicional
-                        )
-
-        messages.success(request, "¡Inventario general guardado exitosamente!")
-        return redirect('verInventarioGuardar')
-
+        
+        messages.success(request, "¡Inventario General guardado correctamente!")
+        return redirect('historial_inventario_general')
+    
     return redirect('verInventarioGuardar')
 
+#Paginación para mejor orden
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def historial_inventario_general(request):
-    historiales = GuardadoInventarioGeneral.objects.all().order_by('-fecha_guardado') #Las fechas más recientes se muestran primero
-    return render(request, "historial_inventario_general.html", {"historiales": historiales})
+    historiales = GuardadoInventarioGeneral.objects.all().order_by('-fecha_guardado')
+    paginator = Paginator(historiales, 6)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, "historial_inventario_general.html", {
+        "page_obj": page_obj,
+        "historiales": page_obj.object_list  # Nueva variable para el exporte
+    })
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def detalle_inventario_guardado(request, pk):
     inventario_guardado = get_object_or_404(GuardadoInventarioGeneral, pk=pk)
-    categorias_guardadas = inventario_guardado.categorias_guardadas.all()
-
-    for categoria in categorias_guardadas:
-        subcategorias = categoria.subcategorias_guardadas.all()
-        for subcategoria in subcategorias:
-            # Asegurémonos de que esta línea esté trayendo los ítems correctamente
-            subcategoria.inventarios_guardados_list = subcategoria.inventarios_guardados.all()
-            print(f"Subcategoría: {subcategoria.nombre}, Ítems: {subcategoria.inventarios_guardados_list}")
-
-        categoria.subcategorias_guardadas_list = subcategorias
-
-    return render(request, "detalle_inventario_guardado.html", {
-        "inventario_guardado": inventario_guardado,
-        "categorias_guardadas": categorias_guardadas
-    })
+    
+    # Obtener categorías-subcategorías con sus ítems (usando el nombre correcto de la relación)
+    categorias_subcategorias = CategoriaSubcategoriaSnapshot.objects.filter(
+        guardado=inventario_guardado
+    ).prefetch_related(
+        'items_snapshot' 
+    )
+    
+    # Organizar los datos
+    categorias_organizadas = {}
+    for cs in categorias_subcategorias:
+        if cs.nombre_categoria not in categorias_organizadas:
+            categorias_organizadas[cs.nombre_categoria] = {
+                'descripcion': cs.descripcion_categoria,
+                'subcategorias': {}
+            }
+        
+        # Agregar subcategoría con sus ítems (accediendo a items_snapshot)
+        categorias_organizadas[cs.nombre_categoria]['subcategorias'][cs.nombre_subcategoria] = list(
+            cs.items_snapshot.all()  #Relación correcta
+        )
+    
+    context = {
+        'inventario_guardado': inventario_guardado,
+        'categorias_organizadas': categorias_organizadas
+    }
+    
+    return render(request, "detalle_inventario_guardado.html", context)
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser) # Permite el acceso solo a usuarios con privilegios de superusuario (administradores).
@@ -396,7 +427,7 @@ def eliminarInventarioGuardado(request, id_guardado):
 
     return redirect("historial_inventario_general")
 
-#Vista del Inventario General donde estarán las opciones de las vistas de arriba
+#Vista del Inventario General donde estarán las opciones de las vistas de arriba (guardar inventario y ver historial de inventarios guardados)
 def verInventarioGuardar(request):
     # Cargar categorías con sus subcategorías e ítems (incluyendo las tablas (clases) relacionadas)
     categorias = Categoria.objects.prefetch_related( #prefetch_related asegura que todos los datos relacionados se carguen de manera eficiente, evitando múltiples consultas innecesarias
@@ -408,3 +439,552 @@ def verInventarioGuardar(request):
     return render(request, "verInventarioGuardar.html", {
         "Categorias": categorias,
     })
+#----------------------------------------------------------------------------
+#EXPORTAR HISTORIAL DE INVENTARIOS GUARDADOS
+
+#EXPORTAR A EXCEL PRIMERO
+
+from django.db.models import Prefetch
+from django.http import HttpResponse
+import pandas as pd
+from io import BytesIO
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def exportar_inventario_excel(request, pk):
+    inventario = get_object_or_404(GuardadoInventarioGeneral, pk=pk)
+    
+    # Obtener todas las categorías/subcategorías con sus ítems relacionados
+    categorias = CategoriaSubcategoriaSnapshot.objects.filter(
+        guardado=inventario
+    ).order_by('nombre_categoria', 'nombre_subcategoria').prefetch_related(
+        Prefetch('items_snapshot', queryset=InventarioGuardado.objects.all())
+    )
+    
+    # Estructura de datos completa
+    data = []
+    for cat in categorias:
+        # Caso 1: Categoría sin subcategorías
+        if cat.nombre_subcategoria == "SIN SUBCATEGORÍAS":
+            data.append({
+                'Categoría': cat.nombre_categoria,
+                'Subcategoría': 'SIN SUBCATEGORÍAS',
+                'Item': 'SIN ÍTEMS',
+                'Descripción': '',
+                'Cantidad': '',
+                'Unidad': '',
+                'Lote': '',
+                'Vencimiento': '',
+                'Observaciones': '',
+                'N° Serie': '',
+                'Marca': '',
+                'Artículo': '',
+                'Color': '',
+                'Modelo': '',
+                'Código': '',
+                'Presentación': '',
+                'Accesorios': '',
+                'Medidas': '',
+                'Capacidad': '',
+                'Información Adicional': ''
+            })
+        else:
+            # Caso 2: Subcategoría sin ítems
+            if not cat.items_snapshot.exists():
+                data.append({
+                    'Categoría': cat.nombre_categoria,
+                    'Subcategoría': cat.nombre_subcategoria,
+                    'Item': 'SIN ÍTEMS',
+                    'Descripción': '',
+                    'Cantidad': '',
+                    'Unidad': '',
+                    'Lote': '',
+                    'Vencimiento': '',
+                    'Observaciones': '',
+                    'N° Serie': '',
+                    'Marca': '',
+                    'Artículo': '',
+                    'Color': '',
+                    'Modelo': '',
+                    'Código': '',
+                    'Presentación': '',
+                    'Accesorios': '',
+                    'Medidas': '',
+                    'Capacidad': '',
+                    'Información Adicional': ''
+                })
+            # Caso 3: Subcategoría con ítems
+            for item in cat.items_snapshot.all():
+                data.append({
+                    'Categoría': cat.nombre_categoria,
+                    'Subcategoría': cat.nombre_subcategoria,
+                    'Item': item.nombre,
+                    'Descripción': item.descripcion or '-',
+                    'Cantidad': item.cantidad_disponible,
+                    'Unidad': item.unidad_medida or '-',
+                    'Lote': item.lote or '-',
+                    'Vencimiento': item.vencimiento.strftime('%d/%m/%Y') if item.vencimiento else '-',
+                    'Observaciones': item.observaciones or '-',
+                    'N° Serie': item.num_serie or '-',
+                    'Marca': item.marca_caracteristica or '-',
+                    'Artículo': item.articulo or '-',
+                    'Color': item.colores or '-',
+                    'Modelo': item.modelo or '-',
+                    'Código': item.codigo or '-',
+                    'Presentación': item.presentacion or '-',
+                    'Accesorios': item.accesorios or '-',
+                    'Medidas': item.medidas or '-',
+                    'Capacidad': item.capacidad or '-',
+                    'Información Adicional': item.informacionAdicional or '-'
+                })
+    
+    # Crear DataFrame
+    df = pd.DataFrame(data)
+    
+    # Generar Excel
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Inventario', index=False)
+        workbook = writer.book
+        worksheet = writer.sheets['Inventario']
+        
+        # Autoajustar columnas
+        for column in worksheet.columns:
+            max_length = max(len(str(cell.value)) for cell in column)
+            adjusted_width = (max_length + 2) if max_length < 50 else 50
+            worksheet.column_dimensions[column[0].column_letter].width = adjusted_width
+    
+    output.seek(0)
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=Inventario_{inventario.nombre}.xlsx'
+    return response
+
+# EXPORTAR A PDF
+
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.units import inch
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.utils.timezone import localtime
+import pytz
+
+@login_required
+def exportar_inventario_pdf(request, pk):
+    inventario = get_object_or_404(GuardadoInventarioGeneral, pk=pk)
+    categorias = CategoriaSubcategoriaSnapshot.objects.filter(
+        guardado=inventario
+    ).order_by('nombre_categoria', 'nombre_subcategoria').prefetch_related(
+        'items_snapshot'
+    )
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inventario_{inventario.nombre}.pdf'
+    
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=landscape(letter),
+        leftMargin=0.3*inch,
+        rightMargin=0.3*inch,
+        topMargin=0.4*inch,
+        bottomMargin=0.4*inch
+    )
+    
+    elements = []
+    styles = getSampleStyleSheet()
+
+    styles.add(ParagraphStyle(
+        name='Titulo',
+        fontSize=12,
+        leading=14,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#2c3e50'),
+        fontName='Helvetica-Bold',
+        spaceAfter=8
+    ))
+    
+    styles.add(ParagraphStyle(
+        name='TextoNormal',
+        fontSize=6,
+        leading=7,
+        alignment=TA_LEFT,
+        textColor=colors.black,
+        wordWrap='CJK'
+    ))
+    
+    styles.add(ParagraphStyle(
+        name='CabeceraTabla',
+        fontSize=7,
+        leading=8,
+        alignment=TA_CENTER,
+        textColor=colors.white,
+        fontName='Helvetica-Bold',
+        wordWrap='CJK'
+    ))
+
+    tz = pytz.timezone('America/Managua')
+    fecha_local = localtime(inventario.fecha_guardado, timezone=tz)
+    
+    elements.append(Paragraph(f"INVENTARIO: {inventario.nombre}", styles['Titulo']))
+    elements.append(Paragraph(
+        f"Generado el {fecha_local.strftime('%d/%m/%Y %H:%M')} (Hora Nicaragua)",
+        ParagraphStyle(
+            name='Fecha',
+            fontSize=8,
+            alignment=TA_CENTER,
+            spaceAfter=16
+        )
+    ))
+
+    columnas = [
+        'Categoría', 'Subcategoría', 'Item', 'Descripción',
+        'Cantidad', 'Unidad', 'Lote', 'Vencimiento',
+        'Observaciones', 'N° Serie', 'Marca', 'Artículo',
+        'Color', 'Modelo', 'Código', 'Presentación',
+        'Accesorios', 'Medidas', 'Capacidad', 'Información Adicional'
+    ]
+    
+    anchos = [
+        0.8*inch, 0.9*inch, 1.0*inch, 1.2*inch,
+        0.5*inch, 0.5*inch, 0.6*inch, 0.7*inch,
+        0.9*inch, 0.7*inch, 0.7*inch, 0.7*inch,
+        0.5*inch, 0.7*inch, 0.6*inch, 0.9*inch,
+        0.8*inch, 0.7*inch, 0.7*inch, 1.1*inch
+    ]
+
+    for i, cat in enumerate(categorias):
+        elements.append(Paragraph(
+            f"CATEGORÍA: {cat.nombre_categoria}",
+            ParagraphStyle(
+                name='Categoria',
+                fontSize=8,
+                textColor=colors.HexColor('#0066cc'),
+                fontName='Helvetica-Bold',
+                spaceAfter=6,
+                keepWithNext=True
+            )
+        ))
+
+        data = [columnas]
+        
+        if cat.nombre_subcategoria == "SIN SUBCATEGORÍAS":
+            row = [cat.nombre_categoria, 'SIN SUBCATEGORÍAS', 'SIN ÍTEMS'] + ['']*(len(columnas)-3)
+            data.append(row)
+        else:
+            if not cat.items_snapshot.exists():
+                row = [cat.nombre_categoria, cat.nombre_subcategoria, 'SIN ÍTEMS'] + ['']*(len(columnas)-3)
+                data.append(row)
+            else:
+                for item in cat.items_snapshot.all():
+                    row = [
+                        cat.nombre_categoria,
+                        cat.nombre_subcategoria,
+                        Paragraph(item.nombre or '-', styles['TextoNormal']),
+                        Paragraph(item.descripcion or '-', styles['TextoNormal']),
+                        str(item.cantidad_disponible),
+                        item.unidad_medida or '-',
+                        item.lote or '-',
+                        item.vencimiento.strftime('%d/%m/%Y') if item.vencimiento else '-',
+                        Paragraph(item.observaciones or '-', styles['TextoNormal']),
+                        item.num_serie or '-',
+                        item.marca_caracteristica or '-',
+                        item.articulo or '-',
+                        item.colores or '-',
+                        item.modelo or '-',
+                        item.codigo or '-',
+                        Paragraph(item.presentacion or '-', styles['TextoNormal']),
+                        Paragraph(item.accesorios or '-', styles['TextoNormal']),
+                        Paragraph(item.medidas or '-', styles['TextoNormal']),
+                        item.capacidad or '-',
+                        Paragraph(item.informacionAdicional or '-', styles['TextoNormal'])
+                    ]
+                    data.append(row)
+
+        tabla = Table(
+            data,
+            colWidths=anchos,
+            repeatRows=1
+        )
+        
+        estilo = TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#34495e')),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('ALIGN', (0,0), (-1,0), 'CENTER'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,0), 6),
+            ('BOTTOMPADDING', (0,0), (-1,0), 4),
+            ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f8fafc')),
+            ('GRID', (0,0), (-1,-1), 0.3, colors.lightgrey),
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('WORDWRAP', (0,0), (-1,-1), True)
+        ])
+        
+        tabla.setStyle(estilo)
+        elements.append(tabla)
+        elements.append(Spacer(1, 12))
+        if (i + 1) % 2 == 0:
+            elements.append(PageBreak())
+
+    doc.build(elements)
+    return response
+
+#EXPORTAR EXCEL DEL INVENTARIO ACTUAL
+
+@login_required
+def exportar_inventario_actual_excel(request):
+    # Obtener todos los items del inventario actual con sus relaciones
+    inventarios = Inventario.objects.select_related(
+        'categoria', 'subcategoria', 'detalle_tecnico', 'datos_complementarios'
+    ).all()
+    
+    # Estructura de datos
+    data = []
+    for inv in inventarios:
+        # Acceder directamente a las relaciones OneToOne (sin .first())
+        detalle = inv.detalle_tecnico if hasattr(inv, 'detalle_tecnico') else None
+        complemento = inv.datos_complementarios if hasattr(inv, 'datos_complementarios') else None
+        
+        data.append({
+            # Información básica
+            'Categoría': inv.categoria.nombre_categoria,
+            'Subcategoría': inv.subcategoria.nombre,
+            'Item': inv.nombre,
+            'Descripción': inv.descripcion or '-',
+            'Cantidad': inv.cantidad_disponible,
+            'Unidad': inv.unidad_medida or '-',
+            'Lote': inv.lote or '-',
+            'Vencimiento': inv.vencimiento.strftime('%d/%m/%Y') if inv.vencimiento else '-',
+            'Observaciones': inv.observaciones or '-',
+            
+            # Detalles técnicos
+            'Marca': detalle.marca_caracteristica if detalle else '-',
+            'N° Serie': detalle.num_serie if detalle else '-',
+            'Modelo': detalle.modelo if detalle else '-',
+            'Código': detalle.codigo if detalle else '-',
+            'Artículo': detalle.articulo if detalle else '-',
+            
+            # Datos complementarios
+            'Presentación': complemento.presentacion if complemento else '-',
+            'Accesorios': complemento.accesorios if complemento else '-',
+            'Medidas': complemento.medidas if complemento else '-',
+            'Color': complemento.colores if complemento else '-',
+            'Capacidad': complemento.capacidad if complemento else '-',
+            'Info. Adicional': complemento.informacionAdicional if complemento else '-'
+        })
+    
+    # Crear DataFrame
+    df = pd.DataFrame(data)
+    
+    # Generar Excel
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Inventario Actual', index=False)
+        worksheet = writer.sheets['Inventario Actual']
+        
+        # Autoajustar columnas
+        for column in worksheet.columns:
+            max_length = max(len(str(cell.value)) for cell in column)
+            adjusted_width = (max_length + 2) if max_length < 50 else 50
+            worksheet.column_dimensions[column[0].column_letter].width = adjusted_width
+    
+    output.seek(0)
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=Inventario_Actual.xlsx'
+    return response
+
+#EXPORTAR PDF DEL INVENTARIO ACTUAL
+
+from django.utils import timezone
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.units import inch
+import pytz
+
+@login_required
+def exportar_inventario_actual_pdf(request):
+    # Obtener datos con relaciones
+    inventarios = Inventario.objects.select_related(
+        'categoria', 'subcategoria', 'detalle_tecnico', 'datos_complementarios'
+    ).order_by('categoria__nombre_categoria', 'subcategoria__nombre').all()
+    
+    # Configuración PDF para vista previa
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename=Inventario_Actual.pdf'  # 'inline' para abrir en navegador
+    
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=landscape(letter),
+        leftMargin=0.3*inch,
+        rightMargin=0.3*inch,
+        topMargin=0.4*inch,
+        bottomMargin=0.4*inch
+    )
+    
+    elements = []
+    styles = getSampleStyleSheet()
+
+    # Estilos personalizados
+    styles.add(ParagraphStyle(
+        name='Titulo',
+        fontSize=12,
+        leading=14,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#2c3e50'),
+        fontName='Helvetica-Bold',
+        spaceAfter=8
+    ))
+    
+    styles.add(ParagraphStyle(
+        name='TextoNormal',
+        fontSize=6.5,  # Tamaño reducido para más columnas
+        leading=7.5,
+        alignment=TA_LEFT,
+        textColor=colors.black,
+        wordWrap='LTR'
+    ))
+
+    # Cabecera
+    tz = pytz.timezone('America/Managua')
+    fecha_local = timezone.now().astimezone(tz)
+    
+    elements.append(Paragraph("INVENTARIO ACTUAL COMPLETO", styles['Titulo']))
+    elements.append(Paragraph(
+        f"Generado el {fecha_local.strftime('%d/%m/%Y %H:%M')} (Hora Nicaragua)",
+        ParagraphStyle(
+            name='Fecha',
+            fontSize=8,
+            alignment=TA_CENTER,
+            spaceAfter=12
+        )
+    ))
+
+    # Agrupar por categoría y subcategoría
+    categorias = {}
+    for inv in inventarios:
+        categoria_nombre = inv.categoria.nombre_categoria
+        subcategoria_nombre = inv.subcategoria.nombre
+        
+        if categoria_nombre not in categorias:
+            categorias[categoria_nombre] = {}
+        
+        if subcategoria_nombre not in categorias[categoria_nombre]:
+            categorias[categoria_nombre][subcategoria_nombre] = []
+        
+        categorias[categoria_nombre][subcategoria_nombre].append(inv)
+
+    # Definir columnas completas (similar al Excel)
+    columnas = [
+        'Subcategoría', 'Item', 'Descripción', 'Cantidad', 'Unidad',
+        'Lote', 'Vencimiento', 'N° Serie', 'Marca', 'Artículo',
+        'Color', 'Modelo', 'Código', 'Presentación',
+        'Accesorios', 'Medidas', 'Capacidad', 'Info. Adicional'
+    ]
+    
+    anchos = [
+        0.7*inch, 0.9*inch, 1.1*inch, 0.5*inch, 0.5*inch,
+        0.6*inch, 0.7*inch, 0.7*inch, 0.7*inch, 0.7*inch,
+        0.5*inch, 0.7*inch, 0.6*inch, 0.9*inch,
+        0.8*inch, 0.6*inch, 0.6*inch, 1.1*inch
+    ]
+
+    # Procesar por categoría
+    for i, (categoria_nombre, subcategorias) in enumerate(categorias.items()):
+        # Encabezado de categoría
+        elements.append(Paragraph(
+            f"CATEGORÍA: {categoria_nombre.upper()}",
+            ParagraphStyle(
+                name='Categoria',
+                fontSize=9,
+                textColor=colors.HexColor('#0066cc'),
+                fontName='Helvetica-Bold',
+                spaceAfter=6,
+                alignment=TA_LEFT
+            )
+        ))
+        
+        # Procesar subcategorías
+        for subcategoria_nombre, items in subcategorias.items():
+            # Preparar datos para la tabla
+            data = [columnas]  # Encabezados
+            
+            if not items:
+                data.append([subcategoria_nombre, 'SIN ÍTEMS'] + ['']*(len(columnas)-2))
+            else:
+                for inv in items:
+                    detalle = getattr(inv, 'detalle_tecnico', None)
+                    complemento = getattr(inv, 'datos_complementarios', None)
+                    
+                    data.append([
+                        subcategoria_nombre,
+                        Paragraph(inv.nombre or '-', styles['TextoNormal']),
+                        Paragraph(inv.descripcion or '-', styles['TextoNormal']),
+                        str(inv.cantidad_disponible),
+                        inv.unidad_medida or '-',
+                        inv.lote or '-',
+                        inv.vencimiento.strftime('%d/%m/%Y') if inv.vencimiento else '-',
+                        detalle.num_serie if detalle else '-',
+                        detalle.marca_caracteristica if detalle else '-',
+                        detalle.articulo if detalle else '-',
+                        complemento.colores if complemento else '-',
+                        detalle.modelo if detalle else '-',
+                        detalle.codigo if detalle else '-',
+                        Paragraph(complemento.presentacion if complemento else '-', styles['TextoNormal']),
+                        Paragraph(complemento.accesorios if complemento else '-', styles['TextoNormal']),
+                        Paragraph(complemento.medidas if complemento else '-', styles['TextoNormal']),
+                        complemento.capacidad if complemento else '-',
+                        Paragraph(complemento.informacionAdicional if complemento else '-', styles['TextoNormal'])
+                    ])
+            
+            # Crear tabla
+            tabla = Table(
+                data,
+                colWidths=anchos,
+                repeatRows=1
+            )
+            
+            estilo = TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#34495e')),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+                ('ALIGN', (0,0), (-1,0), 'CENTER'),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,0), 6),
+                ('BOTTOMPADDING', (0,0), (-1,0), 4),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f8fafc')),
+                ('GRID', (0,0), (-1,-1), 0.3, colors.lightgrey),
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('WORDWRAP', (0,0), (-1,-1), True)
+            ])
+            
+            # Filas alternadas
+            for row in range(1, len(data)):
+                estilo.add('BACKGROUND', (0,row), (-1,row), 
+                         colors.white if row % 2 == 0 else colors.HexColor('#f1f5f9'))
+            
+            tabla.setStyle(estilo)
+            elements.append(tabla)
+            elements.append(Spacer(1, 10))
+        
+        # Salto de página cada 2 categorías
+        if (i + 1) % 2 == 0 and (i + 1) < len(categorias):
+            elements.append(PageBreak())
+
+    # Generar PDF
+    doc.build(elements)
+    return response

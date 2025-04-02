@@ -177,3 +177,22 @@ class CustomLoginView(LoginView):
             messages.error(request, "Usuario o contraseña no coinciden. Ingréselos correctamente.")
             return redirect('login')
 
+
+from aplicaciones.appGestionInventario.forms import EditProfileForm
+
+@login_required
+def edit_profile(request):
+    if request.method == "POST":
+        form = EditProfileForm(request.POST, request.FILES, instance=request.user, user=request.user)
+        
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Perfil actualizado correctamente")
+            return redirect('editar_perfil')
+    else:
+        form = EditProfileForm(instance=request.user, user=request.user)
+
+    return render(request, "editar_perfil.html", {
+        "form": form,
+        "user": request.user
+    })

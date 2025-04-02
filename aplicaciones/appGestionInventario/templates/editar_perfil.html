@@ -1,0 +1,272 @@
+{% extends "./base.html" %}
+
+{% block title %}Editar Perfil{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Estilos mejorados para la foto */
+    .profile-picture-container {
+        cursor: pointer;
+        transition: transform 0.3s;
+        width: 200px;
+        height: 200px;
+        object-fit: cover;
+        margin: 0 auto;
+        display: block;
+    }
+
+    .profile-picture-large {
+        max-width: 100%;
+        max-height: 70vh;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+
+    /* Flecha de volver */
+    .back-arrow {
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-size: 1.8rem;
+        color: #007bff;
+        cursor: pointer;
+        z-index: 1000;
+    }
+
+    .back-arrow:hover {
+        color: #0056b3;
+    }
+
+    /* Modal mejorado */
+    .modal-content {
+        background-color: #f8f9fa;
+    }
+
+    .modal-body {
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- Flecha para volver -->
+<div class="back-arrow" onclick="history.back()">
+    <i class="bi bi-arrow-left-circle"></i>
+</div>
+
+{% if messages %}
+<div class="alert alert-dismissible {% if messages.tags %}{{ messages.tags }}{% else %}alert-info{% endif %}">
+    {% for message in messages %}
+    <strong>{{ message }}</strong>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">
+        <i class="bi bi-person-gear" style="font-size: 3rem; color: #007bff;"></i><br>
+        Editar Perfil
+    </h2>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" autocomplete="off" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <!-- Columna Izquierda - Datos Personales -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3 text-primary"><i class="bi bi-person-lines-fill"></i> Información
+                                    Personal</h5>
+
+                                {% for field in form %}
+                                {% if field.name in 'username,first_name,last_name,email' %}
+                                <div class="mb-3">
+                                    <label class="form-label">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ field.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <!-- Columna Derecha - Seguridad y Foto -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3 text-primary"><i class="bi bi-shield-lock"></i> Seguridad</h5>
+
+                                {% for field in form %}
+                                {% if field.name in 'current_password,password,confirm_password' %}
+                                <div class="mb-3">
+                                    <label class="form-label">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ field.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+
+                                <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-camera"></i> Foto de Perfil</h5>
+
+                                <div class="text-center mb-3">
+                                    {% if user.userprofile.profile_picture %}
+                                    <img src="{{ user.userprofile.profile_picture.url }}"
+                                        class="img-thumbnail rounded-circle profile-picture-container"
+                                        id="profilePicture" data-bs-toggle="modal" data-bs-target="#pictureModal"
+                                        style="width: 200px; height: 200px; object-fit: cover;">
+
+                                    <div
+                                        class="form-check form-switch d-flex justify-content-center align-items-center mb-3">
+                                        <input class="form-check-input me-2" type="checkbox" id="delete_picture"
+                                            name="delete_picture">
+                                        <label class="form-check-label text-danger" for="delete_picture">
+                                            <i class="bi bi-trash"></i> Eliminar foto actual
+                                        </label>
+                                    </div>
+                                    {% else %}
+                                    <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center profile-picture-container"
+                                        style="width: 200px; height: 200px;" id="profilePicture" data-bs-toggle="modal"
+                                        data-bs-target="#pictureModal">
+                                        <i class="bi bi-person" style="font-size: 80px;"></i>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="mb-3 mt-3">
+                                        <input type="file" name="profile_picture" class="form-control" accept="image/*">
+                                        <small class="form-text text-muted">Formatos: JPG, PNG.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <button type="button" onclick="history.back()" class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-arrow-left"></i> Volver
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal mejorado para la foto -->
+<div class="modal fade" id="pictureModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Foto de perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                {% if user.userprofile.profile_picture %}
+                <img src="{{ user.userprofile.profile_picture.url }}" class="profile-picture-large"
+                    style="max-height: 70vh;">
+                {% else %}
+                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 300px; height: 300px;">
+                    <i class="bi bi-person" style="font-size: 150px;"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Validación mejorada -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Validación de contraseñas
+        const password = document.getElementById('{{ form.password.id_for_label }}');
+        const confirm_password = document.getElementById('{{ form.confirm_password.id_for_label }}');
+
+        function validatePassword() {
+            if (password.value && password.value !== confirm_password.value) {
+                confirm_password.setCustomValidity("Las contraseñas no coinciden");
+            } else {
+                confirm_password.setCustomValidity('');
+            }
+        }
+
+        password.addEventListener('input', validatePassword);
+        confirm_password.addEventListener('input', validatePassword);
+
+        // Prevenir distorsión de imagen en el modal
+        document.getElementById('pictureModal').addEventListener('show.bs.modal', function () {
+            const img = this.querySelector('img');
+            if (img) {
+                // Mantener proporciones naturales
+                const naturalWidth = img.naturalWidth;
+                const naturalHeight = img.naturalHeight;
+                const aspectRatio = naturalWidth / naturalHeight;
+
+                // Ajustar según la relación de aspecto
+                if (aspectRatio > 1) {
+                    img.style.width = '100%';
+                    img.style.height = 'auto';
+                } else {
+                    img.style.width = 'auto';
+                    img.style.height = '80%';
+                }
+            }
+        });
+
+        // Validación de campos obligatorios
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function (e) {
+            let isValid = true;
+
+            ['username', 'first_name', 'last_name', 'email', 'current_password'].forEach(fieldName => {
+                const field = document.querySelector(`[name="${fieldName}"]`);
+                if (field && !field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('invalid-feedback')) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback d-block';
+                        errorDiv.textContent = 'Este campo es obligatorio';
+                        field.parentNode.appendChild(errorDiv);
+                    }
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger position-fixed top-0 start-50 translate-middle-x mt-3';
+                alertDiv.style.zIndex = '1100';
+                alertDiv.textContent = 'Por favor complete todos los campos obligatorios';
+                document.body.appendChild(alertDiv);
+                setTimeout(() => alertDiv.remove(), 3000);
+            }
+        });
+    });
+</script>
+{% endblock %}

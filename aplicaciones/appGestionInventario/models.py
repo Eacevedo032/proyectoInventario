@@ -5,7 +5,26 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.timezone import now
+<<<<<<< HEAD
 from django.db.models import JSONField
+=======
+import os
+
+#Perfil de usuario
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+
+    def __str__(self):
+        return self.user.username
+
+    def delete_profile_picture(self):
+        """Elimina físicamente el archivo de imagen"""
+        if self.profile_picture:
+            if os.path.isfile(self.profile_picture.path):
+                os.remove(self.profile_picture.path)
+            self.profile_picture.delete(save=False)
+>>>>>>> branch-jose
 
 # Tabla para manejar los usuarios aprobados y denegados
 class ApprovedUser(models.Model):
@@ -102,37 +121,34 @@ class DatosComplementarios(models.Model):
         return f"Datos complementarios para {self.inventario.nombre}"
 
 # Clases para guardar el Inventario General cuando el admin lo desee
-
 # Tabla principal que registra el guardado del Inventario General
 class GuardadoInventarioGeneral(models.Model):
     nombre = models.CharField(max_length=255, null=False, blank=False)
     descripcion = models.TextField()
     fecha_guardado = models.DateTimeField(default=now)
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-
+    
     def __str__(self):
-        return f"{self.nombre} - Guardado por {self.usuario.username} ({self.usuario.email}) el {self.fecha_guardado.strftime('%Y-%m-%d %H:%M:%S')}"
+        return f"{self.nombre} - {self.usuario.username} ({self.fecha_guardado.strftime('%Y-%m-%d %H:%M:%S')})"
 
-# Tabla para almacenar las Categorías guardadas
-class CategoriaGuardada(models.Model):
-    guardado = models.ForeignKey(GuardadoInventarioGeneral, on_delete=models.CASCADE, related_name='categorias_guardadas')
+# Nueva tabla para categorías/subcategorías (snapshots)
+class CategoriaSubcategoriaSnapshot(models.Model): 
+    guardado = models.ForeignKey(GuardadoInventarioGeneral, on_delete=models.CASCADE, related_name='categorias_snapshot')
     nombre_categoria = models.CharField(max_length=100)
-    descripcion = models.CharField(max_length=255)
-
+    descripcion_categoria = models.CharField(max_length=255)
+    nombre_subcategoria = models.CharField(max_length=100)
+    
+    class Meta:
+        unique_together = ('guardado', 'nombre_categoria', 'nombre_subcategoria')
+        verbose_name = "Categoría/Subcategoría (Snapshot)"
+    
     def __str__(self):
-        return f"{self.nombre_categoria} ({self.descripcion})"
+        return f"{self.nombre_categoria} - {self.nombre_subcategoria}"
 
-# Tabla para almacenar las Subcategorías guardadas
-class SubCategoriaGuardada(models.Model):
-    categoria_guardada = models.ForeignKey(CategoriaGuardada, on_delete=models.CASCADE, related_name='subcategorias_guardadas')
-    nombre = models.CharField(max_length=100)
-
-    def __str__(self):
-        return f"{self.nombre} - {self.categoria_guardada.nombre_categoria}"
-
-# Tabla para almacenar los ítems de Inventario guardados
-class InventarioGuardado(models.Model):
-    subcategoria_guardada = models.ForeignKey(SubCategoriaGuardada, on_delete=models.CASCADE, related_name='inventarios_guardados')
+# Tabla de ítems (snapshots) 
+class InventarioGuardado(models.Model):  
+    categoria_subcategoria = models.ForeignKey(CategoriaSubcategoriaSnapshot, on_delete=models.CASCADE, related_name='items_snapshot') 
+    # campos actuales:
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True, null=True)
     cantidad_disponible = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
@@ -140,35 +156,27 @@ class InventarioGuardado(models.Model):
     lote = models.CharField(max_length=36, blank=True, null=True)
     vencimiento = models.DateField(blank=True, null=True)
     observaciones = models.TextField(blank=True, null=True)
-
-    def __str__(self):
-        return self.nombre
-
-# Tabla para almacenar los Detalles Técnicos guardados
-class DetalleTecnicoGuardado(models.Model):
-    inventario_guardado = models.OneToOneField(InventarioGuardado, on_delete=models.CASCADE, related_name="detalle_tecnico_guardado")
+    # Campos técnicos:
     marca_caracteristica = models.TextField(blank=True, null=True)
     num_cat = models.TextField(blank=True, null=True)
     num_serie = models.TextField(blank=True, null=True)
     modelo = models.TextField(blank=True, null=True)
     codigo = models.TextField(blank=True, null=True)
     articulo = models.TextField(blank=True, null=True)
-
-    def __str__(self):
-        return f"Detalle Técnico guardado para {self.inventario_guardado.nombre}"
-
-# Tabla para almacenar los Datos Complementarios guardados
-class DatosComplementariosGuardados(models.Model):
-    inventario_guardado = models.OneToOneField(InventarioGuardado, on_delete=models.CASCADE, related_name="datos_complementarios_guardados")
+    # Datos complementarios:
     presentacion = models.TextField(blank=True, null=True)
     accesorios = models.TextField(blank=True, null=True)
     medidas = models.TextField(blank=True, null=True)
     colores = models.TextField(blank=True, null=True)
     capacidad = models.TextField(blank=True, null=True)
     informacionAdicional = models.TextField(blank=True, null=True)
-
+    
+    class Meta:
+        unique_together = ('categoria_subcategoria', 'nombre', 'lote')
+        verbose_name = "Ítem Guardado (Snapshot)"
+    
     def __str__(self):
-        return f"Datos complementarios guardados para {self.inventario_guardado.nombre}"
+        return f"{self.nombre} (Lote: {self.lote})"
 
 #LABORATORIOS
 
@@ -329,6 +337,8 @@ class ReporteUsoLaboratorio(models.Model):
 
     def __str__(self):
         return f"Reporte para {self.solicitud.laboratorio} - {self.solicitud.usuario.username}"
+    
+from .signals import *
 
 
 class ReporteFoto(models.Model):
