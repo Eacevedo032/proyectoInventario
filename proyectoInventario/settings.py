@@ -143,7 +143,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Carpeta donde se almacenarán lo
 REPORTES_FOTOS_URL = '/reportes_fotos/'  
 REPORTES_FOTOS_ROOT = os.path.join(MEDIA_ROOT, 'reportes_fotos')  
 
-<<<<<<< HEAD
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Ruta donde se almacenan los archivos subidos de fotos de reporte
@@ -152,8 +151,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Carpeta donde se guardarán las fotos
 MEDIA_URL = '/media/'  # URL base para acceder a las fotos
 
-=======
->>>>>>> branch-jose
 
 '''redireccion de login a inicio en settings.py
 LOGIN_REDIRECT_URL = 'inicio'

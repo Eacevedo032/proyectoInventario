@@ -5,9 +5,6 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.timezone import now
-<<<<<<< HEAD
-from django.db.models import JSONField
-=======
 import os
 
 #Perfil de usuario
@@ -24,7 +21,6 @@ class UserProfile(models.Model):
             if os.path.isfile(self.profile_picture.path):
                 os.remove(self.profile_picture.path)
             self.profile_picture.delete(save=False)
->>>>>>> branch-jose
 
 # Tabla para manejar los usuarios aprobados y denegados
 class ApprovedUser(models.Model):
