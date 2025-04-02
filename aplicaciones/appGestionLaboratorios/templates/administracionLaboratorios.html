@@ -44,6 +44,7 @@
             <div class="col-md-3">
                 <select name="estado" class="form-control">
                     <option value="">Todos los Estados</option>
+                    <option value="en_revision">en_revision</option>
                     <option value="pendiente">Pendiente</option>
                     <option value="aprobada">Aprobada</option>
                     <option value="rechazada">Rechazada</option>
@@ -55,7 +56,7 @@
                     <option value="">Todos los Laboratorios</option>
                     <option value="Planta Baja">Laboratorio Planta Baja</option>
                     <option value="Planta Alta">Laboratorio Planta Alta</option>
-                    <option value="Microbial">Laboratorio Microbial</option>
+                    <option value="Microbiana">Laboratorio Microbiana</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -125,18 +126,13 @@
                                 <a href="{% url 'ver_items_solicitud' solicitud.id %}" class="btn btn-info btn-sm me-2">Ver Ítems</a>
                                 <a href="javascript:abrirModal('{{ solicitud.id }}');" 
                                    class="btn btn-primary btn-sm me-2 
-                                          {% if solicitud.estado != 'pendiente' %} btn-disabled {% endif %}">
+                                          {% if solicitud.estado != 'en_revision' %} btn-disabled {% endif %}">
                                     Aprobar
                                 </a>
                                 <a href="{% url 'rechazar_solicitud' solicitud.id %}" 
                                    class="btn btn-danger btn-sm me-2 
-                                          {% if solicitud.estado != 'pendiente' %} btn-disabled {% endif %}">
+                                          {% if solicitud.estado != 'en_revision' %} btn-disabled {% endif %}">
                                     Rechazar
-                                </a>
-                                <a href="{% url 'solicitud_pendiente' solicitud.id %}" 
-                                   class="btn btn-warning btn-sm 
-                                          {% if solicitud.estado != 'pendiente' %} btn-disabled {% endif %}">
-                                    Pendiente
                                 </a>
                             </div>                                                                            
                         </td>

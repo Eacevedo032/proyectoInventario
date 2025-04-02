@@ -14,52 +14,59 @@ from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convert
 @login_required
 def solicitar_recursos(request):
     if request.method == 'POST':
-        # Procesar la solicitud de recursos
         solicitud_id = request.POST.get('solicitud')
-        inventario_id = request.POST.get('inventario')
         usuario_id = request.POST.get('usuario')
-        cantidad_utilizada = request.POST.get('cantidad_utilizada')
-        unidad_medida = request.POST.get('unidad_medida')
         fecha_uso = request.POST.get('fecha_uso')
 
-        # Obtener el inventario correspondiente
-        inventario = get_object_or_404(Inventario, id_inventario=inventario_id)
+        inventario_ids = request.POST.getlist('inventario[]')
+        cantidades = request.POST.getlist('cantidad_utilizada[]')
+        unidades_medida = request.POST.getlist('unidad_medida[]')
 
-        # Validación de cantidad ingresada que sea mayor a 0
-        try:
-            cantidad_utilizada_decimal = Decimal(cantidad_utilizada)
-            if cantidad_utilizada_decimal <= 0:
-                messages.error(request, "La cantidad a utilizar debe ser mayor a 0.")
+        if not solicitud_id or not usuario_id or not fecha_uso:
+            messages.error(request, "Faltan datos obligatorios.")
+            return redirect('solicitar_recursos')
+
+        for i in range(len(inventario_ids)):
+            inventario = get_object_or_404(Inventario, id_inventario=inventario_ids[i])
+            try:
+                cantidad_utilizada_decimal = Decimal(cantidades[i])
+                if cantidad_utilizada_decimal <= 0:
+                    messages.error(request, "La cantidad a utilizar debe ser mayor a 0.")
+                    return redirect('solicitar_recursos')
+            except (InvalidOperation, IndexError, TypeError):
+                messages.error(request, "La cantidad ingresada no es válida.")
                 return redirect('solicitar_recursos')
-        except (InvalidOperation, TypeError):
-            messages.error(request, "La cantidad ingresada no es válida.")
-            return redirect('solicitar_recursos')
 
-        # Hacemos la conversión de la cantidad solo si las unidades son diferentes
-        try:
-            cantidad_convertida = convertir_unidades(cantidad_utilizada_decimal, unidad_medida, inventario.unidad_medida)
-        except ValueError:
-            messages.error(request, f"No se pueden convertir {unidad_medida} a {inventario.unidad_medida}. "
-                                    "Solicite items cuyas unidades de medida tengan lógica con las medidas de Inventario.")
-            return redirect('solicitar_recursos')
-        
-        # Verificamos si la cantidad solicitada es mayor que la disponible (cantidad ya convertida o no)
-        if cantidad_convertida > inventario.cantidad_disponible:
-            messages.error(request, "La cantidad solicitada es mayor a la existente en Inventario.")
-            return redirect('solicitar_recursos')
+            unidad_medida = unidades_medida[i]
 
-        # Registrar el uso del ítem
-        uso_item = UsoItemLaboratorio(
-            solicitud_id=solicitud_id,
-            inventario=inventario,
-            usuario_id=usuario_id,
-            cantidad_utilizada=cantidad_utilizada_decimal,
-            unidad_medida=unidad_medida,
-            fecha_uso=fecha_uso,
-            cantidad_disponible_momento=inventario.cantidad_disponible,
-            unidad_medida_momento=inventario.unidad_medida,
-        )
-        uso_item.save()
+            # Hacemos la conversión de la cantidad solo si las unidades son diferentes
+            try:
+                cantidad_convertida = convertir_unidades(
+                    cantidad_utilizada_decimal, unidad_medida, inventario.unidad_medida
+                )
+            except ValueError:
+                messages.error(request, f"No se pueden convertir {unidad_medida} a {inventario.unidad_medida}. "
+                                        "Solicite items cuyas unidades de medida tengan lógica con las medidas de Inventario.")
+                return redirect('solicitar_recursos')
+
+            # Verificamos si la cantidad solicitada es mayor que la disponible
+            if cantidad_convertida > inventario.cantidad_disponible:
+                messages.error(request, "La cantidad solicitada es mayor a la existente en Inventario.")
+                return redirect('solicitar_recursos')
+
+            # Registrar el uso del ítem
+            uso_item = UsoItemLaboratorio(
+                solicitud_id=solicitud_id,
+                inventario=inventario,
+                usuario_id=usuario_id,
+                cantidad_utilizada=cantidad_utilizada_decimal,
+                unidad_medida=unidad_medida,
+                fecha_uso=fecha_uso,
+                cantidad_disponible_momento=inventario.cantidad_disponible,
+                unidad_medida_momento=inventario.unidad_medida,
+            )
+            uso_item.save()
+
         messages.success(request, 'La solicitud de recursos se ha creado exitosamente.')
         return redirect('solicitar_recursos')
 
@@ -106,6 +113,7 @@ def solicitar_recursos(request):
 
     return render(request, 'solicitar_recursos.html', {
         'solicitudes': solicitudes,
+        'solicitudes_recursos': solicitudes_recursos,
         'page_obj': page_obj,
         'solicitudes_pendientes': solicitudes_pendientes,
         'solicitudes_aprobadas': solicitudes_aprobadas,

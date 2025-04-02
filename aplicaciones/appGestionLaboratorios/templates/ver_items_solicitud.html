@@ -36,7 +36,7 @@
                 <td>{{ item.inventario.cantidad_disponible }} {{ item.inventario.unidad_medida }}</td>
                 <td>{{ item.fecha_uso }}</td>
                 <td>
-                    {% if item.solicitud.estado == 'pendiente' %}
+                    {% if item.solicitud.estado == 'en_revision' %}
                     <a href="{% url 'editar_recurso' item.id %}" class="btn btn-warning">Editar</a>
                     <a href="{% url 'eliminar_recurso' item.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro de eliminar este ítem?');">Eliminar</a>
                     {% else %}

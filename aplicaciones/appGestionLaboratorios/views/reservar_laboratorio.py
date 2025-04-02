@@ -90,17 +90,43 @@ def reservar_laboratorio(request):
         'mostrar_historial': request.GET.get('mostrar_historial') == 'true',
     })
 
+@login_required
+def enviar_solicitud(request, solicitud_id):
+    solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id, usuario=request.user)
+
+    if solicitud.estado != SolicitudLaboratorio.PENDIENTE:
+        messages.error(request, "Solo se pueden enviar solicitudes en estado pendiente.")
+        return redirect('reservar_laboratorio')
+
+    # Cambiar estado a "en revisión"
+    solicitud.estado = SolicitudLaboratorio.EN_REVISION
+    solicitud.save()
+    
+    messages.success(request, "La solicitud ha sido enviada y está en revisión.")
+    return redirect('reservar_laboratorio')
+
 #editar solicitud de laboratorio
 @login_required
 def editar_laboratorio(request, solicitud_id):
     # Obtener la solicitud de reserva a editar
     solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id, usuario=request.user)
 
-    # Solo permitir editar si la reserva está en estado "pendiente"
-    if solicitud.estado != SolicitudLaboratorio.PENDIENTE:
-        messages.error(request, "Solo se pueden editar reservas en estado pendiente.")
-        return redirect('reservar_laboratorio')
-
+    # Verificar si el estado de la solicitud permite edición
+    if solicitud.estado == SolicitudLaboratorio.PENDIENTE:
+        # Si es un usuario con permisos, bloquear edición
+        if request.user.is_superuser or request.user.has_perm('app.administrador') or request.user.has_perm('app.privilegiado'):
+            messages.error(request, "Usuarios con privilegios no pueden editar reservas en estado pendiente.")
+            return redirect('reservar_laboratorio')
+    elif solicitud.estado == SolicitudLaboratorio.EN_REVISION:
+            # Permitir edición solo a usuarios con privilegios
+            if not (request.user.is_superuser or request.user.has_perm('app.administrador') or request.user.has_perm('app.privilegiado')):
+                messages.error(request, "Solo los usuarios con privilegios pueden editar reservas en estado EN_REVISION.")
+                return redirect('reservar_laboratorio')
+    else:
+                # Bloquear edición para cualquier otro estado
+                messages.error(request, "No se pueden editar reservas en este estado.")
+                return redirect('reservar_laboratorio')
+            
     if request.method == 'POST':
         # Obtener los datos del formulario
         laboratorio = request.POST['laboratorio']

@@ -1,9 +1,11 @@
 from django.urls import path, include
 from aplicaciones.appGestionLaboratorios.views import views
+from aplicaciones.appGestionLaboratorios.views.reservar_laboratorio import enviar_solicitud
 
 urlpatterns = [
     # URLs para formulario y tabla de laboratorio
     path('reservar_laboratorio/', views.reservar_laboratorio, name='reservar_laboratorio'),
+    path('enviar_solicitud/<int:solicitud_id>/', enviar_solicitud, name='enviar_solicitud'),
     path('editar_laboratorio/<int:solicitud_id>/', views.editar_laboratorio, name='editar_laboratorio'),
     path('eliminar_solicitud/<int:solicitud_id>/', views.eliminar_solicitud, name='eliminar_solicitud'),
 

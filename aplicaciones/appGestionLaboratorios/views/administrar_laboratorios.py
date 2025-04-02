@@ -19,7 +19,7 @@ def administracionLaboratorios(request):
     laboratorio = request.GET.get('laboratorio')
     usuario = request.GET.get('usuario')
 
-    solicitudes = SolicitudLaboratorio.objects.select_related('usuario').order_by('usuario__username')
+    solicitudes = SolicitudLaboratorio.objects.select_related('usuario').exclude(estado='rechazada').order_by('usuario__username')
 
     if estado:
         solicitudes = solicitudes.filter(estado=estado)

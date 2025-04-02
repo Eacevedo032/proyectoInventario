@@ -3,8 +3,22 @@
 {% block title %}Detalle de Reporte{% endblock %}
 
 {% block body %}
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        .imprimible { width: 100%; }
+        .pagina {
+            page-break-after: always;
+        }
+    }
+    .contenedor-fotos {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+</style>
+
 <div class="container no-print" style="font-family: 'Times New Roman', Times, serif; margin: 20px auto; max-width: 900px;">
-    <!-- Botones para exportar e imprimir -->
     <div class="mb-4 text-left no-print">
         <button type="button" class="btn btn-primary" onclick="exportToPDF()">Exportar a PDF</button>
         <button type="button" class="btn btn-success" onclick="exportToExcel()">Exportar a Excel</button>
@@ -12,158 +26,61 @@
     </div>
 </div>
 
-<!-- Contenido imprimible -->
 <div class="container imprimible" style="font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; max-width: 900px; box-sizing: border-box;">
     <h1 class="mb-4 text-left" style="font-size: 16pt; font-weight: bold;">Detalle de Reporte</h1>
-
     <div class="card" style="border: none; text-align: left; width: 100%;">
         <div class="card-body">
             <h5 class="card-title" style="font-size: 14pt; font-weight: bold;">Laboratorio: {{ laboratorio_nombre }}</h5>
-            <p class="card-text estudiantes" style="font-size: 14pt;">Cantidad de Estudiantes: {{ reporte.numero_estudiantes }}</p>
-
-            <!-- Mostrar la imagen utilizando la URL correcta -->
-            {% if reporte.foto %}
-            <p class="card-text" style="font-size: 14pt;">Foto Adjunta:</p>
-            <img src="{{ reporte.foto.url }}" class="img-fluid rounded" alt="Foto Adjunta" style="max-width: 100%; height: auto; margin-bottom: 20px;">
-            {% else %}
-            <p class="card-text" style="font-size: 14pt;">No hay foto adjunta.</p>
-            {% endif %}
-
+            <p class="card-text" style="font-size: 14pt;">Clase: {{ reporte.clase }}</p>
+            <p class="card-text" style="font-size: 14pt;">Asignatura: {{ reporte.asignatura }}</p>
+            <p class="card-text" style="font-size: 14pt;">Horario de Salida Real: {{ reporte.horario_salida_real }}</p>
+            <p class="card-text" style="font-size: 14pt;">Estudiantes Masculinos: {{ reporte.estudiantes_masculinos }}</p>
+            <p class="card-text" style="font-size: 14pt;">Estudiantes Femeninos: {{ reporte.estudiantes_femeninos }}</p>
             <p class="card-text objetivo" style="font-size: 14pt;">Objetivo de la Práctica: {{ reporte.objetivo_practica }}</p>
             <h6 class="card-subtitle mb-2 text-muted" style="font-size: 14pt;">Fecha de Generación: {{ reporte.fecha_generacion }}</h6>
+
+            {% if fotos %}
+            <p class="card-text" style="font-size: 14pt;">Fotos Adjuntas:</p>
+            <div class="contenedor-fotos">
+                {% for foto in fotos %}
+                <div class="pagina">
+                    <img src="{{ foto.imagen.url }}" class="img-fluid rounded" alt="Foto Adjunta"
+                        style="max-width: 100%; height: auto; margin-bottom: 20px;">
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="card-text" style="font-size: 14pt;">No hay fotos adjuntas.</p>
+            {% endif %}
         </div>
     </div>
-</div>
+</div> 
 
-<!-- Botón de regreso -->
 <div class="container no-print text-center" style="margin: 20px auto; max-width: 900px;">
     <a href="{% url 'listar_reportes' %}" class="btn btn-secondary mt-3">Regresar</a>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <script>
-    async function exportToPDF() {
-        try {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
+    function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
 
-            // Establecer las fuentes
-            pdf.setFont("Helvetica");
+        pdf.setFont("Helvetica");
+        pdf.setFontSize(16);
+        pdf.text("Detalle de Reporte", 20, 20);
+        pdf.setFontSize(12);
 
-            // Título
-            pdf.setFontSize(16);
-            pdf.text("Detalle de Reporte", 20, 20);
-
-            // Contenido
-            pdf.setFontSize(12);
-            const laboratorio = document.querySelector(".card-title")?.innerText;
-            const estudiantes = document.querySelector(".card-text.estudiantes")?.innerText;
-            const objetivo = document.querySelector(".card-text.objetivo")?.innerText;
-            const fechaGeneracion = document.querySelector(".card-subtitle")?.innerText;
-
-            if (laboratorio) pdf.text(`${laboratorio}`, 20, 40);
-            if (estudiantes) pdf.text(`${estudiantes}`, 20, 50);
-            if (objetivo) pdf.text(`${objetivo}`, 20, 60);
-            if (fechaGeneracion) pdf.text(`${fechaGeneracion}`, 20, 70);
-
-            // Imagen
-            const imgElement = document.querySelector("img");
-            if (imgElement) {
-                const imgData = await fetch(imgElement.src).then(res => res.blob());
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    pdf.addImage(e.target.result, "JPEG", 20, 80, 160, 120);
-                    pdf.save("reporte.pdf");
-                };
-                reader.readAsDataURL(imgData);
-            } else {
-                pdf.save("reporte.pdf");
-            }
-        } catch (error) {
-            console.error("Error exportando a PDF:", error);
-        }
-    }
-
-    function exportToExcel() {
-        try {
-            const data = [
-                ["Detalle de Reporte"],
-                ["Laboratorio", document.querySelector(".card-title")?.innerText || ""],
-                ["Cantidad de Estudiantes", document.querySelector(".card-text.estudiantes")?.innerText || ""],
-                ["Objetivo de la Práctica", document.querySelector(".card-text.objetivo")?.innerText || ""],
-                ["Fecha de Generación", document.querySelector(".card-subtitle")?.innerText || ""]
-            ];
-
-            const workbook = XLSX.utils.book_new();
-            const worksheet = XLSX.utils.aoa_to_sheet(data);
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
-            XLSX.writeFile(workbook, "reporte.xlsx");
-        } catch (error) {
-            console.error("Error exportando a Excel:", error);
-        }
+        let contenido = document.querySelector(".imprimible");
+        html2canvas(contenido).then(canvas => {
+            let imgData = canvas.toDataURL("image/png");
+            pdf.addImage(imgData, "PNG", 10, 30, 190, 0);
+            pdf.save("reporte.pdf");
+        });
     }
 </script>
-
-<style>
-/* Estilos generales */
-body {
-    font-family: 'Times New Roman', Times, serif;
-}
-
-/* Estilos de impresión */
-@media print {
-    .no-print {
-        display: none !important;
-    }
-
-    /* Ocultar el menú hamburguesa y el nombre de la aplicación */
-    .navbar, .navbar-brand {
-        display: none !important;
-    }
-
-    /* Ajustes del contenedor principal para la impresión */
-    .imprimible {
-        margin: 0;
-        padding: 1in 0.5in; /* Márgenes de Word (1 pulgada arriba/abajo, 0.5 a los lados) */
-        width: 100%;
-        max-width: 100%; /* Se expande a todo el ancho disponible */
-        text-align: left; /* Todo alineado a la izquierda */
-        box-sizing: border-box;
-    }
-
-    /* Configuración del contenido */
-    .card {
-        margin: 0; /* Eliminar márgenes innecesarios */
-        padding: 0;
-        border: none;
-    }
-
-    /* Márgenes y alineación de imágenes */
-    img {
-        display: block;
-        margin: 20px 0; /* Margen superior e inferior */
-        max-width: 100%;
-        height: auto;
-    }
-
-    /* Ajustar fuentes para impresión */
-    h1, h5 {
-        font-size: 16pt;
-        margin: 0 0 10px; /* Espaciado inferior */
-    }
-
-    p, h6 {
-        font-size: 14pt;
-        margin: 0 0 10px; /* Espaciado inferior */
-    }
-
-    body {
-        font-size: 12pt;
-        margin: 0; /* Sin márgenes globales */
-        color: #000; /* Asegurar texto negro para impresión */
-    }
-}
-</style>
 {% endblock %}
+
 

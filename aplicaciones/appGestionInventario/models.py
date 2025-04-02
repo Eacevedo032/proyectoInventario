@@ -5,6 +5,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.timezone import now
+from django.db.models import JSONField
 
 # Tabla para manejar los usuarios aprobados y denegados
 class ApprovedUser(models.Model):
@@ -188,11 +189,13 @@ class HorarioLaboratorio(models.Model):
 # Tabla Solicitudes de Laboratorios
 class SolicitudLaboratorio(models.Model):
     PENDIENTE = 'pendiente'
+    EN_REVISION = 'en_revision'
     APROBADA = 'aprobada'
     RECHAZADA = 'rechazada'
     
     ESTADOS = [
         (PENDIENTE, 'Pendiente'),
+        (EN_REVISION, 'En revisión'),
         (APROBADA, 'Aprobada'),
         (RECHAZADA, 'Rechazada'),
     ]
@@ -227,32 +230,40 @@ class SolicitudLaboratorio(models.Model):
         raise ValidationError("El laboratorio ya está reservado en el horario solicitado.")
 
 
+    def enviar_solicitud(self):
+        """Método para cambiar el estado a 'en revisión'."""
+        if self.estado != self.PENDIENTE:
+            raise ValidationError("Solo se pueden enviar solicitudes pendientes.")
+        self.estado = self.EN_REVISION
+        self.save()
+
     def aprobar_solicitud(self):
-     if self.estado != SolicitudLaboratorio.PENDIENTE:
-        raise ValidationError("Solo se pueden aprobar solicitudes pendientes.")
+        """Método para aprobar la solicitud solo si está en revisión."""
+        if self.estado != self.EN_REVISION:
+            raise ValidationError("Solo se pueden aprobar solicitudes en revisión.")
+        
+        # Verificar disponibilidad del laboratorio
+        conflictos = HorarioLaboratorio.objects.filter(
+            laboratorio=self.laboratorio,
+            fecha_reserva=self.fecha_reserva,
+            hora_inicio__lt=self.hora_fin,
+            hora_fin__gt=self.hora_inicio,
+        )
 
-     # Verificar disponibilidad del laboratorio
-     conflictos = HorarioLaboratorio.objects.filter(
-         laboratorio=self.laboratorio,
-         fecha_reserva=self.fecha_reserva,
-         hora_inicio__lt=self.hora_fin,
-         hora_fin__gt=self.hora_inicio,
-     )
+        if conflictos.exists():
+            raise ValidationError("El laboratorio ya está reservado en el horario solicitado.")
 
-     if conflictos.exists():
-        raise ValidationError("El laboratorio ya está reservado en el horario solicitado.")
+        # Registrar horario de ocupación
+        HorarioLaboratorio.objects.create(
+            laboratorio=self.laboratorio,
+            fecha_reserva=self.fecha_reserva,
+            hora_inicio=self.hora_inicio,
+            hora_fin=self.hora_fin,
+        )
 
-    # Registrar horario de ocupación
-     HorarioLaboratorio.objects.create(
-        laboratorio=self.laboratorio,
-        fecha_reserva=self.fecha_reserva,
-        hora_inicio=self.hora_inicio,
-        hora_fin=self.hora_fin,
-    )
-
-    # Actualizar estado de la solicitud
-     self.estado = SolicitudLaboratorio.APROBADA
-     self.save()
+        # Actualizar estado de la solicitud
+        self.estado = self.APROBADA
+        self.save()
 
 
 # Tabla Usos de Ítems en Laboratorios
@@ -305,15 +316,24 @@ class HistorialInventario(models.Model):
     def __str__(self):
         return f"{self.inventario.nombre} - {self.tipo_cambio} - {self.cantidad_cambiada} - {self.fecha_cambio}"
 
-# Tabla Reportes
 class ReporteUsoLaboratorio(models.Model):
-    solicitud = models.OneToOneField(SolicitudLaboratorio, on_delete=models.CASCADE, verbose_name="Solicitud Asociada")
+    solicitud = models.OneToOneField('SolicitudLaboratorio', on_delete=models.CASCADE, verbose_name="Solicitud Asociada")
     numero_estudiantes = models.PositiveIntegerField(verbose_name="Número de Estudiantes")
+    estudiantes_masculinos = models.PositiveIntegerField(verbose_name="Estudiantes Masculinos", default=0)
+    estudiantes_femeninos = models.PositiveIntegerField(verbose_name="Estudiantes Femeninos", default=0)
+    clase = models.CharField(max_length=100, verbose_name="Clase/Grado")
+    asignatura = models.CharField(max_length=100, verbose_name="Asignatura")
+    horario_salida_real = models.TimeField(verbose_name="Horario Real de Salida")
     objetivo_practica = models.TextField(verbose_name="Objetivo de la Práctica")
-    foto = models.ImageField(upload_to='reportes_fotos/', blank=True, null=True, verbose_name="Foto Adjunta")
     fecha_generacion = models.DateField(auto_now_add=True, verbose_name="Fecha de Generación")
 
     def __str__(self):
         return f"Reporte para {self.solicitud.laboratorio} - {self.solicitud.usuario.username}"
 
 
+class ReporteFoto(models.Model):
+    reporte = models.ForeignKey(ReporteUsoLaboratorio, on_delete=models.CASCADE, related_name='fotos')
+    imagen = models.ImageField(upload_to='reportes_fotos/', max_length=255)
+
+    def __str__(self):
+        return f"Foto {self.id} - Reporte {self.reporte.id}"

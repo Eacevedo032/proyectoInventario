@@ -16,9 +16,9 @@ def editar_recurso(request, uso_id):
     uso_item = get_object_or_404(UsoItemLaboratorio, id=uso_id)
     print(f"Uso ID recibido: {uso_id}")  # Verificamos que el ID sea correcto
 
-    # Verificar que la solicitud esté en estado pendiente
-    if uso_item.solicitud.estado != 'pendiente':
-        messages.error(request, "Solo se pueden editar solicitudes pendientes.")
+    # Verificar que la solicitud esté en estado en_revision
+    if uso_item.solicitud.estado != 'EN_REVISION':
+        messages.error(request, "Solo se pueden editar solicitudes en revisión.")
         return redirect('solicitar_recursos')
 
     if request.method == 'POST':
@@ -68,10 +68,10 @@ def editar_recurso(request, uso_id):
 def eliminar_recurso(request, uso_id):
     uso_item = get_object_or_404(UsoItemLaboratorio, id=uso_id)
     
-    # Solo se pueden eliminar ítems de solicitudes en estado 'pendiente'
-    if uso_item.solicitud.estado != 'pendiente':
-        messages.error(request, "Solo se pueden eliminar ítems de solicitudes pendientes.")
-        return redirect('solicitar_recursos')  # Redirige si la solicitud no está pendiente
+    # Solo se pueden eliminar ítems de solicitudes en estado 'en_revision'
+    if uso_item.solicitud.estado != 'en_revision':
+        messages.error(request, "Solo se pueden eliminar ítems de solicitudes en revisión.")
+        return redirect('solicitar_recursos')  # Redirige si la solicitud no está en revision
 
     # Eliminar el ítem
     uso_item.delete()

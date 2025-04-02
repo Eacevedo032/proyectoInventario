@@ -5,42 +5,76 @@
 {% block body %}
 
 {% if messages %}
-        <div class="alert alert-dismissible alert-success">
-            {% for message in messages %}
-            <strong class="text-dark">{{ message }}</strong>
-            {% endfor %}
-        </div>
-    {% endif %}
-    
+<div class="alert alert-dismissible alert-success">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="container">
     <h1 class="mb-4">Crear Reporte</h1>
 
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
-            <label for="solicitud">Seleccione una Solicitud Aprobada:</label>
+            <label for="solicitud">Solicitud Aprobada:</label>
             <select name="solicitud" id="solicitud" class="form-control" required>
                 <option value="" disabled selected>Seleccione...</option>
                 {% for solicitud in solicitudes %}
-                    <option value="{{ solicitud.id }}">
+                    <option value="{{ solicitud.id }}" {% if solicitud.reporteuso_set.exists %}disabled{% endif %}>
                         {{ solicitud.laboratorio }} - {{ solicitud.usuario.username }} - {{ solicitud.fecha_reserva }}
                     </option>
                 {% endfor %}
             </select>
         </div>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="clase">Clase/Grado:</label>
+                <input type="text" name="clase" id="clase" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label for="asignatura">Asignatura:</label>
+                <input type="text" name="asignatura" id="asignatura" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label for="horario_salida_real">Horario Real de Salida:</label>
+                <input type="time" name="horario_salida_real" id="horario_salida_real" class="form-control" required>
+            </div>
+        </div>
+
         <div class="mb-3">
-            <label for="numero_estudiantes">Número de Estudiantes:</label>
+            <label for="numero_estudiantes">Total Estudiantes:</label>
             <input type="number" name="numero_estudiantes" id="numero_estudiantes" class="form-control" min="1" required>
         </div>
+
+        <div class="mb-3">
+            <h5>Desglose por Género:</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="estudiantes_masculinos">Masculinos:</label>
+                    <input type="number" name="estudiantes_masculinos" id="estudiantes_masculinos" class="form-control" min="0" value="0">
+                </div>
+                <div class="col-md-4">
+                    <label for="estudiantes_femeninos">Femeninos:</label>
+                    <input type="number" name="estudiantes_femeninos" id="estudiantes_femeninos" class="form-control" min="0" value="0">
+                </div>
+            </div>
+        </div>
+
         <div class="mb-3">
             <label for="objetivo_practica">Objetivo de la Práctica:</label>
             <textarea name="objetivo_practica" id="objetivo_practica" class="form-control" rows="4" required></textarea>
         </div>
+
         <div class="mb-3">
-            <label for="foto">Foto:</label>
-            <input type="file" name="foto" id="foto" class="form-control" accept="image/*">
+            <label for="fotos">Fotos (Múltiples):</label>
+            <input type="file" name="fotos" id="fotos" class="form-control" accept="image/*" multiple>
+            <small class="text-muted">Puede seleccionar varias imágenes manteniendo presionado Ctrl/Cmd</small>
         </div>
-        <button type="submit" class="btn btn-primary">Guardar</button>
+
+        <button type="submit" class="btn btn-primary">Guardar Reporte</button>
     </form>
 </div>
 {% endblock %}

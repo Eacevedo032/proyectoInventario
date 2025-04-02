@@ -1,132 +1,166 @@
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.body.contains(document.getElementById('categoria')) &&
-        document.body.contains(document.getElementById('subcategoria')) &&
-        document.body.contains(document.querySelector('[name="solicitud"]'))) {
-        
-        const categoriaElement = document.getElementById('categoria');
-        const subcategoriaElement = document.getElementById('subcategoria');
-        const solicitudElement = document.querySelector('[name="solicitud"]');
-
-        if (categoriaElement && subcategoriaElement && solicitudElement) {
-            categoriaElement.addEventListener('change', actualizarSubcategorias);
-            subcategoriaElement.addEventListener('change', actualizarItems);
-            solicitudElement.addEventListener('change', function() {
-                updateFechaUso(this);
-            });
-        } else {
-            console.error("No se encontraron los elementos con ID 'categoria', 'subcategoria' o el selector 'solicitud'");
-        }
-    }
+document.addEventListener('DOMContentLoaded', function () {
+    initCategoryHandlers();
+    setupItemManagement();
 });
 
-function updateFechaUso(selectElement) { 
-    const selectedOption = selectElement.options[selectElement.selectedIndex]; 
-    const fechaReserva = selectedOption ? selectedOption.getAttribute('data-fecha') : ''; 
-    if (fechaReserva) { 
-        const regexFecha = /(\d{1,2}) de (\w+) de (\d{4})/; 
-        const meses = { 'enero': '01',
-                        'febrero': '02',
-                        'marzo': '03', 
-                        'abril': '04', 
-                        'mayo': '05', 
-                        'junio': '06', 
-                        'julio': '07', 
-                        'agosto': '08', 
-                        'septiembre': '09', 
-                        'octubre': '10', 
-                        'noviembre': '11', 
-                        'diciembre': '12' }; 
-        const match = fechaReserva.match(regexFecha);
-         if (match) { 
-            const dia = match[1]; 
-            const mes = meses[match[2].toLowerCase()];
-            const anio = match[3];
-            const formattedDate = `${anio}-${mes}-${dia.padStart(2, '0')}`;
-             document.getElementById("fecha_uso").value = formattedDate;
-             document.getElementById("hidden_fecha_uso").value = formattedDate;
-             } else { console.error("Fecha inválida:", fechaReserva);             
-              }
-             }
-             }
-            
-function actualizarSubcategorias() {
-    const categoriaId = document.getElementById('categoria').value;
-    console.log("ID de categoría seleccionado:", categoriaId);
+function initCategoryHandlers() {
+    try {
+        document.addEventListener('change', function (event) {
+            const target = event.target;
+
+            if (target.classList.contains('categoria')) {
+                actualizarSubcategorias(target);
+            }
+
+            if (target.classList.contains('subcategoria')) {
+                actualizarItems(target);
+            }
+
+            if (target.name === 'solicitud') {
+                updateFechaUso(target);
+            }
+        });
+    } catch (error) {
+        console.error('Error en initCategoryHandlers:', error);
+    }
+}
+
+function setupItemManagement() {
+    try {
+        const container = document.getElementById('items-container');
+        const addButton = document.getElementById('agregar-item');
+
+        if (!container || !addButton) return;
+
+        addButton.addEventListener('click', function () {
+            const itemEntries = container.querySelectorAll('.item-entry');
+            if (itemEntries.length === 0) return;
+
+            const newItem = itemEntries[0].cloneNode(true);
+
+            // Limpiar valores
+            newItem.querySelectorAll('input, select').forEach((element) => {
+                if (element.tagName === 'SELECT') {
+                    element.selectedIndex = 0;
+                } else {
+                    element.value = '';
+                }
+            });
+
+            // Actualizar eventos en selectores clonados
+            newItem.querySelectorAll('.categoria, .subcategoria').forEach(select => {
+                select.addEventListener('change', function () {
+                    if (select.classList.contains('categoria')) {
+                        actualizarSubcategorias(select);
+                    } else if (select.classList.contains('subcategoria')) {
+                        actualizarItems(select);
+                    }
+                });
+            });
+
+            // Agregar evento de eliminación
+            const removeBtn = newItem.querySelector('.remove-item');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function () {
+                    if (document.querySelectorAll('.item-entry').length > 1) {
+                        this.closest('.item-entry').remove();
+                    }
+                });
+            }
+
+            container.appendChild(newItem);
+        });
+
+        // Configurar botón eliminar existente
+        document.addEventListener('click', function (event) {
+            if (event.target.classList.contains('remove-item')) {
+                if (document.querySelectorAll('.item-entry').length > 1) {
+                    event.target.closest('.item-entry').remove();
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error en setupItemManagement:', error);
+    }
+}
+
+function updateFechaUso(selectElement) {
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const fechaReserva = selectedOption ? selectedOption.getAttribute('data-fecha') : '';
+
+    if (!fechaReserva) return;
+
+    const regexFecha = /(\d{1,2}) de (\w+) de (\d{4})/;
+    const meses = {
+        'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04', 'mayo': '05', 'junio': '06',
+        'julio': '07', 'agosto': '08', 'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
+    };
+
+    const match = fechaReserva.match(regexFecha);
+    if (match) {
+        const dia = match[1].padStart(2, '0');
+        const mes = meses[match[2].toLowerCase()];
+        const anio = match[3];
+        const formattedDate = `${anio}-${mes}-${dia}`;
+
+        document.getElementById("fecha_uso").value = formattedDate;
+        document.getElementById("hidden_fecha_uso").value = formattedDate;
+    } else {
+        console.error("Fecha inválida:", fechaReserva);
+    }
+}
+
+function actualizarSubcategorias(selectElement) {
+    const categoriaId = selectElement.value;
+    const subcategoriaSelect = selectElement.closest('.item-entry').querySelector('.subcategoria');
 
     if (!categoriaId) {
-        console.error("Falta el ID de categoría");
+        subcategoriaSelect.innerHTML = '<option value="">Seleccione una subcategoría</option>';
         return;
     }
 
-    // Habilitar el selector de subcategorías después de seleccionar una categoría
-    document.getElementById('subcategoria').disabled = false;
-
-    fetch(`/appGestionLaboratorios/obtener_subcategorias/${categoriaId}/?nocache=${new Date().getTime()}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
-            }
-            return response.json();
-        })
+    fetch(`/appGestionLaboratorios/obtener_subcategorias/${categoriaId}/?nocache=${Date.now()}`)
+        .then(response => response.json())
         .then(data => {
-            const subcategoriaSelect = document.getElementById('subcategoria');
-            subcategoriaSelect.innerHTML = '<option value="">Seleccione una subcategoría</option>'; // Limpiar opciones anteriores
-
+            subcategoriaSelect.innerHTML = '<option value="">Seleccione una subcategoría</option>';
             data.subcategorias.forEach(subcategoria => {
                 const option = document.createElement('option');
                 option.value = subcategoria.id_subcategoria;
                 option.textContent = subcategoria.nombre;
                 subcategoriaSelect.appendChild(option);
             });
+            subcategoriaSelect.disabled = false;
         })
-        .catch(error => {
-            console.error('Error al obtener las subcategorías:', error);
-        });
+        .catch(error => console.error('Error al obtener subcategorías:', error));
 }
 
-function actualizarItems() {
-    const categoriaElement = document.getElementById('categoria');
-    const subcategoriaElement = document.getElementById('subcategoria');
+function actualizarItems(selectElement) {
+    const itemEntry = selectElement.closest('.item-entry');
+    const categoriaElement = itemEntry.querySelector('.categoria');
+    const subcategoriaElement = itemEntry.querySelector('.subcategoria');
+    const itemSelect = itemEntry.querySelector('.item');
 
-    if (!categoriaElement || !subcategoriaElement) {
-        console.log("Faltan los elementos con ID 'categoria' o 'subcategoria', no se puede actualizar los ítems.");
-        return;  // No hacer nada si faltan los elementos
-    }
+    if (!categoriaElement || !subcategoriaElement) return;
 
     const categoriaId = categoriaElement.value;
     const subcategoriaId = subcategoriaElement.value;
 
-    console.log("ID de categoría seleccionado:", categoriaId);
-    console.log("ID de subcategoría seleccionado:", subcategoriaId);
-
     if (!categoriaId || !subcategoriaId) {
-        console.log("Faltan los IDs de categoría o subcategoría, no se puede actualizar los ítems.");
-        return;  // No hacer nada si faltan los IDs
+        itemSelect.innerHTML = '<option value="">Seleccione un ítem</option>';
+        return;
     }
 
-    console.log(`URL: /appGestionLaboratorios/obtener_items/${categoriaId}/${subcategoriaId}/`);
-
-    fetch(`/appGestionLaboratorios/obtener_items/${categoriaId}/${subcategoriaId}/?nocache=${new Date().getTime()}`)
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        const itemSelect = document.getElementById('item');
-        itemSelect.innerHTML = ''; // Limpiar opciones anteriores
-        itemSelect.disabled = false; // Habilitar el selector de ítems
-
-        data.items.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item.id_inventario; // Usa id_inventario aquí
-            option.textContent = `${item.nombre} - Disponible: ${item.cantidad_disponible} ${item.unidad_medida}`;
-            itemSelect.appendChild(option);
-        });
-    })
-    .catch(error => console.error('Error al obtener los ítems:', error));
+    fetch(`/appGestionLaboratorios/obtener_items/${categoriaId}/${subcategoriaId}/?nocache=${Date.now()}`)
+        .then(response => response.json())
+        .then(data => {
+            itemSelect.innerHTML = '<option value="">Seleccione un ítem</option>';
+            data.items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id_inventario;
+                option.textContent = `${item.nombre} - Disponible: ${item.cantidad_disponible} ${item.unidad_medida}`;
+                itemSelect.appendChild(option);
+            });
+            itemSelect.disabled = false;
+        })
+        .catch(error => console.error('Error al obtener los ítems:', error));
 }
-
-// Inicializar la función después de que el DOM esté cargado
-document.addEventListener('DOMContentLoaded', actualizarItems);
