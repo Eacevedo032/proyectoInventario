@@ -6,77 +6,251 @@
 
 {% block body %}
 
-<!-- Mensajes -->
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.h2, .h5 {
+  color: #333;
+  text-align: center;
+  margin: 0.5rem 0;
+  word-wrap: break-word;
+}
+
+.login-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+/* Imagen de fondo - solo visible en desktop */
+.login-image {
+  width: 60%;
+  height: 100%;
+  background: url("{% static 'img/login_image.png' %}") center/cover no-repeat;
+  filter: brightness(0.85);
+}
+
+/* Contenedor del formulario */
+.login-form-container {
+  width: 40%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  position: relative;
+}
+
+/* Wrapper del formulario con barra integrada */
+.login-form-wrapper {
+  width: 100%;
+  max-width: 350px;
+  position: relative;
+}
+
+/* Barra de carga */
+.loading-bar {
+  height: 4px;
+  width: 100%;
+  position: absolute; /* Cambiado a absolute */
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  background: linear-gradient(90deg, 
+    #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, 
+    #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, 
+    #ff00ff, #ff0080, #ff0000);
+  background-size: 200% 100%;
+  animation: loading 6s linear infinite;
+  z-index: 2;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Contenido del formulario con margen para la barra */
+.login-content {
+  padding: 2rem;
+  background: white;
+  margin-top: 4px; /* Compensa la altura de la barra */
+}
+
+.logo-container {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.logo-container img {
+  max-width: 160px;
+  height: auto;
+}
+
+/* Efecto de unión para desktop */
+.login-form-container::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  background: linear-gradient(to right, 
+    rgba(0,0,0,0.05) 0%, 
+    rgba(255,255,255,0) 100%);
+  z-index: 1;
+}
+
+.btn {
+    transition: background-color 0.3s ease;
+    background-color: #010D42 !important;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.btn:hover{
+    background-color: #e60000 !important;
+    border: none !important;
+}
+
+.text-decoration-none {
+    color: #010D42; /* Color azul por defecto */
+    text-decoration: none; /* Sin subrayado */
+}
+
+.text-decoration-none:hover {
+    color: #e60000; /* Color rojo al pasar el cursor */
+    text-decoration: none; /* Asegura que no haya subrayado */
+}
+
+/* RESPONSIVO - Versión móvil */
+@media (max-width: 992px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-image {
+    display: none; /* Ocultar imagen en móviles */
+  }
+
+  .login-form-container {
+    width: 100%;
+    background: rgba(255,255,255,0.95);
+    padding: 0;
+  }
+
+  .login-form-wrapper {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .login-content {
+    padding: 1.5rem;
+    max-width: 90%;
+    margin: 4px auto 0; /* Mantiene margen para la barra */
+    background: transparent;
+  }
+
+  .login-form-container::before {
+    display: none;
+  }
+}
+
+
+@media (max-width: 576px) {
+  .login-content {
+    padding: 1.2rem;
+    max-width: 95%;
+  }
+
+  .h4 { font-size: 1.3rem; }
+  .h5 { font-size: 1.1rem; }
+  
+  .logo-container img {
+    max-width: 140px;
+  }
+}
+</style>
+
+<!-- Mensajes y errores -->
 {% if messages %}
-<div class="alert alert-dismissible alert-success">
+<div class="alert alert-dismissible alert-success" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;">
     {% for message in messages %}
     <strong class="text-dark">{{ message }}</strong>
     {% endfor %}
 </div>
 {% endif %}
-<!-- Otro mensaje  -->
+
 {% if form.errors %}
-    <div class="alert alert-danger">
-        <strong>Verifica los siguientes errores:</strong>
-        <ul>
-            {% for field, errors in form.errors.items %}
-                {% for error in errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
+<div class="alert alert-danger" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;">
+    <strong>Verifica los siguientes errores:</strong>
+    <ul>
+        {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+                <li>{{ error }}</li>
             {% endfor %}
-        </ul>
-    </div>
+        {% endfor %}
+    </ul>
+</div>
 {% endif %}
 
 {% if user.is_authenticated %}
-    <script>
-        // Redirige al usuario al home si ya está autenticado
-        window.location.href = "{% url 'inicio' %}";  // Asegúrate de que 'inicio' sea el nombre de la URL correcta
-    </script>
+<script>
+    window.location.href = "{% url 'inicio' %}";
+</script>
 {% else %}
-<div class="col-md-4 offset-md-4">
-    <div class="d-flex flex-column align-items-center">
-        <img src="{% static 'img/login_image.png' %}" class="img-fluid" 
-             style="max-width: 200px; height: auto; border: 4px solid #007bff; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" 
-             alt="Imagen de Login">
-    </div>
-    <br>
-    <h2 class="text-center text-primary fw-bold mb-6">Biotecnología Industrial</h2>
-    <h4 class="text-center text-primary fw-bold mb-6">Inicio de Sesión</h4>
-    <div class="card">
-        <div class="card-body">
-            <form action="" method="POST"> 
-                {% csrf_token %}
-                
-                <!-- Grupo de input con icono de usuario -->
-                <div class="form-group mb-3">
-                    <div class="input-group">
-                        <span class="input-group-text" id="basic-addon1">
-                            <i class="bi bi-person"></i> <!-- Icono de usuario -->
-                        </span>
-                        <input type="text" name="username" class="form-control" placeholder="Nombre de usuario" required>
-                    </div>
+<div class="login-container">
+    <div class="login-image"></div>
+
+    <div class="login-form-container">
+      
+      <div class="loading-bar"></div>
+        <div class="login-form-wrapper">
+            <div class="login-content">
+                <div class="logo-container">
+                    <img src="{% static 'img/logoUNP1.png' %}" alt="Logo UNP">
+                    <h2 class="h4 mt-2">Universidad Nacional Politécnica</h2>
+                    <h5 class="text-center fw-bold mt-2">Inicio de Sesión</h5>
                 </div>
 
-                <!-- Grupo de input con icono de candado -->
-                <div class="form-group mb-3">
-                    <div class="input-group">
-                        <span class="input-group-text" id="basic-addon2">
-                            <i class="bi bi-lock"></i> <!-- Icono de candado -->
-                        </span>
-                        <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
-                    </div>
-                </div>
+                <h4 class="text-center fw-bold mb-4" style="color: #050c54;">Biotecnología Industrial</h4>
 
-                <div class="form-group mb-3 d-flex justify-content-center align-items-center" style="height: 5vh;">
-                    <button id="btn-Registrar" class="btn btn-primary">Iniciar Sesión</button>
-                </div>
-                
-                <div class="form-group mb-3 d-flex justify-content-center align-items-center">
-                    <p>¿No tienes una cuenta? <a href="{% url 'register' %}">Registrate aquí</a></p> 
-                </div>
-                <div class="clearfix"></div>
-            </form>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" name="username" class="form-control" placeholder="Nombre de usuario" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <button type="submit" class="btn btn-primary w-100 py-2">Iniciar Sesión</button>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <p class="mb-0">¿No tienes una cuenta? <a href="{% url 'register' %}" class="text-decoration-none">Regístrate aquí</a></p>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

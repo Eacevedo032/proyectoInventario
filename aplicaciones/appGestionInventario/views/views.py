@@ -17,3 +17,5 @@ def inicio(request):
      # Mensaje que se mostrará en la plantilla
     return render(request, "inicio.html")
 
+def SISLAB(request):
+    return render(request, 'SISLAB.html')

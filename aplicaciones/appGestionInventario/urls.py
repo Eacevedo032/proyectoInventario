@@ -10,6 +10,8 @@ from .views.Usuarios import edit_profile  # Importa la vista desde el archivo Us
 urlpatterns = [
     path('', views.inicio, name='inicio'),
 
+    path('SISLAB/', views.SISLAB, name='SISLAB'),
+
     #urls para gestiones de categorias 
     path('gestionCategorias/', views.gestionCategorias, name='gestionCategoria'),
     path('registrarCategoria/', views.registrarCategoria, name='registrarCategoria'),
