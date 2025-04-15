@@ -1,0 +1,527 @@
+ * {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: #ffffff;
+    color: #050c54;
+    padding: 0;
+}
+
+.header {
+    background-color: #ffffff;
+    padding: 1rem;
+    color: white;
+    display: flex;
+    justify-content: center;
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 9999;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.3);
+}
+
+/* Oculta la barra superior cuando se hace scroll */
+.topbar {
+    background-color: #010D42;
+    color: #ffffff;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 80px;
+    align-items: center;
+    flex-wrap: wrap;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    position: sticky;
+    top: -50px; /* Ajusta para ocultar la barra */
+}
+
+  
+.topbar-left span {
+    margin-right: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.topbar-right a {
+    color: #ffffff;
+    margin-left: 12px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.topbar-right a:hover {
+    color: #ffcc00;
+}
+
+.eva-btn {
+    background-color: #e60000;
+    color: #ffffff !important;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-left: 16px;
+    font-weight: bold;
+    font-size: 13px;
+    transition: background 0.3s;
+}
+
+.eva-btn:hover {
+    background-color: #b80000;
+}
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 10px;
+}
+
+.logo {
+    height: 50px;
+}
+
+/* Añade estos estilos al final de tu CSS */
+.nav {
+    display: flex;
+    align-items: flex-end;
+    margin-left: auto; /* Esto empuja todo lo demás a la derecha */
+    padding-left: 0; /* Elimina cualquier padding izquierdo por defecto */
+}
+
+.container {
+    justify-content: flex-end !important; /* Fuerza la alineación a la derecha */
+}
+
+/* Estilos para el dropdown (mejora visual) */
+.nav-item.dropdown-toggle {
+    cursor: pointer;
+    list-style: none;
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border-radius: 4px;
+    padding: 10px 0;
+    min-width: 150px;
+    z-index: 1000;
+    display: none;
+}
+
+.nav-item:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 5px 15px;
+    display: block;
+    color: #050c54 !important;
+}
+
+.dropdown-item:hover {
+    background: #f0f0f0;
+    color: #e30613 !important;
+}
+
+.nav a {
+    color: #050c54;
+    margin: 0 10px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.nav a:hover {
+    color: #e30613;
+}
+
+.user-options {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.search-icon {
+    font-size: 20px;
+    color: white;
+}
+
+.login-btn {
+    background-color: #e30613;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.banner {
+    background-image: url('/static/img/SISLAB-img/banner/banner.png'); /* Ruta de la imagen */
+    background-size: cover; /* Hace que la imagen cubra todo el banner */
+    background-position: center; /* Centra la imagen */
+    background-repeat: no-repeat; /* Evita repeticiones */
+    width: 100%; /* Ocupa todo el ancho de la pantalla */
+    height: 300px; /* Ocupa toda la altura de la pantalla */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white; /* Ajusta el color del texto para que sea legible */
+}
+
+.banner h1 {
+    font-size: 3rem; /* Aumenta el tamaño */
+    font-weight: 800; /* Hace la letra más gruesa */
+    margin-bottom: 20px;
+}
+
+.banner p {
+    font-size: 1.2em;
+    color: white;
+}
+
+.cta-btn {
+    background-color: #e30613;
+    color: white;
+    padding: 1em 2em;
+    border-radius: 8px;
+    font-weight: bold;
+    text-decoration: none;
+    margin-top: 20px;
+    display: inline-block;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5em;
+    padding: 40px;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin: 50px auto;
+    border-left: 5px solid #e30613;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2em; 
+    overflow: hidden; 
+    width: 100%;
+}
+
+.card button:hover{
+    background-color: #e60000;
+    border: none;
+}
+
+.card h3 {
+    margin-top: 0;
+    color: #050c54;
+}
+
+.carousel {
+    width: 100%; /* Que el carrusel se ajuste al tamaño de la tarjeta */
+    position: relative; /* Asegura que los botones queden dentro del carrusel */
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    z-index: 1000; /* Asegura que los botones sean visibles */
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%); /* Le da un fondo para que sean visibles en el diseño */
+    border-radius: 10%;
+}
+
+.carousel img {
+    max-width: auto;
+    height: auto;
+    scroll-snap-align: center;
+    border-radius: 8px;
+}
+
+.carousel-inner img {
+    width: 100%; /* Ocupar todo el ancho de la tarjeta */
+    height: 100%;
+    height: 200px; /* Tamaño uniforme para todas las imágenes */
+    object-fit: cover; /* Mantiene la proporción y ajusta la imagen */
+    border-radius: 8px; /* Bordes más estilizados */
+}
+
+.hidden-text {
+    position: relative;
+    z-index: 10;
+}
+
+.hidden-text .more-text {
+    display: none;
+}
+
+.more-text {
+    display: none;
+}
+
+.dots {
+    display: inline;
+}
+
+
+button {
+    background-color: #010D42;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.activities-section {
+    max-width: 1200px;
+    margin: 4rem auto;
+    padding: 2rem;
+    text-align: center;
+  }
+  
+  .activities-section h1 {
+    font-size: 2.5rem;
+    color: #010D42;
+    margin-bottom: 3rem;
+    position: relative;
+  }
+  
+  .activities-section h1::after {
+    content: '';
+    display: block;
+    margin: 0.5rem auto 0;
+    width: 100px;
+    height: 4px;
+    background-color: #e30613;
+    border-radius: 2px;
+  }
+  
+  .activity-card-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+  
+  .activity-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    flex: 1 1 calc(50% - 1rem);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 550px;
+  }
+  
+  .activity-card h2 {
+    font-size: 1.6rem;
+    color: #010D42;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .activity-card p {
+    font-weight: 600;
+    color: #333;
+    line-height: 1.6;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .activity-card-container {
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    .activity-card {
+      max-width: 100%;
+      text-align: center;
+    }
+  
+    .activity-card h2 {
+      justify-content: center;
+    }
+  
+    .activity-card p {
+      text-align: justify;
+    }
+  }  
+
+  .video-section {
+    text-align: center; /* Centra todo el contenido */
+    padding: 50px 20px; /* Añade espacio alrededor */
+    background-color: #f4f4f4; /* Un fondo suave para destacar el contenido */
+}
+  
+  .video-section h2 {
+    margin-bottom: 1rem;
+    font-size: 1.2rem; /* Reduzco ligeramente el tamaño */
+    color: #050c54;
+    text-align: center; /* Centrar el texto */
+    font-weight: bold; /* Hace que resalte más */
+    padding: 0.5rem 0; /* Espacio arriba y abajo */
+}
+
+.video-section h3 {
+    margin-bottom: 1rem;
+    font-size: 1rem; /* Reduzco ligeramente el tamaño */
+    color: #333;
+    text-align: center; /* Centrar el texto */
+    font-weight: bold; /* Hace que resalte más */
+    padding: 0.5rem 0; /* Espacio arriba y abajo */
+}
+
+  .video-container,
+  video {
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+  }
+  
+.footer {
+    background-color: #102165;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.footer-container {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    padding: 40px;
+    background-color: #102165;
+    color: white;
+}
+
+.footer-section {
+    flex: 0 1 250px;
+    margin: 10px;
+    padding: 10px;
+}
+
+.footer-section h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.footer-section p,
+.footer-section a {
+    font-size: 14px;
+    color: #dcdcdc;
+    text-decoration: none;
+}
+
+.footer-section a:hover {
+    text-decoration: underline;
+}
+
+.btn-footer {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 6px 14px;
+    border: 1px solid white;
+    border-radius: 5px;
+    color: white;
+    background: transparent;
+    font-size: 13px;
+}
+
+.btn-footer:hover {
+    background-color: white;
+    color: #102165;
+}
+
+.footer-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-section ul li {
+    margin-bottom: 8px;
+}
+
+.footer-section ul li a {
+    color: #f6f6f6;
+    font-size: 14px;
+}
+
+.social-icons a {
+    display: inline-block;
+    margin-right: 10px;
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    text-align: center;
+    line-height: 36px;
+    border-radius: 50%;
+    color: white;
+}
+
+.social-icons a:nth-child(1) {
+    background-color: #3b5998;
+}
+.social-icons a:nth-child(2) {
+    background-color: #c4302b;
+}
+.social-icons a:nth-child(3) {
+    background-color: #e1306c;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding: 15px 10px;
+    background-color: #010D42;
+    font-size: 13px;
+    color: white;
+}
+
+.footer-bottom nav a {
+    margin: 0 10px;
+    color: #ffffff;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.footer-bottom nav a.active {
+    color: red;
+}
+
+@media (max-width: 768px) {
+    .topbar {
+        flex-direction: column;
+        text-align: center;
+        padding: 10px;
+    }
+
+    .container {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+        padding: 20px;
+    }
+}
