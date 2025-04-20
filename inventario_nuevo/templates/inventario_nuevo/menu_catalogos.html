@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Gestión de Catálogos de los Productos del Inventario</h2>
+
+    <div class="card shadow-lg rounded-4 border-0" style="background: linear-gradient(135deg, #1d3557, #a4161a); color: white;">
+        <div class="card-body">
+            <h4 class="card-title mb-3 text-center">Catálogos disponibles</h4>
+            <p class="text-center">Administra todos los catálogos relacionados a los productos del inventario.</p>
+            <div class="row">
+                <!-- Categorías y Subcategorías -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gestionar_catalogos_categoria' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        🗂️ Gestión de Categorías y Subcategorías
+                    </a>
+                </div>
+
+                <!-- Marca -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gestionar_marca' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        🏷️ Gestión de Marca
+                    </a>
+                </div>
+
+                <!-- Modelo -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gestionar_modelo' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        🗃 Gestión de Modelo
+                    </a>
+                </div>
+
+                <!-- Color -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gestionar_color' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        🎨 Gestión de Color
+                    </a>
+                </div>
+
+                <!-- Capacidad -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gestionar_capacidad' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        📈 Gestión de Capacidad
+                    </a>
+                </div>
+
+                <!-- Presentación -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gestionar_presentacion' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        🧴 Gestión de Presentación
+                    </a>
+                </div>
+
+                <!-- Accesorios -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gestionar_accesorios' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        🧰 Gestión de Accesorios
+                    </a>
+                </div>
+                <!-- Ubicaciones -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gestionar_ubicacion' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        📍 Gestión de Ubicaciones
+                    </a>
+                </div>
+                <!-- Lotes -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gestionar_lote' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        📦 Gestión de Lotes
+                    </a>
+                </div>
+                <!-- Medidas -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gestionar_medida' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        📏 Gestión de Medidas de los Productos
+                    </a>
+                </div>
+                <!-- Estado de los Productos -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'filtrar_por_estado' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        ⏱ Filtrar por Estado de los Productos 
+                    </a>
+                </div>
+                <!-- Unidad de Medida de los Productos -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'filtrar_por_unidad' %}" class="btn btn-light w-100 text-start shadow-sm">
+                        📐 Filtrar los Productos por su Unidad de Medida
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

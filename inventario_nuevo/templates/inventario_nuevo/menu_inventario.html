@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2 class="text-center">Menú Principal del Inventario</h2>
+
+    <!-- Mensajes -->
+    {% if messages %}
+    <div class="alert alert-dismissible alert-success">
+        {% for message in messages %}
+        <strong class="text-dark">{{ message }}</strong>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Agregar Producto -->
+        <div class="col-md-4 mb-4">
+            <div class="card text-white shadow" style="background-color: #264653;">
+                <div class="card-body">
+                    <h5 class="card-title">Agregar Producto</h5>
+                    <p class="card-text">Añadir nuevos productos al inventario.</p>
+                    <a href="{% url 'agregar_producto' %}" class="btn btn-light">Ir a agregar producto</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestión de Catálogos -->
+        <div class="col-md-4 mb-4">
+            <div class="card text-white shadow" style="background-color: #264653;">
+                <div class="card-body">
+                    <h5 class="card-title">Gestión de Catálogos</h5>
+                    <p class="card-text">Gestionar todos los catálogos relacionados con los productos del inventario.
+                    </p>
+                    <a href="{% url 'menu_catalogos' %}" class="btn btn-light">Ir a gestión de catálogos</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Listar Productos -->
+        <div class="col-md-4 mb-4">
+            <div class="card text-white shadow" style="background-color: #264653;">
+                <div class="card-body">
+                    <h5 class="card-title">Listar Productos</h5>
+                    <p class="card-text">Ver todos los productos registrados en el inventario.</p>
+                    <a href="{% url 'listar_productos' %}" class="btn btn-light">Ir a listar productos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

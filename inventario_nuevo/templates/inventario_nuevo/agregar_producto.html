@@ -1,0 +1,859 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="container mt-4">
+  <!-- Mensajes mejorados -->
+  <div id="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2 class="mb-4 text-center">Agregar producto</h2>
+
+  <form method="post" id="formProducto">
+    {% csrf_token %}
+    <input type="hidden" name="form_tipo" value="producto">
+    <input type="hidden" name="agregado_por" value="{{ request.user.id }}">
+
+    <!-- Sección de información básica -->
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        Información Básica *
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              {{ form.nombre.label_tag }}
+              {{ form.nombre }}
+              <div class="invalid-feedback">{{ form.nombre.errors }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mb-3 row align-items-center g-2">
+                <div class="col-md-6">
+                    <label class="form-label small mb-0">Usuario</label>
+                    <input type="text" class="form-control form-control-sm bg-light" 
+                           value="{{ request.user.get_full_name|default:request.user.username }}" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small mb-0">Fecha de agregado</label>
+                    <input type="text" class="form-control form-control-sm bg-light" 
+                           value="{{ hoy|date:'SHORT_DATE_FORMAT' }}" readonly>
+                </div>
+            </div>
+        </div>        
+        </div>
+
+        <div class="row">
+          <div class="col-md-4">
+            <div class="mb-3">
+              {{ form.cantidad_disponible.label_tag }}
+              {{ form.cantidad_disponible }}
+              <div class="invalid-feedback">{{ form.cantidad_disponible.errors }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="mb-3">
+              {{ form.unidad_medida.label_tag }}
+                {{ form.unidad_medida }}
+              <div class="invalid-feedback">{{ form.unidad_medida.errors }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="mb-3">
+              {{ form.estado.label_tag }}
+              {{ form.estado }}
+              <div class="invalid-feedback">{{ form.estado.errors }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Sección de categorización -->
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    Categorización *
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          {{ form.categoria.label_tag }}
+          <div class="input-group">
+            <select class="form-select" id="id_categoria" name="categoria">
+              {% for choice in form.categoria.field.choices %}
+                <option value="{{ choice.0 }}" {% if choice.0 == form.categoria.value %}selected{% endif %}>
+                  {{ choice.1 }}
+                </option>
+              {% endfor %}
+            </select>
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria">
+              <i class="fas fa-plus"></i>+
+            </button>
+          </div>
+        </div>        
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          {{ form.subcategoria.label_tag }}
+          <div class="input-group">
+            <select class="form-select" id="id_subcategoria" name="subcategoria">
+              {% for choice in form.subcategoria.field.choices %}
+                <option value="{{ choice.0 }}" {% if choice.0 == form.subcategoria.value %}selected{% endif %}>
+                  {{ choice.1 }}
+                </option>
+              {% endfor %}
+            </select>
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalSubcategoria">
+              <i class="fas fa-plus"></i>+
+            </button>
+          </div>
+        </div>        
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Script de mostrar las subcategorías de categorías elegidas-->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      const categoriaSelect = document.getElementById('id_categoria');
+      const subcategoriaSelect = document.getElementById('id_subcategoria');
+      const subcategoriaSeleccionada = subcategoriaSelect.getAttribute('data-selected');
+  
+      function cargarSubcategorias(categoriaId, subSeleccionada = null) {
+          if (!categoriaId) {
+              subcategoriaSelect.innerHTML = '<option value="">---------</option>';
+              return;
+          }
+  
+          fetch("{% url 'obtener_subcategorias' %}?categoria_id=" + categoriaId)
+          .then(response => response.json())
+              .then(data => {
+                  subcategoriaSelect.innerHTML = '<option value="">---------</option>';
+                  data.forEach(subcat => {
+                      const option = document.createElement('option');
+                      option.value = subcat.id;
+                      option.textContent = subcat.nombre;
+                      if (subSeleccionada && subSeleccionada == subcat.id.toString()) {
+                          option.selected = true;
+                      }
+                      subcategoriaSelect.appendChild(option);
+                  });
+              })
+              .catch(error => {
+                  console.error('Error cargando subcategorías:', error);
+                  subcategoriaSelect.innerHTML = '<option value="">Error</option>';
+              });
+      }
+  
+      categoriaSelect.addEventListener('change', function () {
+          cargarSubcategorias(this.value);
+      });
+  
+      const categoriaInicial = categoriaSelect.value;
+      if (categoriaInicial) {
+          cargarSubcategorias(categoriaInicial, subcategoriaSelect.value);
+      }
+  });
+  </script>  
+  
+    <!-- Sección de información adicional -->
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+      Información Adicional
+  </div>
+  <div class="card-body">
+      <div class="row">
+          <div class="col-md-4">
+              <div class="mb-3">
+                  {{ form.codigo.label_tag }}
+                  {{ form.codigo }}
+                  <small class="text-muted">(Debe ser único si se especifica)</small>
+                  <div class="invalid-feedback">{{ form.codigo.errors }}</div>
+              </div>
+          </div>
+          <div class="col-md-4">
+              <div class="mb-3">
+                  {{ form.num_cat.label_tag }}
+                  {{ form.num_cat }}
+                  <small class="text-muted">(Debe ser único si se especifica)</small>
+                  <div class="invalid-feedback">{{ form.num_cat.errors }}</div>
+              </div>
+          </div>
+          <div class="col-md-4">
+              <div class="mb-3">
+                  {{ form.num_serie.label_tag }}
+                  {{ form.num_serie }}
+                  <small class="text-muted">(Debe ser único si se especifica)</small>
+                  <div class="invalid-feedback">{{ form.num_serie.errors }}</div>
+              </div>
+          </div>
+      </div>
+      
+      <div class="row">
+          <div class="col-md-6">
+              <div class="mb-3">
+                  {{ form.descripcion.label_tag }}
+                  {{ form.descripcion }}
+                  <div class="invalid-feedback">{{ form.descripcion.errors }}</div>
+              </div>
+          </div>
+          <div class="col-md-6">
+              <div class="mb-3">
+                  {{ form.observacion.label_tag }}
+                  {{ form.observacion }}
+                  <div class="invalid-feedback">{{ form.observacion.errors }}</div>
+              </div>
+          </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-4 offset-md-4">  <!-- Centra la columna de 4 unidades en pantallas medianas/grandes -->
+          <div class="mb-3 mx-auto" style="max-width: 300px;">
+              {{ form.vencimiento.label_tag }}
+              {{ form.vencimiento }}
+              <div class="invalid-feedback">{{ form.vencimiento.errors }}</div>
+          </div>
+      </div>
+          <div class="col-md-4">
+              <div class="mb-3">
+                  {{ form.fecha_agregado.label_tag }}
+                  {{ form.fecha_agregado }}
+                  <div class="invalid-feedback">{{ form.fecha_agregado.errors }}</div>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+    <!-- Sección de características -->
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        Características
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="mb-3">
+                {{ form.marca.label_tag }}
+                <div class="input-group">
+                    {{ form.marca }}
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                        data-bs-target="#modalMarca">
+                        <i class="fas fa-plus"></i>+
+                    </button>
+                </div>
+                <div class="invalid-feedback">{{ form.marca.errors }}</div>
+            </div>
+        </div>
+          <div class="col-md-4">
+            <div class="mb-3">
+              {{ form.modelo.label_tag }}
+              <div class="input-group">
+                {{ form.modelo }}
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                  data-bs-target="#modalModelo">
+                  <i class="fas fa-plus"></i>+
+                </button>
+              </div>
+              <div class="invalid-feedback">{{ form.modelo.errors }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="mb-3">
+              {{ form.color.label_tag }}
+              <div class="input-group">
+                {{ form.color }}
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                  data-bs-target="#modalColor">
+                  <i class="fas fa-plus"></i>+
+                </button>
+              </div>
+              <div class="invalid-feedback">{{ form.color.errors }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4">
+            <div class="mb-3">
+              {{ form.presentacion.label_tag }}
+              <div class="input-group">
+                {{ form.presentacion }}
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                  data-bs-target="#modalPresentacion">
+                  <i class="fas fa-plus"></i>+
+                </button>
+              </div>
+              <div class="invalid-feedback">{{ form.presentacion.errors }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="mb-3">
+              {{ form.capacidad.label_tag }}
+              <div class="input-group">
+                {{ form.capacidad }}
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                  data-bs-target="#modalCapacidad">
+                  <i class="fas fa-plus"></i>+
+                </button>
+              </div>
+              <div class="invalid-feedback">{{ form.capacidad.errors }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="mb-3">
+              {{ form.medida.label_tag }}
+              <div class="input-group">
+                {{ form.medida }}
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                  data-bs-target="#modalMedida">
+                  <i class="fas fa-plus"></i>+
+                </button>
+              </div>
+              <div class="invalid-feedback">{{ form.medida.errors }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección de ubicación y otros -->
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        Ubicación y Detalles
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="mb-3">
+              {{ form.ubicacion.label_tag }}
+              <div class="input-group">
+                {{ form.ubicacion }}
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                  data-bs-target="#modalUbicacion">
+                  <i class="fas fa-plus"></i>+
+                </button>
+              </div>
+              <div class="invalid-feedback">{{ form.ubicacion.errors }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="mb-3">
+              {{ form.lote.label_tag }}
+              <div class="input-group">
+                {{ form.lote }}
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                  data-bs-target="#modalLote">
+                  <i class="fas fa-plus"></i>+
+                </button>
+              </div>
+              <div class="invalid-feedback">{{ form.lote.errors }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="mb-3">
+              {{ form.accesorios.label_tag }}
+              <div class="input-group">
+                {{ form.accesorios }}
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                  data-bs-target="#modalAccesorios">
+                  <i class="fas fa-plus"></i>+
+                </button>
+              </div>
+              <div class="invalid-feedback">{{ form.accesorios.errors }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <button type="submit" class="btn btn-primary btn-lg">Guardar Producto</button>
+    </div>
+  </form>
+</div>
+
+<!--MODALS-->
+
+<!-- Modal Nueva Categoría -->
+<div class="modal fade" id="modalCategoria" tabindex="-1" aria-labelledby="modalCategoriaLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formCategoria" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_tipo" value="categoria">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nueva Categoría</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          {{ categoria_form.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nueva Subcategoría -->
+<div class="modal fade" id="modalSubcategoria" tabindex="-1" aria-labelledby="modalSubcategoriaLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formSubcategoria" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_tipo" value="subcategoria">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nueva Subcategoría</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          {{ subcategoria_form.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nueva Marca -->
+<div class="modal fade" id="modalMarca" tabindex="-1" aria-labelledby="modalMarcaLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formMarca" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_tipo" value="marca">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nueva Marca</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Nombre Primero -->
+          <div class="mb-3">
+            <label for="{{ marca_form.nombre.id_for_label }}" class="form-label">Nombre (requerido)</label>
+            {{ marca_form.nombre }}
+            {% if marca_form.nombre.errors %}
+            <div class="text-danger small">{{ marca_form.nombre.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Código Después -->
+          <div class="mb-3">
+            <label for="{{ marca_form.codigo.id_for_label }}" class="form-label">Código de Marca (opcional)</label>
+            {{ marca_form.codigo }}
+            {% if marca_form.codigo.errors %}
+            <div class="text-danger small">{{ marca_form.codigo.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Descripción al Final -->
+          <div class="mb-3">
+            <label for="{{ marca_form.descripcion.id_for_label }}" class="form-label">Descripción (opcional)</label>
+            {{ marca_form.descripcion }}
+            {% if marca_form.descripcion.errors %}
+            <div class="text-danger small">{{ marca_form.descripcion.errors.0 }}</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nuevo Modelo -->
+<div class="modal fade" id="modalModelo" tabindex="-1" aria-labelledby="modalModeloLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formModelo" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_tipo" value="modelo">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nuevo Modelo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          {{ modelo_form.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nuevo Color -->
+<div class="modal fade" id="modalColor" tabindex="-1" aria-labelledby="modalColorLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formColor" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_tipo" value="color">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nuevo Color</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="id_nombre" class="form-label">Nombre: <span class="text-danger">*</span></label>
+            {{ color_form.nombre }}
+          </div>
+          <div class="mb-3">
+            <label for="id_codigo" class="form-label">Código:</label>
+            {{ color_form.codigo }}
+          </div>
+          <div class="mb-3">
+            <label for="id_descripcion" class="form-label">Descripción:</label>
+            {{ color_form.descripcion }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nueva Capacidad -->
+<div class="modal fade" id="modalCapacidad" tabindex="-1" aria-labelledby="modalCapacidadLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formCapacidad" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_tipo" value="capacidad">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalCapacidadLabel">Nueva Capacidad</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label for="id_nombre_capacidad" class="form-label">Nombre: <span class="text-danger">*</span></label>
+            {{ capacidad_form.nombre }}
+            {% if capacidad_form.nombre.errors %}
+            <div class="text-danger small">{{ capacidad_form.nombre.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="id_descripcion_capacidad" class="form-label">Descripción:</label>
+            {{ capacidad_form.descripcion }}
+            {% if capacidad_form.descripcion.errors %}
+            <div class="text-danger small">{{ capacidad_form.descripcion.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nueva Presentación -->
+<div class="modal fade" id="modalPresentacion" tabindex="-1" aria-labelledby="modalPresentacionLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formPresentacion" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_tipo" value="presentacion">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalPresentacionLabel">Nueva Presentación</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label for="id_nombre_presentacion" class="form-label">Nombre: <span class="text-danger">*</span></label>
+            {{ presentacion_form.nombre }}
+            {% if presentacion_form.nombre.errors %}
+            <div class="text-danger small">{{ presentacion_form.nombre.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="id_descripcion_presentacion" class="form-label">Descripción:</label>
+            {{ presentacion_form.descripcion }}
+            {% if presentacion_form.descripcion.errors %}
+            <div class="text-danger small">{{ presentacion_form.descripcion.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nuevo Accesorio -->
+<div class="modal fade" id="modalAccesorios" tabindex="-1" aria-labelledby="modalAccesoriosLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formAccesorios" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_tipo" value="accesorios">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalAccesoriosLabel">Nuevos Accesorios</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label for="id_nombre_accesorio" class="form-label">Nombre: <span class="text-danger">*</span></label>
+            {{ accesorios_form.nombre }}
+            {% if accesorios_form.nombre.errors %}
+            <div class="text-danger small">{{ accesorios_form.nombre.errors.0 }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="id_nombre_acesorio" class="form-label">Descripción:</label>
+            {{ accesorios_form.descripcion }}
+            {% if accesorios_form.descripcion.errors %}
+            <div class="text-danger small">{{ accesorios_form.descripcion.errors.0 }}</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nueva Ubicación -->
+<div class="modal fade" id="modalUbicacion" tabindex="-1" aria-labelledby="modalUbicacionLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formUbicacion" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_tipo" value="ubicacion">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nueva Ubicación de Producto</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="id_nombre" class="form-label">Nombre: <span class="text-danger">*</span></label>
+            {{ ubicacion_form.nombre }}
+          </div>
+          <div class="mb-3">
+            <label for="id_codigo" class="form-label">Código:</label>
+            {{ ubicacion_form.codigo }}
+          </div>
+          <div class="mb-3">
+            <label for="id_descripcion" class="form-label">Descripción:</label>
+            {{ ubicacion_form.descripcion }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nuevo Lote -->
+<div class="modal fade" id="modalLote" tabindex="-1" aria-labelledby="modalLoteLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formLote" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_tipo" value="lote">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nuevo Lote</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="id_codigo" class="form-label">Código: <span class="text-danger">*</span></label>
+            {{ lote_form.codigo }}
+          </div>
+          <div class="mb-3">
+            <label for="id_descripcion" class="form-label">Descripción:</label>
+            {{ lote_form.descripcion }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nueva Medida -->
+<div class="modal fade" id="modalMedida" tabindex="-1" aria-labelledby="modalMedidaLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formMedida" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_tipo" value="medida">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nueva Medida</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="id_nombre" class="form-label">Nombre: <span class="text-danger">*</span></label>
+            {{ medida_form.nombre }}
+          </div>
+          <div class="mb-3">
+            <label for="id_descripcion" class="form-label">Descripción:</label>
+            {{ medida_form.descripcion }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- JavaScript para manejar AJAX -->
+<script>
+  $(document).ready(function () {
+    // Guardar el estado del formulario antes de abrir modales
+    $('.modal').on('show.bs.modal', function () {
+      sessionStorage.setItem('formProductoData', $('#formProducto').serialize());
+    });
+
+    // Manejar envío de formularios de catálogo via AJAX
+    $('[id^="form"]').not('#formProducto').submit(function (e) {
+      e.preventDefault();
+      var form = $(this);
+      var modalId = form.closest('.modal').attr('id');
+      var selectId = 'id_' + modalId.replace('modal', '').toLowerCase();
+
+      $.ajax({
+        url: "{% url 'agregar_producto' %}",
+        type: "POST",
+        data: form.serialize(),
+        success: function (response) {
+          // Restaurar el estado del formulario
+          if (sessionStorage.getItem('formProductoData')) {
+            $('#formProducto').deserialize(sessionStorage.getItem('formProductoData'));
+          }
+
+          // Cerrar el modal y actualizar select
+          $('#' + modalId).modal('hide');
+          if (response.id && response.nombre) {
+            var newOption = new Option(response.nombre, response.id, true, true);
+            $('#' + selectId).append(newOption).trigger('change');
+          }
+
+          // Mostrar mensaje
+          showAlert('success', 'Catálogo actualizado correctamente');
+        },
+        error: function (xhr) {
+          // Manejo de errores...
+        }
+      });
+    });
+
+    // Función para mostrar alertas
+    function showAlert(type, message) {
+      $('#messages-container').html(
+        `<div class="alert alert-${type} alert-dismissible fade show">
+                  ${message}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>`
+      );
+    }
+  });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("formProducto");
+    const STORAGE_KEY = "formProductoData";
+
+    const savedData = sessionStorage.getItem(STORAGE_KEY);
+    let subcategoriaGuardada = null;
+
+    if (savedData) {
+      const data = JSON.parse(savedData);
+      for (let [key, value] of Object.entries(data)) {
+        const field = form.elements.namedItem(key);
+        if (field) {
+          if (field.type === "checkbox" || field.type === "radio") {
+            field.checked = value;
+          } else {
+            field.value = value;
+
+            // Guardamos subcategoría para restaurarla después de cargar opciones
+            if (key === "subcategoria") {
+              subcategoriaGuardada = value;
+            }
+
+            // Disparamos change en categoría para cargar subcategorías
+            if (key === "categoria") {
+              field.dispatchEvent(new Event("change"));
+            }
+          }
+        }
+      }
+
+      // Esperamos un poco a que se repueblen las subcategorías, luego restauramos
+      if (subcategoriaGuardada) {
+        setTimeout(() => {
+          const subField = form.elements.namedItem("subcategoria");
+          if (subField) {
+            subField.value = subcategoriaGuardada;
+          }
+        }, 300); // suficiente para cargar opciones
+      }
+    }
+
+    // Guardar datos al escribir
+    form.addEventListener("input", function () {
+      const dataToSave = {};
+      for (let i = 0; i < form.elements.length; i++) {
+        const el = form.elements[i];
+        if (el.name) {
+          if (el.type === "checkbox" || el.type === "radio") {
+            dataToSave[el.name] = el.checked;
+          } else {
+            dataToSave[el.name] = el.value;
+          }
+        }
+      }
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    });
+
+    // Limpiar datos si la cookie lo dice
+    if (document.cookie.includes("limpiar_datos_producto=true")) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      document.cookie = "limpiar_datos_producto=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    }
+  });
+</script>
+{% endblock %}

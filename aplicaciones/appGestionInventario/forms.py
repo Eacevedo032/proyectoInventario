@@ -31,12 +31,11 @@ class EditProfileForm(forms.ModelForm):
     current_password = forms.CharField(
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Contraseña actual',
             'autocomplete': 'off'
         }),
         required=True,
-        label="Contraseña Actual",
-        help_text="Requerida para confirmar cambios",
+        label="Contraseña Actual *",
+        help_text="Requerida para confirmar cualquier cambio realizado en esta sección.",
         error_messages={
             'required': 'Debe ingresar su contraseña actual para realizar cambios'
         }
@@ -45,22 +44,21 @@ class EditProfileForm(forms.ModelForm):
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Nueva contraseña',
             'autocomplete': 'new-password'
         }), 
         required=False,
-        label="Nueva Contraseña",
-        help_text="Mínimo 8 caracteres con letras, números y signos"
+        label="Nueva Contraseña (Opcional)",
+        help_text="Mínimo 8 caracteres con letras, números, signos. En caso de no desear actualizarla, dejar campo en blanco."
     )
     
     confirm_password = forms.CharField(
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Confirmar nueva contraseña',
             'autocomplete': 'off'
         }), 
         required=False,
-        label="Confirmar Contraseña"
+        label="Confirmar Contraseña (Solo si se ingresó una nueva)",
+        help_text="Sino se agregó una nueva contraseña, no confirmar."
     )
 
     class Meta:

@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+
+{% block body %}
+
+<!-- Mensajes -->
+{% if messages %}
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+    {% for message in messages %}
+        <strong>{{ message }}</strong>
+    {% endfor %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+</div>
+{% endif %}
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Gestión de Colores</h2>
+
+    <!-- Formulario Agregar Color -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Agregar Nuevo Color</h5>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="guardar_color" value="1">
+
+                <div class="mb-3">
+                    <label for="{{ color_form.nombre.id_for_label }}" class="form-label">Nombre <span class="text-danger">(requerido)</span></label>
+                    {{ color_form.nombre|add_class:"form-control" }}
+                    {% if color_form.nombre.errors %}
+                        <div class="text-danger small">{{ color_form.nombre.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ color_form.codigo.id_for_label }}" class="form-label">Código <span class="text-muted">(opcional)</span></label>
+                    {{ color_form.codigo|add_class:"form-control" }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ color_form.descripcion.id_for_label }}" class="form-label">Descripción <span class="text-muted">(opcional)</span></label>
+                    <style>
+                        textarea.form-control {
+                            height: 60px !important;
+                            resize: vertical;
+                        }
+                    </style>
+                    {{ color_form.descripcion|add_class:"form-control form-control-sm" }}
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success">Agregar Color</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Filtro -->
+    <h4 class=" text-center text-primary">Filtrar por Colores</h4>
+    <div class="card p-3 mb-4 shadow-sm border-primary">
+        <form method="get" class="form-inline justify-content-between flex-wrap">
+            <div class="form-group mb-2 mr-2">
+                <label for="colores">Seleccionar Colores:</label>
+                <select name="colores" id="colores" class="form-control ml-2" multiple>
+                    {% for color in todos_colores %}
+                        <option value="{{ color.id }}" {% if color.id in colores_seleccionados %}selected{% endif %}>{{ color.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">Usa Ctrl o Cmd para seleccionar múltiples.</small>
+            </div>
+            <div class="form-check mb-2 mr-2">
+                <input type="checkbox" class="form-check-input" id="ver_todos" name="ver_todos" value="1" {% if ver_todos %}checked{% endif %}>
+                <label class="form-check-label" for="ver_todos">Ver todos los colores</label>
+            </div>
+            <div class="mb-2 text-center">
+                <button type="submit" class="btn btn-primary">Aplicar Filtro</button>
+                <a href="{% url 'gestionar_color' %}" class="btn btn-secondary">Dejar de filtrar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de colores filtrados -->
+    {% for color in colores %}
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0 text-primary">{{ color.nombre }}</h4>
+                    <small><strong>Código:</strong> {{ color.codigo|default:"(sin código)" }} |
+                           <strong>Descripción:</strong> {{ color.descripcion|default:"(sin descripción)" }}</small>
+                </div>
+                <div>
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarColorModal{{ color.id }}">Editar</button>
+                    <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="eliminar_color" value="1">
+                        <input type="hidden" name="color_id" value="{{ color.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <h6 class="text-secondary">Productos Asociados:</h6>
+                {% with productos_color=productos %}
+                    {% if productos_color %}
+                        <table class="table table-bordered table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th>Subcategoría</th>
+                                    <th>Cantidad</th>
+                                    <th>Unidad</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for producto in productos %}
+                                    {% if producto.color.id == color.id %}
+                                        <tr>
+                                            <td>{{ producto.nombre }}</td>
+                                            <td>{{ producto.categoria.nombre }}</td>
+                                            <td class="text-truncate" style="max-width: 150px;" title="{{ producto.subcategoria.nombre }}">
+                                                {{ producto.subcategoria.nombre }}
+                                            </td>
+                                            <td>{{ producto.cantidad_disponible }}</td>
+                                            <td>{{ producto.unidad_medida.abreviatura }}</td>
+                                            <td>{{ producto.marca.nombre|default:"(sin marca)" }}</td>
+                                            <td>{{ producto.modelo.nombre|default:"(sin modelo)" }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>                            
+                        </table>
+                    {% else %}
+                        <p>No hay productos relacionados con este color.</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+
+        <!-- Modal Editar Color -->
+        <div class="modal fade" id="editarColorModal{{ color.id }}" tabindex="-1" aria-labelledby="editarColorModalLabel{{ color.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="editar_color" value="1">
+                        <input type="hidden" name="color_id" value="{{ color.id }}">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editarColorModalLabel{{ color.id }}">Editar Color: {{ color.nombre }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" name="nombre" class="form-control" value="{{ color.nombre }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Código</label>
+                                <input type="text" name="codigo" class="form-control" value="{{ color.codigo }}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <textarea name="descripcion" class="form-control" rows="2">{{ color.descripcion }}</textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <!-- Mensaje si no hay filtros aplicados -->
+    {% if not colores %}
+        <div class="text-center mt-4">
+            <p class="text-muted">Filtrar Colores para mostrar información.</p>
+        </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

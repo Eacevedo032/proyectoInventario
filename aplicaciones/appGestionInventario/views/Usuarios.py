@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User #User propio de Django
 from aplicaciones.appGestionInventario.forms import CustomUserCreationForm #Importa el formulario de registro de usuario personalizado de forms.py
 from django.utils.safestring import mark_safe #Marca contenido seguro
-from aplicaciones.appGestionInventario.models import ApprovedUser, DeniedUser #Tablas para guardar el historial de Usuarios denegados y aceptados
+from aplicaciones.appGestionInventario.models import ApprovedUser #Tablas para guardar el historial de Usuarios aceptados
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import LoginView
 
@@ -46,12 +46,11 @@ Vista `approve_users`
 
 @login_required
 def approve_users(request):
-    pending_users = User.objects.filter(is_active=False).order_by('-date_joined')  # .order_by, de más reciente a más antiguo, por medio de fechas en valores mostrados
-    approved_users = ApprovedUser.objects.all().order_by('-date_approved')  # Más recientes primero
-    denied_users = DeniedUser.objects.all().order_by('-date_denied')  # Más recientes primero
+    pending_users = User.objects.filter(is_active=False).order_by('-date_joined')
+    approved_users = ApprovedUser.objects.all().order_by('-date_approved')
 
     if request.method == "POST":
-        action = request.POST.get('action')  
+        action = request.POST.get('action')
         user_id = request.POST.get('user_id')
         approved_user_id = request.POST.get('approved_user_id')
 
@@ -68,32 +67,26 @@ def approve_users(request):
             except User.DoesNotExist:
                 messages.error(request, "El usuario no existe.")
 
-        elif action == "deny":
+        elif action == "toggle_superuser":
             try:
                 user = User.objects.get(id=user_id)
-                if not DeniedUser.objects.filter(username=user.username).exists():
-                    DeniedUser.objects.create(
-                        username=user.username,
-                        email=user.email,
-                        created_by=request.user
-                    )
-                    user.delete()
-                    messages.success(request, f"El registro del usuario {user.username} ha sido denegado y eliminado.")
+
+                if user.is_superuser:
+                    # Quitar privilegios de superusuario
+                    user.is_superuser = False
+                    user.is_staff = False
+                    user.is_active = True  # Sigue siendo activo como usuario normal
+                    messages.success(request, f"El usuario {user.username} ahora es un usuario común.")
                 else:
-                    messages.warning(request, "Este usuario ya ha sido denegado previamente.")
+                    # Promover a superusuario
+                    user.is_superuser = True
+                    user.is_staff = True
+                    user.is_active = True
+                    messages.success(request, f"El usuario {user.username} ha sido promovido a administrador.")
+
+                user.save()
             except User.DoesNotExist:
                 messages.error(request, "El usuario no existe.")
-
-        elif action == "delete_approved":
-            if approved_user_id:
-                try:
-                    approved_user = ApprovedUser.objects.get(id=approved_user_id)
-                    approved_user.delete()
-                    messages.success(request, "Registro del usuario aprobado eliminado con éxito.")
-                except ApprovedUser.DoesNotExist:
-                    messages.error(request, "El registro del usuario aprobado no existe.")
-            else:
-                messages.error(request, "ID de usuario aprobado no proporcionado.")
 
         elif action == "delete_approved_user":
             if user_id:
@@ -107,36 +100,14 @@ def approve_users(request):
             else:
                 messages.error(request, "ID de usuario no proporcionado.")
 
-        elif action == "delete_denied":
-            try:
-                denied_user = DeniedUser.objects.get(id=user_id)
-                denied_user.delete()
-                messages.success(request, f"Registro del usuario denegado eliminado con éxito.")
-            except DeniedUser.DoesNotExist:
-                messages.error(request, "El registro del usuario denegado no existe.")
-
-        elif action == "clear_approved":
-            try:
-                ApprovedUser.objects.all().delete()
-                messages.success(request, "Historial de usuarios aprobados limpiado con éxito.")
-            except Exception as e:
-                messages.error(request, f"Error al limpiar el historial de usuarios aprobados: {str(e)}")
-
-        elif action == "clear_denied":
-            try:
-                DeniedUser.objects.all().delete()
-                messages.success(request, "Historial de usuarios denegados limpiado con éxito.")
-            except Exception as e:
-                messages.error(request, f"Error al limpiar el historial de usuarios denegados: {str(e)}")
-
         return redirect('approve_users')
 
     context = {
         'pending_users': pending_users,
-        'approved_users': approved_users,
-        'denied_users': denied_users,
+        'approved_users': approved_users
     }
     return render(request, 'admin/approve_users.html', context)
+
 
 #Validación de que el usuario ingresado exista, se ingrese correctamente, pendiente o denegado.
 class CustomLoginView(LoginView):
@@ -148,11 +119,6 @@ class CustomLoginView(LoginView):
 
         if not username or not password:
             messages.error(request, "Debe ingresar un usuario y una contraseña.")
-            return redirect('login')
-
-        # Valida si el usuario está en DeniedUser
-        if DeniedUser.objects.filter(username=username).exists():
-            messages.error(request, "Su registro ha sido denegado (eliminado). Comuníquese con el administrador o regístrese nuevamente.")
             return redirect('login')
 
         # Buscamos en User si existe con ese username

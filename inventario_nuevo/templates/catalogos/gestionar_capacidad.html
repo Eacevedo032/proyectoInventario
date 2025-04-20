@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+
+{% block body %}
+{% if messages %}
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+    {% for message in messages %}
+        <strong>{{ message }}</strong>
+    {% endfor %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+</div>
+{% endif %}
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Gestión de Capacidades de los Productos</h2>
+
+    <!-- Formulario Agregar Capacidad -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Agregar Nueva Capacidad</h5>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="guardar_capacidad" value="1">
+
+                <div class="mb-3">
+                    <label for="{{ capacidad_form.nombre.id_for_label }}" class="form-label">Nombre <span class="text-danger">(requerido)</span></label>
+                    {{ capacidad_form.nombre|add_class:"form-control" }}
+                    {% if capacidad_form.nombre.errors %}
+                        <div class="text-danger small">{{ capacidad_form.nombre.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <label for="{{ capacidad_form.descripcion.id_for_label }}" class="form-label">Descripción <span class="text-muted">(opcional)</span></label>
+                    {{ capacidad_form.descripcion|add_class:"form-control form-control-sm" }}
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success">Agregar Capacidad</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filtro -->
+    <h4 class="text-center text-primary">Filtrar por Capacidad</h4>
+    <div class="card p-3 mb-4 shadow-sm border-primary">
+        <form method="get" class="form-inline justify-content-between flex-wrap">
+            <div class="form-group mb-2 mr-2">
+                <label for="capacidades">Seleccionar Capacidades:</label>
+                <select name="capacidades" id="capacidades" class="form-control ml-2" multiple>
+                    {% for capacidad in todas_capacidades %}
+                        <option value="{{ capacidad.id }}" {% if capacidad.id in capacidades_seleccionadas %}selected{% endif %}>{{ capacidad.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">Usa Ctrl o Cmd para seleccionar múltiples.</small>
+            </div>
+            <div class="form-check mb-2 mr-2">
+                <input type="checkbox" class="form-check-input" id="ver_todos" name="ver_todos" value="1" {% if ver_todos %}checked{% endif %}>
+                <label class="form-check-label" for="ver_todos">Ver todas las capacidades</label>
+            </div>
+            <div class="mb-2 text-center">
+                <button type="submit" class="btn btn-primary">Aplicar Filtro</button>
+                <a href="{% url 'gestionar_capacidad' %}" class="btn btn-secondary">Dejar de filtrar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de capacidades filtradas -->
+    {% for capacidad in capacidades %}
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0 text-primary">{{ capacidad.nombre }}</h4>
+                    <small><strong>Descripción:</strong> {{ capacidad.descripcion|default:"(sin descripción)" }}</small>
+                </div>
+                <div>
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarCapacidadModal{{ capacidad.id }}">Editar</button>
+                    <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="eliminar_capacidad" value="1">
+                        <input type="hidden" name="capacidad_id" value="{{ capacidad.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <h6 class="text-secondary">Productos Asociados:</h6>
+                {% with productos_cap=productos %}
+                    {% if productos_cap %}
+                        <table class="table table-bordered table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th>Subcategoría</th>
+                                    <th>Cantidad</th>
+                                    <th>Unidad</th>
+                                    <th>Presentación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for producto in productos %}
+                                    {% if producto.capacidad.id == capacidad.id %}
+                                        <tr>
+                                            <td>{{ producto.nombre }}</td>
+                                            <td>{{ producto.categoria.nombre }}</td>
+                                            <td>{{ producto.subcategoria.nombre }}</td>
+                                            <td>{{ producto.cantidad_disponible }}</td>
+                                            <td>{{ producto.unidad_medida.abreviatura }}</td>
+                                            <td>{{ producto.presentacion.nombre|default:"(sin presentación)" }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No hay productos relacionados con esta capacidad.</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+
+        <!-- Modal Editar Capacidad -->
+        <div class="modal fade" id="editarCapacidadModal{{ capacidad.id }}" tabindex="-1" aria-labelledby="editarCapacidadModalLabel{{ capacidad.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="editar_capacidad" value="1">
+                        <input type="hidden" name="capacidad_id" value="{{ capacidad.id }}">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Editar Capacidad: {{ capacidad.nombre }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" name="nombre" class="form-control" value="{{ capacidad.nombre }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <textarea name="descripcion" class="form-control">{{ capacidad.descripcion }}</textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    {% if not capacidades %}
+        <div class="text-center mt-4">
+            <p class="text-muted">Filtrar capacidades de Productos para mostrar información.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

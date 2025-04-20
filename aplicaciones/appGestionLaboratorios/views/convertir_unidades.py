@@ -44,3 +44,11 @@ def convertir_unidades(cantidad, unidad_origen, unidad_destino):
 
     # Si no se puede convertir, lanza un error
     raise ValueError(f"No se puede convertir de {unidad_origen} a {unidad_destino}")
+
+def convertir_usando_modelo(cantidad, unidad_origen_obj, unidad_destino_obj):
+    """
+    Esta función permite usar la conversión incluso si se pasan objetos UnidadMedida en lugar de abreviaturas.
+    """
+    origen = unidad_origen_obj.abreviatura if hasattr(unidad_origen_obj, 'abreviatura') else str(unidad_origen_obj)
+    destino = unidad_destino_obj.abreviatura if hasattr(unidad_destino_obj, 'abreviatura') else str(unidad_destino_obj)
+    return convertir_unidades(cantidad, origen, destino)

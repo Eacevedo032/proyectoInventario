@@ -39,8 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',  # Para filtros como intcomma
+    'inventario_nuevo', #Inventario nuevo modificado
 
-    
+
     # Apps propias
     'aplicaciones.appGestionInventario',
     'aplicaciones.appGestionLaboratorios',

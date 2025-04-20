@@ -8,7 +8,7 @@ from django.utils.dateparse import parse_date
 from decimal import Decimal, InvalidOperation
 from django.core.paginator import Paginator
 from datetime import datetime, timedelta
-from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_unidades
+from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_usando_modelo, convertir_unidades
 
 # Vista para solicitar recursos desde una cuenta de usuario sin privilegios de administrador
 @login_required

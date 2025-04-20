@@ -26,6 +26,8 @@ urlpatterns = [
     path('', include('aplicaciones.appGestionInventario.urls')),
     path('appGestionLaboratorios/', include('aplicaciones.appGestionLaboratorios.urls')),
     path('appReportes/', include('aplicaciones.appReportes.urls')),
+    path('inventarioNuevo/', include('inventario_nuevo.urls')), 
+
 ]
 
 if settings.DEBUG:  # Solo en modo desarrollo

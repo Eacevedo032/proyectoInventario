@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+
+<h4 class="text-center text-primary">Filtrar Productos por Unidad de Medida</h4>
+
+<div class="card p-3 mb-4 shadow-sm border-success">
+    <form method="get" class="form-inline justify-content-between flex-wrap">
+        <div class="form-group mb-2 mr-2">
+            <label for="unidades">Seleccionar Unidad(es):</label>
+            <select name="unidades" id="unidades" class="form-control ml-2" multiple>
+                {% for unidad in todas_unidades %}
+                    <option value="{{ unidad.id }}" {% if unidad.id in unidades_seleccionadas %}selected{% endif %}>
+                        {{ unidad.nombre }} ({{ unidad.abreviatura }})
+                    </option>
+                {% endfor %}
+            </select>
+            <small class="form-text text-muted">Usa Ctrl o Cmd para seleccionar múltiples.</small>
+        </div>
+
+        <div class="form-check mb-2 mr-2">
+            <input type="checkbox" class="form-check-input" id="ver_todos" name="ver_todos" value="1" {% if ver_todos %}checked{% endif %}>
+            <label class="form-check-label" for="ver_todos">Ver todas las unidades</label>
+        </div>
+
+        <div class="mb-2 text-center">
+            <button type="submit" class="btn btn-primary">Aplicar Filtro</button>
+            <a href="{% url 'filtrar_por_unidad' %}" class="btn btn-secondary">Limpiar Filtros</a>
+        </div>
+    </form>
+</div>
+
+{% for unidad, productos in productos_por_unidad.items %}
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light">
+        <h4 class="mb-0 text-success">{{ unidad.nombre }} ({{ unidad.abreviatura }})</h4>
+    </div>
+    <div class="card-body">
+        {% if productos %}
+            {% regroup productos|dictsort:"categoria.nombre" by categoria as categorias_agrupadas %}
+            {% for categoria_group in categorias_agrupadas %}
+                {% regroup categoria_group.list|dictsort:"subcategoria.nombre" by subcategoria as subcategorias_agrupadas %}
+                {% for sub_group in subcategorias_agrupadas %}
+                    <div class="mb-3">
+                        <h5 class="text-dark mb-0">{{ categoria_group.grouper.nombre }}</h5>
+                        <small class="text-muted ms-2 border-start border-3 ps-2 d-block fst-italic">{{ sub_group.grouper.nombre }}</small>
+                    </div>
+
+                    <table class="table table-bordered table-sm mb-4">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Ubicación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in sub_group.list %}
+                                <tr>
+                                    <td>{{ producto.nombre }}</td>
+                                    <td>{{ producto.cantidad_disponible }}</td>
+                                    <td>{{ producto.ubicacion.nombre }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% endfor %}
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-warning text-center mb-0" role="alert">
+                No hay productos registrados con esta unidad de medida.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<div class="text-center mt-4">
+    <p class="text-muted">Filtra por unidad de medida para visualizar productos relacionados.</p>
+</div>
+{% endfor %}
+
+{% endblock %}

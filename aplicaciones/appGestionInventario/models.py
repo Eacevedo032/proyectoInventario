@@ -3,11 +3,10 @@ from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.contrib.auth.models import User
 from django.utils.timezone import now
 import os
 
-#Perfil de usuario
+#Perfil de usuario, sirve para editar el perfil y la parte del inventario
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
@@ -16,10 +15,8 @@ class UserProfile(models.Model):
         return self.user.username
 
     def delete_profile_picture(self):
-        """Elimina físicamente el archivo de imagen"""
-        if self.profile_picture:
-            if os.path.isfile(self.profile_picture.path):
-                os.remove(self.profile_picture.path)
+        if self.profile_picture and os.path.isfile(self.profile_picture.path):
+            os.remove(self.profile_picture.path)
             self.profile_picture.delete(save=False)
 
 # Tabla para manejar los usuarios aprobados y denegados
@@ -30,17 +27,6 @@ class ApprovedUser(models.Model):
 
     def __str__(self):
         return f"{self.user.username} (Aprobado por: {self.created_by.username if self.created_by else 'Desconocido'})"
-
-
-class DeniedUser(models.Model):
-    username = models.CharField(max_length=150)  # Nombre del usuario denegado
-    email = models.EmailField()  # Correo electrónico del usuario denegado
-    date_denied = models.DateTimeField(auto_now_add=True)  # Fecha de denegación
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="denied_by")  # Admin que lo creó
-
-    def __str__(self):
-        return f"{self.username} (Denegado por: {self.created_by.username if self.created_by else 'Desconocido'})"
-    
 
 # Tabla Categoria
 class Categoria(models.Model):
@@ -59,7 +45,7 @@ class SubCategoria(models.Model):
 
     def __str__(self):
         return f"{self.nombre} - {self.categoria.nombre_categoria}"
-
+        
 class Inventario(models.Model):
     #on delete cascade  asegura que, al eliminar una subcategoría, todos los ítems relacionados 
     #también se eliminen automáticamente.
@@ -147,7 +133,13 @@ class InventarioGuardado(models.Model):
     # campos actuales:
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True, null=True)
-    cantidad_disponible = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    cantidad_disponible = models.DecimalField(
+    max_digits=10, 
+    decimal_places=2, 
+    default=0.00, 
+    validators=[MinValueValidator(0.0)],
+    verbose_name="Cantidad Disponible"
+    )
     unidad_medida = models.CharField(max_length=50, null=True, blank=True)
     lote = models.CharField(max_length=36, blank=True, null=True)
     vencimiento = models.DateField(blank=True, null=True)
@@ -173,7 +165,7 @@ class InventarioGuardado(models.Model):
     
     def __str__(self):
         return f"{self.nombre} (Lote: {self.lote})"
-
+    
 #LABORATORIOS
 
 #control de horarios en los laboratorios
