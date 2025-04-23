@@ -160,5 +160,5 @@ LOGOUT_REDIRECT_URL = '/accounts/login'
 
 LOGIN_URL = 'login'  # Ahora se usa la nueva vista personalizada
 LOGIN_REDIRECT_URL = 'inicio'  # Ajusta al nombre correcto de tu home
-LOGOUT_REDIRECT_URL = 'login'  # Redirige a login después de cerrar sesión
+LOGOUT_REDIRECT_URL = 'SISLAB'  # Redirige a login después de cerrar sesión
 
