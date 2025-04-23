@@ -12,6 +12,8 @@ urlpatterns = [
 
     path('', views.SISLAB, name='SISLAB'),
 
+    path('SISLAB/', views.SISLAB, name='SISLAB'),
+
     #urls para gestiones de categorias 
     path('gestionCategorias/', views.gestionCategorias, name='gestionCategoria'),
     path('registrarCategoria/', views.registrarCategoria, name='registrarCategoria'),

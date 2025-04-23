@@ -24,4 +24,11 @@ def SISLAB(request):
 def inicio(request):
     '''Esto es la pagina principal'''
      # Mensaje que se mostrará en la plantilla
+<<<<<<< HEAD
     return render(request, "inicio.html")
+=======
+    return render(request, "inicio.html")
+
+def SISLAB(request):
+    return render(request, 'SISLAB.html')
+>>>>>>> adb964f7427a493d804e8a645563d5ceff5aca3c
