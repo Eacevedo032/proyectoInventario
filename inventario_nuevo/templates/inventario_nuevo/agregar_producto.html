@@ -738,7 +738,7 @@
   </div>
 </div>
 
-<!-- JavaScript para manejar AJAX -->
+<!-- JavaScript para manejar AJAX + restaurar datos después de modales y que aparezcan en el select-->
 <script>
   $(document).ready(function () {
     // Guardar el estado del formulario antes de abrir modales
@@ -791,6 +791,7 @@
   });
 </script>
 
+<!-- JavaScript para recuperar automáticamente los datos del formulario en la carga y no se pierda ya lo ingresado-->
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById("formProducto");
@@ -856,4 +857,5 @@
     }
   });
 </script>
+
 {% endblock %}

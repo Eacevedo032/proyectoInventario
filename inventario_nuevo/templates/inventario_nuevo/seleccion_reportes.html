@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container py-5">
+    <h2 class="text-primary text-center mb-4">📊 Reportes de Inventario</h2>
+    <p class="text-muted text-center">Accede a distintos reportes para optimizar la gestión de almacenes.</p>
+    <hr class="my-4">
+
+    <!-- Contenedor de reportes alineados con estilos unificados -->
+    <div class="row g-4 justify-content-center align-items-stretch"> <!-- Asegura que todas las tarjetas se alineen correctamente -->
+
+        <!-- Historial General de Inventario -->
+        <div class="col-lg-4 col-md-6 d-flex">
+            <div class="card border-0 shadow-sm w-100 h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-between">
+                    <i class="bi bi-file-text-fill text-primary display-4"></i>
+                    <h4 class="card-title mt-3 text-primary">Historial General</h4>
+                    <p class="card-text text-muted">
+                        Registros completos por fechas de movimientos y ajustes de inventario con el usuario.
+                    </p>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'reporte_inventario' %}" class="btn btn-outline-primary w-100">Ver Historial Completo</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reporte de Inventario por Fecha -->
+        <div class="col-lg-4 col-md-6 d-flex">
+            <div class="card border-0 shadow-sm w-100 h-100 mt-3"> <!-- Agregamos margen superior -->
+                <div class="card-body text-center d-flex flex-column justify-content-between">
+                    <i class="bi bi-calendar-date-fill text-primary display-4"></i>
+                    <h4 class="card-title mt-3 text-primary">Reporte por Fecha</h4>
+
+                    <!-- Formulario bien estructurado con card-footer adentro -->
+                    <form method="get" action="{% url 'reporte_inventario_diario' %}">
+                        <input type="date" name="fecha" class="form-control mb-3 border-primary text-center bg-white"
+                            style="transition: 0.3s;"
+                            onfocus="this.style.backgroundColor='#cce5ff';"
+                            onblur="this.style.backgroundColor='white';" required>
+                        <p class="text-center text-muted mt-2">Filtra el inventario por una fecha específica.</p>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-outline-primary w-100">Seleccionar Fecha</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial de Transferencias -->
+        <div class="col-lg-4 col-md-6 d-flex">
+            <div class="card border-0 shadow-sm w-100 h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-between">
+                    <i class="bi bi-arrow-left-right text-primary display-4"></i>
+                    <h4 class="card-title mt-3 text-primary">Historial de Transferencias</h4>
+                    <p class="card-text text-muted">
+                        Seguimiento de movimientos entre ubicaciones, traslados o ingresos de productos por fecha.
+                    </p>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'historial_transferencias' %}" class="btn btn-outline-primary w-100">Ver Transferencias</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

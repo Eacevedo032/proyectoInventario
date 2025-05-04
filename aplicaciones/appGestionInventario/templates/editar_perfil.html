@@ -1,178 +1,126 @@
-{% extends "./base.html" %}
+{% extends 'base.html' %}
+{% load static %}
+
+{% load widget_tweaks %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/gestionUsuarios.css' %}">
+{% endblock %}
 
 {% block title %}Editar Perfil{% endblock %}
 
-{% block extra_head %}
-<style>
-    /* Estilos mejorados para la foto */
-    .profile-picture-container {
-        cursor: pointer;
-        transition: transform 0.3s;
-        width: 200px;
-        height: 200px;
-        object-fit: cover;
-        margin: 0 auto;
-        display: block;
-    }
+{% block content_wrapper %}
+<div class="fondo-institucional">
+    <div class="contenido-principal">
 
-    .profile-picture-large {
-        max-width: 100%;
-        max-height: 70vh;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-    }
+        <!-- Flecha para volver -->
+        <div class="back-arrow" onclick="history.back()" style="cursor: pointer; font-size: 2.5rem; color: #010D42;">
+            <i class="bi bi-arrow-left-circle-fill"></i>
+        </div>
 
-    /* Flecha de volver */
-    .back-arrow {
-        position: absolute;
-        left: 20px;
-        top: 20px;
-        font-size: 1.8rem;
-        color: #007bff;
-        cursor: pointer;
-        z-index: 1000;
-    }
+        {% if messages %}
+        <div class="alert alert-dismissible {% if messages.tags %}{{ messages.tags }}{% else %}alert-info{% endif %}">
+            {% for message in messages %}
+            <strong>{{ message }}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            {% endfor %}
+        </div>
+        {% endif %}
 
-    .back-arrow:hover {
-        color: #0056b3;
-    }
+        <h2 class="titulo-institucional">
+            <i class="bi bi-person-gear" style="font-size: 3rem;"></i><br>
+            Editar Perfil
+        </h2>
 
-    /* Modal mejorado */
-    .modal-content {
-        background-color: #f8f9fa;
-    }
+        <div class="tarjeta-institucional">
+            <form method="POST" enctype="multipart/form-data" autocomplete="off" novalidate>
+                {% csrf_token %}
+                <div class="row">
+                    <!-- Columna izquierda -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3 text-primary"><i class="bi bi-person-lines-fill"></i> Información Personal</h5>
 
-    .modal-body {
-        padding: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 300px;
-    }
-</style>
-{% endblock %}
+                        {% for field in form %}
+                        {% if field.name in 'username,first_name,last_name,email' %}
+                        <div class="mb-3">
+                            <label class="label-institucional">{{ field.label }}</label>
+                            {{ field|add_class:"input-institucional" }}
+                            {% if field.errors %}
+                            <div class="invalid-feedback d-block">{{ field.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
 
-{% block body %}
+                    <!-- Columna derecha -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3 text-primary"><i class="bi bi-shield-lock"></i> Seguridad</h5>
 
-<!-- Flecha para volver -->
-<div class="back-arrow" onclick="history.back()">
-    <i class="bi bi-arrow-left-circle"></i>
-</div>
+                        {% for field in form %}
+                        {% if field.name in 'current_password,password,confirm_password' %}
+                        <div class="mb-3">
+                            <label class="label-institucional">{{ field.label }}</label>
+                            {{ field|add_class:"input-institucional" }}
+                            {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                            <div class="invalid-feedback d-block">{{ field.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
 
-{% if messages %}
-<div class="alert alert-dismissible {% if messages.tags %}{{ messages.tags }}{% else %}alert-info{% endif %}">
-    {% for message in messages %}
-    <strong>{{ message }}</strong>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    {% endfor %}
-</div>
-{% endif %}
+                        <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-camera"></i> Foto de Perfil (Opcional)</h5>
 
-<div class="container mt-4">
-    <h2 class="text-center mb-4">
-        <i class="bi bi-person-gear" style="font-size: 3rem; color: #007bff;"></i><br>
-        Editar Perfil
-    </h2>
+                        <div class="text-center mb-3">
+                            {% if user.userprofile.profile_picture %}
+                            <img src="{{ user.userprofile.profile_picture.url }}"
+                                class="img-thumbnail rounded-circle profile-picture-container" id="profilePicture"
+                                data-bs-toggle="modal" data-bs-target="#pictureModal"
+                                style="width: 200px; height: 200px; object-fit: cover;">
 
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow">
-                <div class="card-body">
-                    <form method="POST" enctype="multipart/form-data" autocomplete="off" novalidate>
-                        {% csrf_token %}
-
-                        <div class="row">
-                            <!-- Columna Izquierda - Datos Personales -->
-                            <div class="col-md-6">
-                                <h5 class="mb-3 text-primary"><i class="bi bi-person-lines-fill"></i> Información
-                                    Personal</h5>
-
-                                {% for field in form %}
-                                {% if field.name in 'username,first_name,last_name,email' %}
-                                <div class="mb-3">
-                                    <label class="form-label">{{ field.label }}</label>
-                                    {{ field }}
-                                    {% if field.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ field.errors.0 }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
-                                {% endfor %}
+                            <div class="form-check form-switch d-flex justify-content-center align-items-center mb-3">
+                                <input class="form-check-input me-2" type="checkbox" id="delete_picture"
+                                    name="delete_picture">
+                                <label class="form-check-label text-danger" for="delete_picture">
+                                    <i class="bi bi-trash"></i> Eliminar foto actual
+                                </label>
                             </div>
+                            {% else %}
+                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center profile-picture-container"
+                                style="width: 200px; height: 200px;" id="profilePicture" data-bs-toggle="modal"
+                                data-bs-target="#pictureModal">
+                                <i class="bi bi-person" style="font-size: 80px;"></i>
+                            </div>
+                            {% endif %}
 
-                            <!-- Columna Derecha - Seguridad y Foto -->
-                            <div class="col-md-6">
-                                <h5 class="mb-3 text-primary"><i class="bi bi-shield-lock"></i> Seguridad</h5>
-
-                                {% for field in form %}
-                                {% if field.name in 'current_password,password,confirm_password' %}
-                                <div class="mb-3">
-                                    <label class="form-label">{{ field.label }}</label>
-                                    {{ field }}
-                                    {% if field.help_text %}
-                                    <small class="form-text text-muted">{{ field.help_text }}</small>
-                                    {% endif %}
-                                    {% if field.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ field.errors.0 }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
-                                {% endfor %}
-
-                                <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-camera"></i> Foto de Perfil (Opcional)</h5>
-
-                                <div class="text-center mb-3">
-                                    {% if user.userprofile.profile_picture %}
-                                    <img src="{{ user.userprofile.profile_picture.url }}"
-                                        class="img-thumbnail rounded-circle profile-picture-container"
-                                        id="profilePicture" data-bs-toggle="modal" data-bs-target="#pictureModal"
-                                        style="width: 200px; height: 200px; object-fit: cover;">
-
-                                    <div
-                                        class="form-check form-switch d-flex justify-content-center align-items-center mb-3">
-                                        <input class="form-check-input me-2" type="checkbox" id="delete_picture"
-                                            name="delete_picture">
-                                        <label class="form-check-label text-danger" for="delete_picture">
-                                            <i class="bi bi-trash"></i> Eliminar foto actual
-                                        </label>
-                                    </div>
-                                    {% else %}
-                                    <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center profile-picture-container"
-                                        style="width: 200px; height: 200px;" id="profilePicture" data-bs-toggle="modal"
-                                        data-bs-target="#pictureModal">
-                                        <i class="bi bi-person" style="font-size: 80px;"></i>
-                                    </div>
-                                    {% endif %}
-
-                                    <div class="mb-3 mt-3">
-                                        <input type="file" name="profile_picture" class="form-control" accept="image/*">
-                                        <small class="form-text text-muted">Formatos: JPG, PNG.</small>
-                                    </div>
-                                </div>
+                            <div class="mb-3 mt-3">
+                                <input type="file" name="profile_picture" class="form-control input-institucional"
+                                    accept="image/*">
+                                <small class="form-text text-muted">Formatos: JPG, PNG.</small>
                             </div>
                         </div>
-
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                            <button type="button" onclick="history.back()" class="btn btn-outline-secondary me-md-2">
-                                <i class="bi bi-arrow-left"></i> Volver
-                            </button>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> Guardar Cambios
-                            </button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Botones centrados debajo de ambas columnas -->
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <button type="button" onclick="history.back()" class="btn"
+                        style="background-color: #e30613; color: white;">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </button>
+                    <button type="submit" class="btn btn-institucional">
+                        <i class="bi bi-check-circle"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-<!-- Modal mejorado para la foto -->
+<!-- Modal -->
 <div class="modal fade" id="pictureModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">

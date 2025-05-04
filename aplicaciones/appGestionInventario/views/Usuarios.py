@@ -2,111 +2,13 @@ from django.shortcuts import render,redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User #User propio de Django
-from aplicaciones.appGestionInventario.forms import CustomUserCreationForm #Importa el formulario de registro de usuario personalizado de forms.py
-from django.utils.safestring import mark_safe #Marca contenido seguro
-from aplicaciones.appGestionInventario.models import ApprovedUser #Tablas para guardar el historial de Usuarios aceptados
+from aplicaciones.appGestionInventario.forms import CrearUsuarioForm #Importa a Forms.py
+from aplicaciones.appGestionInventario.models import ApprovedUser 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import LoginView
-
-# Vista para registrar un usuario nuevo 
-def register_user(request):
-    if request.method == "POST":
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.is_active = False  # Desactiva el usuario por defecto
-            user.save()
-            messages.success(request, mark_safe(
-                "Registro exitoso. Tu cuenta será activada o eliminada tras la verificación de un administrador. "
-            ))
-            return render(request, 'registration/register.html', {'form': CustomUserCreationForm()}) #Crea un nuevo formulario vacio cada vez que se desea registrar un nuevo usuario
-    else:
-        form = CustomUserCreationForm()
-    return render(request, 'registration/register.html', {'form': form})
-
-"""
-Vista `approve_users`
-
-1. Obtiene tres listas principales:
-   - Usuarios pendientes (`is_active=False`).
-   - Usuarios aprobados (`is_active=True`).
-   - Usuarios denegados (guardados en la sesión).
-
-2. Maneja el formulario (POST):
-   - `user_id`: ID del usuario enviado desde la plantilla.
-   - `action`: Acción a realizar ('approve' o 'deny').
-
-3. Acciones:
-   - Aprobar: Activa al usuario (`is_active=True`) y lo guarda en la base de datos.
-   - Denegar: Elimina al usuario de la base de datos y lo agrega a la lista de usuarios denegados.
-
-4. Redirige a la misma página para actualizar la interfaz.
-"""
-# Vista para aprobar, denegar o eliminar usuarios
-
-@login_required
-def approve_users(request):
-    pending_users = User.objects.filter(is_active=False).order_by('-date_joined')
-    approved_users = ApprovedUser.objects.all().order_by('-date_approved')
-
-    if request.method == "POST":
-        action = request.POST.get('action')
-        user_id = request.POST.get('user_id')
-        approved_user_id = request.POST.get('approved_user_id')
-
-        if action == "approve":
-            try:
-                user = User.objects.get(id=user_id)
-                if not ApprovedUser.objects.filter(user=user).exists():
-                    user.is_active = True
-                    user.save()
-                    ApprovedUser.objects.create(user=user, created_by=request.user)
-                    messages.success(request, f"Usuario {user.username} aprobado (activado) con éxito.")
-                else:
-                    messages.warning(request, "Este usuario ya ha sido aprobado previamente.")
-            except User.DoesNotExist:
-                messages.error(request, "El usuario no existe.")
-
-        elif action == "toggle_superuser":
-            try:
-                user = User.objects.get(id=user_id)
-
-                if user.is_superuser:
-                    # Quitar privilegios de superusuario
-                    user.is_superuser = False
-                    user.is_staff = False
-                    user.is_active = True  # Sigue siendo activo como usuario normal
-                    messages.success(request, f"El usuario {user.username} ahora es un usuario común.")
-                else:
-                    # Promover a superusuario
-                    user.is_superuser = True
-                    user.is_staff = True
-                    user.is_active = True
-                    messages.success(request, f"El usuario {user.username} ha sido promovido a administrador.")
-
-                user.save()
-            except User.DoesNotExist:
-                messages.error(request, "El usuario no existe.")
-
-        elif action == "delete_approved_user":
-            if user_id:
-                try:
-                    user = User.objects.get(id=user_id)
-                    ApprovedUser.objects.filter(user=user).delete()
-                    user.delete()
-                    messages.success(request, f"Usuario {user.username} eliminado con éxito.")
-                except User.DoesNotExist:
-                    messages.error(request, "El usuario no existe.")
-            else:
-                messages.error(request, "ID de usuario no proporcionado.")
-
-        return redirect('approve_users')
-
-    context = {
-        'pending_users': pending_users,
-        'approved_users': approved_users
-    }
-    return render(request, 'admin/approve_users.html', context)
+from django.contrib.auth.decorators import user_passes_test
+from django.core.paginator import Paginator
+from aplicaciones.appGestionInventario.forms import EditProfileForm #Importa a Forms.py
 
 
 #Validación de que el usuario ingresado exista, se ingrese correctamente, pendiente o denegado.
@@ -128,11 +30,6 @@ class CustomLoginView(LoginView):
             messages.error(request, "El usuario ingresado no existe.")
             return redirect('login')
 
-        # Verificamos si el usuario existe pero está INACTIVO
-        if not user.is_active:
-            messages.warning(request, "Su cuenta está pendiente de aprobación por parte del administrador.")
-            return redirect('login')
-
         # Intentamos autenticarlo con la contraseña
         user = authenticate(request, username=username, password=password)
         if user is not None:
@@ -142,9 +39,6 @@ class CustomLoginView(LoginView):
         else:
             messages.error(request, "Usuario o contraseña no coinciden. Ingréselos correctamente.")
             return redirect('login')
-
-
-from aplicaciones.appGestionInventario.forms import EditProfileForm
 
 @login_required
 def edit_profile(request):
@@ -162,3 +56,80 @@ def edit_profile(request):
         "form": form,
         "user": request.user
     })
+
+# Vista para gestionar usuarios por parte de un administrador NUEVO FINAL
+
+# Solo accesible por superusuarios
+def solo_superusuarios(user):
+    return user.is_superuser
+
+#Vista para pagina y listar usuarios agregados por el admin
+from aplicaciones.appGestionInventario.models import UserProfile  
+
+@login_required
+@user_passes_test(solo_superusuarios)
+def gestion_usuarios(request):
+    if request.method == "POST":
+        action = request.POST.get('action')
+        user_id = request.POST.get('user_id')
+
+        if action and user_id:
+            try:
+                user = User.objects.get(id=user_id)
+
+                # Verificar que no se elimine o cambie el rol de un admin
+                if user == request.user:
+                    messages.error(request, "No puedes eliminarte a ti mismo ni cambiar tu propio rol.")
+                    return redirect('gestion_usuarios')
+
+                if user.is_superuser and action == "delete_user":
+                    messages.error(request, "No puedes eliminar a un usuario administrador.")
+                    return redirect('gestion_usuarios')
+
+                if action == "delete_user":
+                    ApprovedUser.objects.filter(user=user).delete()
+                    user.delete()
+                    messages.success(request, f"Usuario {user.username} eliminado con éxito.")
+
+                elif action == "toggle_superuser":
+                    if user.is_superuser:
+                        user.is_superuser = False
+                        messages.success(request, f"El usuario {user.username} ahora es un usuario común.")
+                    else:
+                        user.is_superuser = True
+                        messages.success(request, f"El usuario {user.username} ha sido promovido a administrador.")
+                    user.save()
+
+            except User.DoesNotExist:
+                messages.error(request, "El usuario no existe.")
+
+        return redirect('gestion_usuarios')
+
+    usuarios_list = User.objects.all().order_by('-date_joined')
+
+    # Perfil de usuario
+    for u in usuarios_list:
+        u.profile = getattr(u, 'userprofile', None)
+
+    paginator = Paginator(usuarios_list, 6)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'admin/gestion_usuarios.html', {
+        'page_obj': page_obj,
+    })
+
+@login_required
+@user_passes_test(solo_superusuarios)
+def agregar_usuario_admin(request):
+    if request.method == 'POST':
+        form = CrearUsuarioForm(request.POST)
+        if form.is_valid():
+            form.save(created_by=request.user)
+            messages.success(request, "Usuario creado y activado exitosamente.")
+            return redirect('gestion_usuarios')
+    else:
+        form = CrearUsuarioForm()
+    
+    usuarios = User.objects.all().order_by('-date_joined')
+    return render(request, 'admin/agregar_usuario_admin.html', {'form': form, 'usuarios': usuarios})

@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% load widget_tweaks %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/gestionUsuarios.css' %}">
+{% endblock %}
+
+{% block content_wrapper%}
+
+<!-- Mensajes -->
+{% if messages %}
+<div class="alert alert-dismissible alert-success text-center">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="usuarios-header text-center mb-4">
+    <h1>Gestión de Usuarios</h1>
+    <a href="{% url 'agregar_usuario_admin' %}" class="btn btn-crear-usuario btn-borde-rojo mt-3">
+        Agregar nuevo usuario
+    </a>
+</div>
+
+<div class="user-cards-container">
+    {% for usuario in page_obj %}
+    <div class="user-card">
+        <!-- FOTO DE PERFIL CON MODAL -->
+        <div class="user-photo">
+            {% if usuario.profile and usuario.profile.profile_picture %}
+                <img src="{{ usuario.profile.profile_picture.url }}"
+                     alt="Foto de {{ usuario.username }}"
+                     class="profile-picture-container"
+                     data-bs-toggle="modal"
+                     data-bs-target="#modalFoto{{ usuario.id }}">
+            {% else %}
+                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center"
+                     style="width: 100px; height: 100px;">
+                    <i class="bi bi-person" style="font-size: 40px;"></i>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- INFORMACIÓN DEL USUARIO -->
+        <div class="user-info">
+            <h3>{{ usuario.username }}</h3>
+            <p><strong>Nombres:</strong> {{ usuario.first_name }}</p>
+            <p><strong>Apellidos:</strong> {{ usuario.last_name }}</p>
+            <p><strong>Email:</strong> {{ usuario.email }}</p>
+            <p><strong>Creado por:</strong> {{ usuario.approveduser.created_by.username }}</p>
+            <p><strong>Fecha de creación:</strong> {{ usuario.date_joined|date:"d/m/Y h:i A" }}</p>
+        </div>
+
+        <!-- ACCIONES -->
+        <div class="user-actions d-flex flex-column align-items-center gap-3 mt-3">
+            <!-- Cambio de rol -->
+            <form method="post" class="text-center">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle_superuser">
+                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+
+                <div class="d-flex justify-content-center gap-3 align-items-center">
+                    <label class="form-check-label text-warning fw-bold">
+                        <input type="radio" name="rol" value="usuario" onchange="this.form.submit()"
+                               {% if not usuario.is_superuser %}checked{% endif %}>
+                        Usuario común
+                    </label>
+                    <label class="form-check-label text-success fw-bold">
+                        <input type="radio" name="rol" value="admin" onchange="this.form.submit()"
+                               {% if usuario.is_superuser %}checked{% endif %}>
+                        Administrador
+                    </label>
+                </div>
+            </form>
+
+            <!-- Botón eliminar -->
+            <form method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                <button type="submit" name="action" value="delete_user" class="delete-btn"
+                        onclick="return confirm('¿Estás seguro? Esta acción eliminará al usuario del sistema.')">
+                    Eliminar usuario
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal individual para cada foto (SOLO UNA VEZ POR USUARIO) -->
+    <div class="modal fade" id="modalFoto{{ usuario.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Foto de {{ usuario.username }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    {% if usuario.profile and usuario.profile.profile_picture %}
+                    <img src="{{ usuario.profile.profile_picture.url }}"
+                         alt="Foto ampliada de {{ usuario.username }}"
+                         class="img-fluid profile-picture-large">
+                    {% else %}
+                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto"
+                         style="width: 200px; height: 200px;">
+                        <i class="bi bi-person" style="font-size: 80px;"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-center py-4">No hay usuarios registrados aún.</p>
+    {% endfor %}
+</div>
+
+<!-- Paginación -->
+<div class="pagination-container text-center mt-5">
+    <div class="pagination-links d-inline-block px-3 py-2 rounded"
+         style="display: inline-flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        {% if page_obj.has_previous %}
+        <a href="?page=1"
+           class="pagination-link">
+            <strong>&laquo; Primera</strong>
+        </a>
+        <a href="?page={{ page_obj.previous_page_number }}"
+           class="pagination-link">
+            <strong>Anterior</strong>
+        </a>
+        {% endif %}
+
+        <span class="mx-2 fw-bold">
+            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}"
+           class="pagination-link">
+            <strong>Siguiente</strong>
+        </a>
+        <a href="?page={{ page_obj.paginator.num_pages }}"
+           class="pagination-link">
+            <strong>Última &raquo;</strong>
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Script optimizado para los modals -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicialización de los modals
+    const modals = document.querySelectorAll('.modal');
+    
+    modals.forEach(modal => {
+        // Configuración básica para evitar parpadeo
+        modal.addEventListener('show.bs.modal', function() {
+            const img = this.querySelector('img');
+            if (img) {
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '70vh';
+                img.style.width = 'auto';
+                img.style.height = 'auto';
+            }
+        });
+
+        // Asegurar que el modal se cierre correctamente
+        modal.addEventListener('hidden.bs.modal', function() {
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        });
+    });
+
+    // Mejorar el cierre de los modals
+    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) {
+                    bsModal.hide();
+                }
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}

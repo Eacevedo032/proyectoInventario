@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',  # Para filtros como intcomma
     'inventario_nuevo', #Inventario nuevo modificado
-
+    'widget_tweaks', # Para poder usar atributos en los formularios de Django
 
     # Apps propias
     'aplicaciones.appGestionInventario',

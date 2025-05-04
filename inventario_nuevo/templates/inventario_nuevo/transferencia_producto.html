@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<script>
+    function mostrarDisponibilidad() {
+        var productoSeleccionado = document.getElementById("producto").value;
+        var disponibilidad = document.getElementById("disponibilidad");
+
+        var productosDisponibles = {
+            {% for producto in productos %}
+                "{{ producto.id }}": {
+                    cantidad: "{{ producto.cantidad_disponible }}",
+                    unidad: "{{ producto.unidad_medida.nombre }}"
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        };
+
+        if (productoSeleccionado in productosDisponibles) {
+            var infoProducto = productosDisponibles[productoSeleccionado];
+            disponibilidad.innerHTML = `<span class="bg-primary text-white p-2 rounded fw-bold">
+                Disponibles: ${infoProducto.cantidad} ${infoProducto.unidad}
+            </span>`;
+        } else {
+            disponibilidad.innerHTML = `<span class="bg-danger text-white p-2 rounded fw-bold">No disponible</span>`;
+        }
+    }
+</script>
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <h2 class="text-danger text-center fw-bold">🔄 Transferencia de Producto</h2>
+    <hr class="my-4">
+
+    {% if mensaje_error %}
+    <div class="alert alert-danger text-center">
+        {{ mensaje_error }}
+    </div>
+    {% else %}
+    <div class="card shadow-lg p-4">
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Selección de Producto -->
+            <div class="mb-3">
+                <label for="producto" class="form-label fw-bold">📦 Seleccionar Producto:</label>
+                <select id="producto" name="producto_id" class="form-select border-danger" onchange="mostrarDisponibilidad()">
+                    <option value="">Seleccione un producto</option>
+                    {% for producto in productos %}
+                        <option value="{{ producto.id }}">{{ producto.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <p id="disponibilidad" class="mt-2"></p>
+            </div>
+
+            <!-- Selección de Estado Destino -->
+            <div class="mb-3">
+                <label for="estado" class="form-label fw-bold">📌 Seleccionar Estado Destino:</label>
+                <select name="estado" class="form-select border-danger">
+                    {% for estado in estados %}
+                        <option value="{{ estado }}">{{ estado }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Cantidad a Transferir -->
+            <div class="mb-3">
+                <label for="cantidad" class="form-label fw-bold">🔢 Cantidad a Transferir:</label>
+                <input type="number" name="cantidad" class="form-control border-danger"
+                    placeholder="Ingrese cantidad (positivo/aumentar, negativo/reducir)" required>
+            </div>
+
+            <!-- Motivo de Transferencia -->
+            <div class="mb-3">
+                <label for="motivo" class="form-label fw-bold">📝 Motivo Transferencia:</label>
+                <textarea name="motivo" class="form-control border-danger" rows="3"
+                    placeholder="Añade notas sobre la transferencia..."></textarea>
+            </div>
+
+            <!-- Botón de Registro -->
+            <div class="text-center">
+                <button type="submit" class="btn btn-danger fw-bold px-4 py-2">✅ Registrar Transferencia</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -2,27 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-
-#Aca se llenaran los campos faltantes de User (de manera que es personalizado)
-class CustomUserCreationForm(UserCreationForm):
-    first_name = forms.CharField(max_length=50, required=True, label="Nombres")
-    last_name = forms.CharField(max_length=50, required=True, label="Apellidos")
-    email = forms.EmailField(required=True, label="Dirección de correo electrónico")
-
-    class Meta:
-        model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
-
-    #Validación para que el usuario meta un nombre sin espacios, ya que django no lo permite
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        if " " in username:
-            raise ValidationError("El nombre de usuario no puede contener espacios.")
-        return username
-    
-from django import forms
-from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from aplicaciones.appGestionInventario.models import ApprovedUser 
 from django.core.validators import validate_email
 from django.utils.translation import gettext_lazy as _
 from aplicaciones.appGestionInventario.models import UserProfile
@@ -184,4 +164,38 @@ class EditProfileForm(forms.ModelForm):
             user.save()
             profile.save()
         
+        return user
+
+#Form NUEVO para agregar un usuario por parte de un admin
+#Se validan los nombres y correo, lo demás lo valida Django en su modelo de User
+
+class CrearUsuarioForm(UserCreationForm):
+    email = forms.EmailField(required=True, label="Correo electrónico")
+    first_name = forms.CharField(max_length=50, required=False, label="Nombres")
+    last_name = forms.CharField(max_length=50, required=False, label="Apellidos")
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if " " in username:
+            raise ValidationError("El nombre de usuario no puede contener espacios.")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("Ya existe un usuario con este correo electrónico.")
+        return email
+
+    def save(self, commit=True, created_by=None):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        user.is_active = True
+        if commit:
+            user.save()
+            if created_by:
+                ApprovedUser.objects.create(user=user, created_by=created_by)
         return user

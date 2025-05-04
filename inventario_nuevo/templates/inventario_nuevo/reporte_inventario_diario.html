@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container py-5">
+    <h2 class="text-primary text-center">📜 Reporte de Inventario Diario - {{ fecha }}</h2>
+    <hr class="my-4">
+
+    <!-- Formulario de Selección de Fecha -->
+    <form method="get" action="{% url 'reporte_inventario_diario' %}" class="mb-4 text-center">
+        <label for="fecha" class="fw-bold">📅 Selecciona una Fecha:</label>
+        <input type="date" name="fecha" class="form-control border-primary w-25 mx-auto mb-3" value="{{ fecha }}">
+
+        <p class="text-center text-muted mt-2">Filtra el inventario y transferencias por la fecha seleccionada.</p>
+
+        <button type="submit" class="btn btn-primary">Seleccionar Fecha</button>
+    </form>
+
+    <!-- Tabla de Reporte de Inventario Diario -->
+    <h3 class="text-dark mt-4">📦 Registros de Inventario Diario</h3>
+    <table class="table table-bordered table-striped text-center">
+        <thead class="bg-primary text-white">
+            <tr>
+                <th>Fecha</th>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Cantidad Inicial</th>
+                <th>Cantidad Final</th>
+                <th>Diferencia</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if movimientos %}
+                {% for movimiento in movimientos %}
+                <tr>
+                    <td>{{ movimiento.fecha }}</td>
+                    <td>{{ movimiento.producto.nombre }}</td>
+                    <td>{{ movimiento.producto.categoria.nombre }}</td>
+                    <td>{{ movimiento.cantidad_inicial }}</td>
+                    <td>{{ movimiento.cantidad_final }}</td>
+                    <td class="fw-bold {% if movimiento.diferencia < 0 %}text-danger{% else %}text-success{% endif %}">
+                        {{ movimiento.diferencia|floatformat:2 }}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-danger">No hay registros para esta fecha.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <!-- Tabla de Transferencias de Productos -->
+    <h3 class="text-dark mt-5">🔄 Transferencias de Productos</h3>
+    <table class="table table-bordered table-striped text-center">
+        <thead class="bg-primary text-white">
+            <tr>
+                <th>Fecha</th>
+                <th>Usuario</th>
+                <th>Producto</th>
+                <th>Cantidad Transferida</th>
+                <th>Estado</th>
+                <th>Motivo Transferencia</th> <!-- Se movió al final -->
+            </tr>
+        </thead>
+        <tbody>
+            {% if transferencias %}
+                {% for transferencia in transferencias %}
+                <tr>
+                    <td>{{ transferencia.fecha_transferencia }}</td>
+                    <td>{% if transferencia.usuario %}{{ transferencia.usuario.username }}{% else %}Sin usuario{% endif %}</td>
+                    <td>{{ transferencia.producto.nombre }}</td>
+                    <td class="fw-bold {% if transferencia.cantidad < 0 %}text-danger{% else %}text-success{% endif %}">
+                        {{ transferencia.cantidad }}
+                    </td> <!-- Diferenciado por color -->
+                    <td>{{ transferencia.producto.estado }}</td> <!-- Estado del producto -->
+                    <td>{{ transferencia.motivo }}</td> <!-- Ahora correctamente en la última columna -->
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-danger">No hay transferencias registradas para esta fecha.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,5 +1,6 @@
 from django.urls import path
-from . import views
+from inventario_nuevo import views
+from .views import exportar_pdf, exportar_excel
 
 urlpatterns = [
     path('agregar/', views.agregar_producto, name='agregar_producto'),
@@ -19,4 +20,11 @@ urlpatterns = [
     path('gestionar-medida/', views.gestionar_medida, name='gestionar_medida'),
     path('filtrar_por_estados/', views.filtrar_por_estados, name='filtrar_por_estado'), #Url del filtro por estado de un Producto
     path('filtrar_por_unidades/', views.filtrar_por_unidades, name='filtrar_por_unidad'), #Url del filtro por estado de un Producto
+    path('registrar_inventario/', views.registrar_inventario, name='registrar_inventario'),
+    path('reporte_inventario_diario/', views.reporte_inventario_diario, name='reporte_inventario_diario'),    path('transferencia_producto/', views.transferencia_producto, name='transferencia_producto'),
+    path('reporte-inventario/', views.reporte_inventario, name='reporte_inventario'),
+    path('historial-transferencias/', views.historial_transferencias, name='historial_transferencias'),
+    path('seleccion-reportes/', views.seleccion_reportes, name='seleccion_reportes'),  #Verifica que esta línea existe
+    path('exportar-pdf/', views.exportar_pdf, name='exportar_pdf'),
+    path('exportar-excel/', views.exportar_excel, name='exportar_excel'),  # Agregamos la ruta correcta
 ]

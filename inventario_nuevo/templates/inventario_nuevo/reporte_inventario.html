@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container py-5">
+    <h2 class="text-primary text-center">📜 Reporte de Inventario y Transferencias</h2>
+    <hr class="my-4">
+
+    <!-- Filtros de búsqueda -->
+    <div class="mb-4">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Fecha:</label>
+                <input type="date" name="fecha" class="form-control border-primary">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Producto:</label>
+                <input type="text" name="producto" class="form-control border-primary" placeholder="Buscar producto">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Categoría:</label>
+                <select name="categoria" class="form-select border-primary">
+                    <option value="">Todas</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-12 text-end">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Botones de exportación -->
+    <div class="mb-4 text-end">
+        <a href="{% url 'exportar_pdf' %}" class="btn btn-outline-primary">📜 Exportar a PDF</a>
+        <a href="{% url 'exportar_excel' %}" class="btn btn-outline-primary">📊 Exportar a Excel</a>
+    </div>
+
+    <!-- Tabla de Inventario con Transferencias Integradas -->
+    <h3 class="text-dark mt-4">📦 Historial Completo del Inventario</h3>
+    <table class="table table-striped table-bordered">
+        <thead class="table-primary">
+            <tr>
+                <th>Fecha</th>
+                <th>Usuario</th>
+                <th>Categoría</th>
+                <th>Subcategoría</th>
+                <th>Producto</th>
+                <th>Unidad de Medida</th>
+                <th>Cantidad Inicial</th>
+                <th>Transferencias (±)</th> <!-- Refleja entradas/salidas -->
+                <th>Cantidad Final</th> <!-- Ahora incluido -->
+                <th>Diferencias</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movimiento in movimientos %}
+            <tr>
+                <td>{{ movimiento.fecha }}</td>
+                <td>{{ movimiento.usuario.username }}</td>
+                <td>{{ movimiento.producto.categoria.nombre }}</td>
+                <td>{{ movimiento.producto.subcategoria.nombre }}</td>
+                <td>{{ movimiento.producto.nombre }}</td>
+                <td>{{ movimiento.producto.unidad_medida }}</td>
+                <td>{{ movimiento.cantidad_inicial }}</td>
+                <td class="{% if movimiento.transferencia and movimiento.transferencia.estado_destino == 'Ingreso' %}text-success{% else %}text-danger{% endif %}">
+                    {% if movimiento.transferencia %}
+                        {% if movimiento.transferencia.estado_destino == 'Ingreso' %}
+                            +{{ movimiento.transferencia.cantidad }}
+                        {% else %}
+                            -{{ movimiento.transferencia.cantidad }}
+                        {% endif %}
+                    {% else %}
+                        0
+                    {% endif %}
+                </td>
+                <td>{{ movimiento.cantidad_final }}</td> <!-- Cantidad final ahora se muestra -->
+                <td>{{ movimiento.diferencia }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

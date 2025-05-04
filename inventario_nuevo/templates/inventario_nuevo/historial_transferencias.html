@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container py-5">
+    <h2 class="text-primary text-center">📋 Historial de Transferencias</h2>
+    <hr class="my-4">
+
+    <!-- Tabla de Transferencias -->
+    <table class="table table-bordered table-striped">
+        <thead class="bg-primary text-white">
+            <tr>
+                <th>Fecha de Transferencia</th>
+                <th>Usuario</th>
+                <th>Categoría</th>
+                <th>Subcategoría</th>
+                <th>Unidad de Medida</th>
+                <th>Cantidad Transferida</th>
+                <th>Motivo</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transferencia in transferencias %}
+            <tr class="text-dark">
+                <td>{{ transferencia.fecha_transferencia }}</td>
+                <td>{% if transferencia.usuario %}{{ transferencia.usuario.username }}{% else %}Sin usuario{% endif %}</td>
+                <td>{{ transferencia.producto.categoria.nombre }}</td>
+                <td>{{ transferencia.producto.subcategoria.nombre }}</td>
+                <td>{{ transferencia.producto.unidad_medida }}</td>
+                <td>{{ transferencia.cantidad }}</td>
+                <td>{{ transferencia.observacion }}</td>
+                <td class="fw-bold text-primary">{{ transferencia.estado_destino }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+    body {
+        background-color: #f8f9fa; /* ✅ Fondo blanco */
+    }
+    .table {
+        border-radius: 10px; /* ✅ Bordes redondeados */
+        overflow: hidden;
+    }
+    .table th {
+        font-weight: bold;
+        text-align: center;
+    }
+    .table td {
+        text-align: center;
+    }
+    h2 {
+        font-weight: bold;
+    }
+</style>
+
+{% endblock %}

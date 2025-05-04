@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/gestionUsuarios.css' %}">
+{% endblock %}
+
+{% block content_wrapper %}
+
+<!-- Mensajes -->
+{% if messages %}
+<div class="alert alert-dismissible alert-success">
+    {% for message in messages %}
+    <div class="d-flex justify-content-between align-items-center">
+        <strong class="text-dark">{{ message }}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="fondo-admin">
+    <div class="contenido-admin">
+        <div class="formulario-institucional">
+            <h2 class="titulo-institucional">
+                <i class="bi bi-person-plus-fill"></i> Agregar Nuevo Usuario
+            </h2>
+
+            <form method="post" class="mb-4">
+                {% csrf_token %}
+                <!-- Nos basamos en un add_class que se encuentra en templatetags, custom_filters.py -->
+
+                <!-- Username -->
+                <div class="form-group mb-4">
+                    <label for="{{ form.username.id_for_label }}" class="form-label requerido">Nombre de usuario</label>
+                    <div class="input-group">
+                        <span class="input-group-text input-group-text-institucional">
+                            <i class="bi bi-person-badge"></i>
+                        </span>
+                        {{ form.username|add_class:"form-control input-institucional" }}
+                    </div>
+                    {% if form.username.errors %}
+                    <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                    {% else %}
+                    <small class="form-text text-muted">No puede contener espacios ni caracteres especiales.</small>
+                    {% endif %}
+                </div>
+
+                <!-- Nombres -->
+                <div class="form-group mb-4">
+                    <label for="{{ form.first_name.id_for_label }}" class="form-label">Nombres</label>
+                    <div class="input-group">
+                        <span class="input-group-text input-group-text-institucional">
+                            <i class="bi bi-person-lines-fill"></i>
+                        </span>
+                        {{ form.first_name|add_class:"form-control input-institucional" }}
+                    </div>
+                    {% if form.first_name.errors %}
+                    <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Apellidos -->
+                <div class="form-group mb-4">
+                    <label for="{{ form.last_name.id_for_label }}" class="form-label">Apellidos</label>
+                    <div class="input-group">
+                        <span class="input-group-text input-group-text-institucional">
+                            <i class="bi bi-person-vcard"></i>
+                        </span>
+                        {{ form.last_name|add_class:"form-control input-institucional" }}
+                    </div>
+                    {% if form.last_name.errors %}
+                    <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Email -->
+                <div class="form-group mb-4">
+                    <label for="{{ form.email.id_for_label }}" class="form-label requerido">Correo electrónico</label>
+                    <div class="input-group">
+                        <span class="input-group-text input-group-text-institucional">
+                            <i class="bi bi-envelope-at"></i>
+                        </span>
+                        {{ form.email|add_class:"form-control input-institucional" }}
+                    </div>
+                    {% if form.email.errors %}
+                    <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Contraseña -->
+                <div class="form-group mb-4">
+                    <label for="{{ form.password1.id_for_label }}" class="form-label requerido">Contraseña</label>
+                    <div class="input-group">
+                        <span class="input-group-text input-group-text-institucional">
+                            <i class="bi bi-shield-lock"></i>
+                        </span>
+                        {{ form.password1|add_class:"form-control input-institucional" }}
+                    </div>
+                    {% if form.password1.errors %}
+                    <div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>
+                    {% else %}
+                    <small class="form-text text-muted">Mínimo 8 caracteres, no puede ser similar a otros datos.</small>
+                    {% endif %}
+                </div>
+
+                <!-- Confirmación de contraseña -->
+                <div class="form-group mb-4">
+                    <label for="{{ form.password2.id_for_label }}" class="form-label requerido">Confirmar contraseña</label>
+                    <div class="input-group">
+                        <span class="input-group-text input-group-text-institucional">
+                            <i class="bi bi-shield-check"></i>
+                        </span>
+                        {{ form.password2|add_class:"form-control input-institucional" }}
+                    </div>
+                    {% if form.password2.errors %}
+                    <div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Botones -->
+                <div class="d-flex justify-content-between mt-5">
+                    <a href="{% url 'gestion_usuarios' %}" class="btn btn-volver">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                    <button type="submit" class="btn btn-institucional">
+                        <i class="bi bi-person-add"></i> Registrar Usuario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación en tiempo real para el username
+    const usernameField = document.getElementById('{{ form.username.id_for_label }}');
+    if (usernameField) {
+        usernameField.addEventListener('input', function() {
+            if (this.value.includes(' ')) {
+                this.setCustomValidity('El nombre de usuario no puede contener espacios');
+                this.classList.add('is-invalid');
+            } else {
+                this.setCustomValidity('');
+                this.classList.remove('is-invalid');
+            }
+        });
+    }
+
+    // Validación de coincidencia de contraseñas
+    const password1 = document.getElementById('{{ form.password1.id_for_label }}');
+    const password2 = document.getElementById('{{ form.password2.id_for_label }}');
+    
+    function validatePassword() {
+        if (password1.value && password2.value && password1.value !== password2.value) {
+            password2.setCustomValidity('Las contraseñas no coinciden');
+            password2.classList.add('is-invalid');
+        } else {
+            password2.setCustomValidity('');
+            password2.classList.remove('is-invalid');
+        }
+    }
+    
+    password1.addEventListener('input', validatePassword);
+    password2.addEventListener('input', validatePassword);
+    
+    // Mostrar/ocultar contraseña
+    document.querySelectorAll('.password-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const input = this.previousElementSibling;
+            const icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}

@@ -44,10 +44,11 @@ urlpatterns = [
 
     #urls para las configuraciones de cuentas de usuario
     path('accounts/', include('django.contrib.auth.urls')),
-    path('register/', views.register_user, name='register'),
-    path('approve-users/', views.approve_users, name='approve_users'),
     path('login/', CustomLoginView.as_view(template_name='registration/login.html'), name='login'),
     path('editar-perfil/', views.edit_profile, name='editar_perfil'),  # Para editar el perfil
+    #Agregar usuarios por parte de un admin NUEVO FINAL
+    path('gestion-usuarios/', views.gestion_usuarios, name='gestion_usuarios'),
+    path('gestion-usuarios/agregar/', views.agregar_usuario_admin, name='agregar_usuario_admin'),
     path('logout/', LogoutView.as_view(), name='logout'),
 
     #urls para los guardados de inventario
