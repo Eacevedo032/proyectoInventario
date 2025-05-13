@@ -1,4 +1,3 @@
-<!--ver lista de horarios y administrar Horarios desde el lado del administrador-->
 {% extends "./base.html" %}
 
 {% block title %}Horarios para Clases y Maestros{% endblock %}
@@ -32,8 +31,8 @@
                                 <tr>
                                     <td>{{ bloqueo.laboratorio }}</td>
                                     <td>{{ bloqueo.fecha_reserva }}</td>
-                                    <td>{{ bloqueo.hora_inicio }}</td>
-                                    <td>{{ bloqueo.hora_fin }}</td>
+                                    <td class="hora-12h">{{ bloqueo.hora_inicio }}</td>
+                                    <td class="hora-12h">{{ bloqueo.hora_fin }}</td>
                                     <td>
                                         <div class="d-flex justify-content-between">
                                             <!-- Botón para editar el bloqueo -->
@@ -81,8 +80,8 @@
                                 {% for horario in laboratorio1 %}
                                 <tr>
                                     <td>{{ horario.fecha_reserva }}</td>
-                                    <td>{{ horario.hora_inicio }}</td>
-                                    <td>{{ horario.hora_fin }}</td>
+                                    <td class="hora-12h">{{ horario.hora_inicio }}</td>
+                                    <td class="hora-12h">{{ horario.hora_fin }}</td>
                                     <td>
                                         <div class="d-flex justify-content-between">
                                             <a href="{% url 'editar_horario' horario.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
@@ -126,8 +125,8 @@
                                 {% for horario in laboratorio2 %}
                                 <tr>
                                     <td>{{ horario.fecha_reserva }}</td>
-                                    <td>{{ horario.hora_inicio }}</td>
-                                    <td>{{ horario.hora_fin }}</td>
+                                    <td class="hora-12h">{{ horario.hora_inicio }}</td>
+                                    <td class="hora-12h">{{ horario.hora_fin }}</td>
                                     <td>
                                         <div class="d-flex justify-content-between">
                                             <a href="{% url 'editar_horario' horario.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
@@ -171,8 +170,8 @@
                                 {% for horario in laboratorio3 %}
                                 <tr>
                                     <td>{{ horario.fecha_reserva }}</td>
-                                    <td>{{ horario.hora_inicio }}</td>
-                                    <td>{{ horario.hora_fin }}</td>
+                                    <td class="hora-12h">{{ horario.hora_inicio }}</td>
+                                    <td class="hora-12h">{{ horario.hora_fin }}</td>
                                     <td>
                                         <div class="d-flex justify-content-between">
                                             <a href="{% url 'editar_horario' horario.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
@@ -200,5 +199,4 @@
         <a href="{% url 'administracion_laboratorios' %}" class="btn btn-secondary">Volver</a>
     </div>
 </div>
-
 {% endblock %}

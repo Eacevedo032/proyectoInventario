@@ -1,0 +1,69 @@
+<!-- Plantilla para usuario sin privilegios -->
+{% extends "./base.html" %}
+
+{% load static %}
+{% block title %}Reservación de Laboratorio{% endblock %}
+{% block body %}
+
+{% if messages %}
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+{% endif %}
+
+<div class="container mt-5 d-flex justify-content-center">
+    <div class="card shadow-sm" style="width: 100%; max-width: 800px;">
+        <div class="card-header text-center bg-primary text-white">
+            <h5 class="mt-2">Editar Ítems del Inventario</h5>
+        </div>
+        <div class="card-body" id="form-card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="fecha_reserva">Fecha de uso:</label>
+                    <input type="date" class="form-control" id="fecha_reserva" name="fecha_reserva" 
+                        value="{{ solicitud.fecha_uso|date:'Y-m-d' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="motivo">Motivo:</label>
+                    <textarea class="form-control" id="motivo" name="motivo" required>{{ solicitud.motivo }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="cantidad">Cantidad:</label>
+                    <input type="text" class="form-control" id="cantidad" step="0.01" name="cantidad" value="{{ solicitud.cantidad_utilizada}}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="unidad_medida">Unidad de medida:</label>
+                            <select name="unidad_medida" id="unidad_medida" class="form-control"  value="{{ solicitud.unidad_medida }}" required>
+                                <option value="Unidad">Unidad</option>
+                                <option value="kg">kg (Kilogramo)</option>
+                                <option value="g">g (Gramo)</option>
+                                <option value="mg">mg (Miligramo)</option>
+                                <option value="lb">lb (Libra)</option>
+                                <option value="L">L (Litro)</option>
+                                <option value="mL">mL (Mililitro)</option>
+                                <option value="cm³">cm³ (Centímetro cúbico)</option>
+                                <option value="m³">m³ (Metro cúbico)</option>
+                                <option value="gal">gal (Galón)</option>
+                                <option value="m">m (Metro)</option>
+                                <option value="mm">mm (Milímetro)</option>
+                                <option value="cm">cm (Centímetro)</option>
+                                <option value="in">in (Pulgada)</option>
+                            </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block mt-3">Actualizar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

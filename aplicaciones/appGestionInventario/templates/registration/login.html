@@ -4,184 +4,241 @@
 
 {% load static %}
 
-{% block body %}
+{% block content_wrapper %}
 
 <style>
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-.h2, .h5 {
-  color: #333;
-  text-align: center;
-  margin: 0.5rem 0;
-  word-wrap: break-word;
-}
-
-.login-container {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  position: fixed;
-  top: 0;
-  left: 0;
-}
-
-/* Imagen de fondo - solo visible en desktop */
-.login-image {
-  width: 60%;
-  height: 100%;
-  background: url("{% static 'img/login_image.png' %}") center/cover no-repeat;
-  filter: brightness(0.85);
-}
-
-/* Contenedor del formulario */
-.login-form-container {
-  width: 40%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: white;
-  position: relative;
-}
-
-/* Wrapper del formulario con barra integrada */
-.login-form-wrapper {
-  width: 100%;
-  max-width: 350px;
-  position: relative;
-}
-
-/* Barra de carga */
-.loading-bar {
-  height: 4px;
-  width: 100%;
-  position: absolute; /* Cambiado a absolute */
-  top: 0;
-  left: 0;
-  overflow: hidden;
-  background: linear-gradient(90deg, 
-    #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, 
-    #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, 
-    #ff00ff, #ff0080, #ff0000);
-  background-size: 200% 100%;
-  animation: loading 6s linear infinite;
-  z-index: 2;
-}
-
-@keyframes loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* Contenido del formulario con margen para la barra */
-.login-content {
-  padding: 2rem;
-  background: white;
-  margin-top: 4px; /* Compensa la altura de la barra */
-}
-
-.logo-container {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.logo-container img {
-  max-width: 160px;
-  height: auto;
-}
-
-/* Efecto de unión para desktop */
-.login-form-container::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 10px;
-  background: linear-gradient(to right, 
-    rgba(0,0,0,0.05) 0%, 
-    rgba(255,255,255,0) 100%);
-  z-index: 1;
-}
-
-.btn {
-    transition: background-color 0.3s ease;
-    background-color: #010D42 !important;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-.btn:hover{
-    background-color: #e60000 !important;
-    border: none !important;
-}
-
-.text-decoration-none {
-    color: #010D42; /* Color azul por defecto */
-    text-decoration: none; /* Sin subrayado */
-}
-
-.text-decoration-none:hover {
-    color: #e60000; /* Color rojo al pasar el cursor */
-    text-decoration: none; /* Asegura que no haya subrayado */
-}
-
-/* RESPONSIVO - Versión móvil */
-@media (max-width: 992px) {
-  .login-container {
-    flex-direction: column;
-  }
-
-  .login-image {
-    display: none; /* Ocultar imagen en móviles */
-  }
-
-  .login-form-container {
-    width: 100%;
-    background: rgba(255,255,255,0.95);
+  html, body {
+    height: 100%;
+    margin: 0;
     padding: 0;
+    overflow: auto; /* auto para permitir scroll */
   }
-
-  .login-form-wrapper {
-    max-width: 100%;
+  
+  .h2, .h5 {
+    color: #333;
+    text-align: center;
+    margin: 0.5rem 0;
+    word-wrap: break-word;
+  }
+  
+  .login-container {
+    display: flex;
+    min-height: 100vh; /* Cambiado de height a min-height */
     width: 100%;
+    position: relative; /* Cambiado de fixed a relative */
   }
-
+  
+  /* Contenedor de imágenes - ocupa el 60% del ancho */
+  .login-image {
+    width: 55%;
+    min-height: 100vh;
+    background-color: #010D42;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    box-sizing: border-box;
+    gap: 0.5rem;
+    position: relative;
+    border-left: 5px solid #e60000;
+    border-right: 5px solid #e60000;
+  }
+  
+  /* Estilo para ambas imágenes */
+  .login-img {
+    width: 100%;
+    max-height: 50vh; /* Limita la altura máxima */
+    object-fit: contain; /* Cambiado de cover a contain para ver imágenes completas */
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    flex-shrink: 1; /* Permite que se reduzcan si es necesario */
+  }
+  
+  /* Efectos hover para interactividad */
+  .login-img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Fondo decorativo con los colores institucionales */
+  .login-image::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      135deg,
+      rgba(1, 13, 66, 0.05) 0%,
+      rgba(227, 6, 19, 0.03) 100%
+    );
+    pointer-events: none;
+  }
+  
+  /* Contenedor del formulario */
+  .login-form-container {
+    width: 45%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: white;
+    position: relative;
+    padding: 2rem;
+    box-sizing: border-box;
+  }
+  
+  /* Wrapper del formulario con barra integrada */
+  .login-form-wrapper {
+    width: 100%;
+    max-width: 350px;
+    position: relative;
+  }
+  
+  /* Barra de carga */
+  .loading-bar {
+    height: 4px;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    background: linear-gradient(90deg, 
+      #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, 
+      #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, 
+      #ff00ff, #ff0080, #ff0000);
+    background-size: 200% 100%;
+    animation: loading 6s linear infinite;
+    z-index: 2;
+  }
+  
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  
+  /* Contenido del formulario con margen para la barra */
   .login-content {
-    padding: 1.5rem;
-    max-width: 90%;
-    margin: 4px auto 0; /* Mantiene margen para la barra */
-    background: transparent;
+    padding: 2rem;
+    background: white;
+    margin-top: 4px;
   }
-
-  .login-form-container::before {
-    display: none;
+  
+  .logo-container {
+    text-align: center;
+    margin-bottom: 1.5rem;
   }
-}
-
-
-@media (max-width: 576px) {
-  .login-content {
-    padding: 1.2rem;
-    max-width: 95%;
-  }
-
-  .h4 { font-size: 1.3rem; }
-  .h5 { font-size: 1.1rem; }
   
   .logo-container img {
-    max-width: 140px;
+    max-width: 160px;
+    height: auto;
   }
-}
-</style>
+  
+  /* Efecto de unión para desktop */
+  .login-form-container::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    background: linear-gradient(to right, 
+      rgba(0,0,0,0.05) 0%, 
+      rgba(255,255,255,0) 100%);
+    z-index: 1;
+  }
+  
+  .btn {
+      transition: background-color 0.3s ease;
+      background-color: #010D42 !important;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 5px;
+  }
+  
+  .btn:hover{
+      background-color: #e60000 !important;
+      border: none !important;
+  }
+  
+  .text-decoration-none {
+      color: #010D42;
+      text-decoration: none;
+  }
+  
+  .text-decoration-none:hover {
+      color: #e60000;
+      text-decoration: none;
+  }
+  
+  /* RESPONSIVO - Versión móvil */
+  @media (max-width: 992px) {
+    .login-container {
+      flex-direction: column;
+      min-height: 100vh;
+    }
+  
+    .login-image {
+      width: 100%;
+      min-height: auto;
+      padding: 1rem;
+      border-left: none;
+      border-right: none;
+      border-bottom: 3px solid #e60000;
+      gap: 1rem;
+    }
+  
+    .login-img {
+      width: 100%;
+      max-height: 40vh;
+      object-fit: contain;
+    }
+  
+    .login-form-container {
+      width: 100%;
+      min-height: auto;
+      padding: 1rem;
+    }
+  
+    .login-form-wrapper {
+      max-width: 100%;
+    }
+  
+    .login-content {
+      padding: 1.5rem;
+      max-width: 100%;
+      margin: 4px auto 0;
+    }
+  
+    .login-form-container::before {
+      display: none;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .login-content {
+      padding: 1.2rem;
+    }
+  
+    .h4 { font-size: 1.3rem; }
+    .h5 { font-size: 1.1rem; }
+    
+    .logo-container img {
+      max-width: 140px;
+    }
+    
+    .login-img {
+      max-height: 35vh;
+    }
+  }
+  </style>
 
 <!-- Mensajes y errores -->
 {% if messages %}
@@ -207,12 +264,14 @@ html, body {
 
 {% if user.is_authenticated %}
 <script>
-    window.location.href = "{% url 'inicio' %}";
+    window.location.href = "{% url 'inicioAplicacion' %}";
 </script>
 {% else %}
 <div class="login-container">
-    <div class="login-image"></div>
-
+  <div class="login-image">
+    <img src="{% static 'img/img1.jpg' %}" alt="Imagen 1" class="login-img">
+    <img src="{% static 'img/img2.jpg' %}" alt="Imagen 2" class="login-img">
+  </div>
     <div class="login-form-container">
       
       <div class="loading-bar"></div>
@@ -224,7 +283,7 @@ html, body {
                     <h5 class="text-center fw-bold mt-2">Inicio de Sesión</h5>
                 </div>
 
-                <h4 class="text-center fw-bold mb-4" style="color: #050c54;">Biotecnología Industrial</h4>
+                <h4 class="text-center fw-bold mb-4" style="color: #050c54;">Ingeniería en Biotecnología Industrial</h4>
 
                 <form method="POST">
                     {% csrf_token %}

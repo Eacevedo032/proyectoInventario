@@ -1,0 +1,547 @@
+/* Estilos para el inicio de la aplicación como tal */
+
+/* Oculta la barra superior cuando se hace scroll - Todo lo que tenga que ver con el TopBar */
+.topbar {
+    background-color: #010D42;
+    color: #ffffff;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 80px;
+    align-items: center;
+    flex-wrap: wrap;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    position: sticky;
+    top: -50px; /* Ajusta para ocultar la barra */
+}
+
+.topbar-left span {
+    margin-right: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.topbar-right a {
+    color: #ffffff;
+    margin-left: 12px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.topbar-right a:hover {
+    color: #ffcc00;
+}
+
+.eva-btn {
+    background-color: #e60000;
+    color: #ffffff !important;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-left: 16px;
+    font-weight: bold;
+    font-size: 13px;
+    transition: background 0.3s;
+}
+
+.eva-btn:hover {
+    background-color: #b80000;
+}
+
+/* Estilos para el fondo/banner de la aplicación */
+
+.banner {
+  background-image: url('/static/img/inicioApp.jpg');
+  background-size: 100% auto; /* Ajusta al ancho, altura proporcional */
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  height: auto; /* Deja que la altura se ajuste automáticamente */
+  aspect-ratio: 3 / 1; /* Mantén una relación fija opcional (ej. 3:1) */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #0000ff;
+  position: relative;
+}
+
+.banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.3); /* Transparencia sutil */
+  z-index: 1;
+}
+
+.banner > * {
+  position: relative;
+  z-index: 2;
+}
+
+
+.banner h1 {
+    font-size: 3rem; /* Aumenta el tamaño */
+    font-weight: 800; /* Hace la letra más gruesa */
+    margin-bottom: 20px;
+}
+
+.banner p {
+    font-size: 2em;
+    color: black;
+    font-weight: 800;
+}
+
+.section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #010D42;
+  }
+  
+  .section-text {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #333;
+    border-left: 4px solid #e30613;
+
+  }
+  
+  .info-section {
+    padding: 1rem 0;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .image-content img {
+    max-width: 90%;
+    height: auto;
+    border-radius: 12px;
+  }
+  
+  .service-card {
+    border: none;
+    background-color: #f9f9f9;
+    transition: transform 0.3s ease;
+  }
+  
+  .service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  
+  .card-title {
+    color: #e30613;
+    font-weight: bold;
+  }
+
+  .vision-img {
+    max-width: 90%;
+    height: auto;
+    border-radius: 12px;
+  }
+  
+  /* Estilos para la sección de servicios y valores*/
+
+  .servicios-valores-section .section-title {
+    font-size: 1.8rem;
+    color: #010D42;
+    font-weight: 600;
+  }
+  
+  .servicios-valores-section .section-text {
+    font-size: 1rem;
+    text-align: justify;
+    color: #333;
+    border-left: 4px solid #e30613;
+    padding-left: 1rem;
+  }
+  
+  .servicios-valores-section .servicios-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  
+  .valor-icon {
+    font-size: 2rem;
+    color: #0000ff;
+    margin-bottom: 0.5rem;
+  }
+  
+  .valor-label {
+    font-size: 0.95rem;
+    color: #0000ff;
+    font-weight: 600;
+  }
+    
+  .zoom-hover img {
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+  }
+  
+  .zoom-hover img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Igualar tamaño de imagen de Servicios a las otras */
+.servicios-img.servicios-ajustada {
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+/* Aumentar tamaño de íconos de valores */
+.valor-icon {
+  font-size: 3rem; /* más grande */
+  color: #0000ff;
+  margin-bottom: 1rem; /* más espacio debajo del ícono */
+  margin-top: 1rem; /* más espacio arriba para bajarlo */
+}
+
+  /* Estilos para las normativas */
+
+  .fondo-gris {
+    background-color: #f1f1f1;
+    width: 100%;
+    margin: 0;
+    padding: 0 0 1px 0; /* 1px de relleno evita colapso sin afectar diseño */
+  }
+  
+  .normativas-video-section {
+  padding-top: 40px;
+  padding-bottom: 40px;
+  margin-bottom: 0 !important;
+}
+
+.normativas-video-section h2,
+.normativas-video-section ul,
+.normativas-video-section p {
+  margin-bottom: 0;
+}
+  .section-title {
+    font-size: 1.8rem;
+    color: #010D42;
+    font-weight: 600;
+    border-bottom: 2px solid #e30613;
+    display: inline-block;
+    padding-bottom: 0.5rem;
+  }
+  
+  .normativas-list {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    font-size: 1rem;
+    color: #333;
+    line-height: 1.6;
+    text-align: left !important;
+  }
+  
+  .normativas-list li::marker {
+    color: #e30613;
+  }
+  
+  .video-description {
+    font-size: 1.2rem;
+    margin-top: 10px;
+    margin-bottom: 0;
+    color: #333;
+  }
+
+  .video-box {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* Relación 16:9 */
+    height: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .video-box iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: transparent;
+  }
+
+  .normativas-video-section {
+    margin-bottom: 0;
+  }
+
+  /* Estilos para la sección de contacto (Footer) */
+
+  .footer {
+    background-color: #102165;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.footer-container {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    padding: 40px;
+    background-color: #102165;
+    color: white;
+}
+
+.footer-section {
+    flex: 0 1 250px;
+    margin: 10px;
+    padding: 10px;
+}
+
+.footer-section h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.footer-section p,
+.footer-section a {
+    font-size: 14px;
+    color: #dcdcdc;
+    text-decoration: none;
+}
+
+.footer-section a:hover {
+    text-decoration: underline;
+}
+
+.btn-footer {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 6px 14px;
+    border: 1px solid white;
+    border-radius: 5px;
+    color: white;
+    background: transparent;
+    font-size: 13px;
+}
+
+.btn-footer:hover {
+    background-color: white;
+    color: #102165;
+}
+
+.footer-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-section ul li {
+    margin-bottom: 8px;
+}
+
+.footer-section ul li a {
+    color: #f6f6f6;
+    font-size: 14px;
+}
+
+.social-icons a {
+    display: inline-block;
+    margin-right: 10px;
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    text-align: center;
+    line-height: 36px;
+    border-radius: 50%;
+    color: white;
+}
+
+.social-icons a:nth-child(1) {
+    background-color: #3b5998;
+}
+.social-icons a:nth-child(2) {
+    background-color: #c4302b;
+}
+.social-icons a:nth-child(3) {
+    background-color: #e1306c;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding: 15px 10px;
+    background-color: #010D42;
+    font-size: 13px;
+    color: white;
+}
+
+.footer-bottom nav a {
+    margin: 0 10px;
+    color: #ffffff;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.footer-bottom nav a.active {
+    color: red;
+}
+
+@media (max-width: 768px) {
+    .topbar {
+        flex-direction: column;
+        text-align: center;
+        padding: 10px;
+    }
+
+    .container {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+        padding: 20px;
+    }
+}
+
+/* Para darle formato al perfil en el header */
+.nav-link-profile {
+  display: flex;
+  align-items: center;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}
+
+.nav-link-profile img,
+.nav-link-profile i {
+  align-self: center;
+  margin-top: 0.1rem;
+}
+
+/* ACÁ EMPIEZA LA SECCIÓN DE NAVBAR DE LA APLICACIÓN, QUE EN REALIDAD ES UN HEADER */
+.logo {
+  height: 40px;
+}
+
+.header .container {
+  justify-content: space-between;
+}
+
+.header .nav {
+  margin-left: auto;
+}
+
+.container:not(.header .container) {
+  justify-content: center !important;
+}
+
+.header {
+background-color: #ffffff;
+padding: 1rem;
+color: white;
+display: flex;
+justify-content: center; /* Centra horizontalmente */
+align-items: center; /* Centra verticalmente */
+position: sticky;
+top: 0;
+width: 100%;
+z-index: 9999;
+box-shadow: 0px 2px 5px rgba(0,0,0,0.3);
+}
+
+.header .container {
+max-width: 1200px;
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: space-between; /* Mantiene distribución lógica */
+flex-wrap: wrap;
+padding: 10px;
+}
+
+.header .nav {
+display: flex;
+align-items: center;
+gap: 0.1px;
+}
+
+/* Estilos para el dropdown (mejora visual) */
+.nav-item.dropdown-toggle {
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  border-radius: 4px;
+  padding: 10px 0;
+  min-width: 150px;
+  z-index: 1000;
+  display: none;
+  margin-left: 0;
+  left: 0 !important;
+}
+
+.dropdown-item {
+  padding: 5px 15px;
+  display: block;
+  color: #050c54 !important;
+}
+
+.dropdown-item:hover {
+  background: #f0f0f0;
+  color: #e30613 !important;
+}
+
+.nav a {
+color: #050c54;
+margin: 0 2px;
+text-decoration: none;
+font-weight: 600;
+}
+
+.nav a:hover {
+  color: #e30613;
+}
+
+.user-options {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-icon {
+  font-size: 20px;
+  color: white;
+}
+
+.login-btn {
+  background-color: #e30613;
+  color: white;
+  padding: 5px 15px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* Línea roja dinámica en el header */
+.header {
+  position: relative;
+}
+
+.header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px; /* Grosor de la línea */
+  background-color: red; /* Color de la línea */
+  opacity: 0; /* Inicialmente invisible */
+  transition: opacity 0.3s ease-in-out;
+}
+

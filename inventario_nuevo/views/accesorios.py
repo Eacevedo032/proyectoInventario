@@ -6,7 +6,14 @@ from inventario_nuevo.models import Accesorios
 from inventario_nuevo.forms import AccesoriosForm
 from django.views.decorators.http import require_GET
 
+# Decorador para verificar si el usuario es administrador
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+
 #Gestionar catálogo de accesorios
+@admin_required #Verifica si el usuario es administrador
 def gestionar_accesorios(request):
     accesorios_form = AccesoriosForm()
 

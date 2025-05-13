@@ -26,7 +26,8 @@ urlpatterns = [
     path('', include('aplicaciones.appGestionInventario.urls')),
     path('appGestionLaboratorios/', include('aplicaciones.appGestionLaboratorios.urls')),
     path('appReportes/', include('aplicaciones.appReportes.urls')),
-    path('inventarioNuevo/', include('inventario_nuevo.urls')), 
+    path('inventarioNuevo/', include('inventario_nuevo.urls')), # URL de la app inventario_nuevo
+    path('appMensajes/', include('appMensajes.urls')), # URL de la app de mensajes llamada appMensajes
 
 ]
 

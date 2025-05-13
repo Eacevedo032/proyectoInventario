@@ -13,99 +13,145 @@
 
     <!-- Archivo CSS personalizado -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/estilosMensajes.css' %}">
+    <link rel="stylesheet" href="{% static 'css/estilosInicioAplicacion.css' %}">
 
     {% block head %}{% endblock %}
 </head>
 
 <body>
     {% if user.is_authenticated %}
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand text-center">
-            <span class="text-white bg-primary px-2 py-1 rounded-pill shadow-sm"
-                  style="font-size: 1rem; font-weight: bold;">
-                ¡Hola, {{ user.username }}!
-            </span>
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
-                aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-            <div class="navbar-nav ms-auto">
-                <!-- Mi Perfil -->
-                <li class="nav-item">
-                    <a class="nav-link fw-bold d-flex" href="{% url 'editar_perfil' %}">
-                        {% if user.userprofile.profile_picture %}
-                        <img src="{{ user.userprofile.profile_picture.url }}" alt="Foto de perfil"
-                            class="rounded-circle" width="30" height="30">
-                        {% else %}
-                        <i class="bi bi-person-circle"></i>
-                        {% endif %}
-                        <span class="ms-2">Mi Perfil</span>
-                    </a>
-                </li>
-
-                <!-- Menú de Inventario -->
-                <li class="nav-item">
-                    <a class="nav-item nav-link fw-bold" href="{% url 'menu_inventario' %}">Menú del Inventario</a>
-                </li>
-
-                <!-- Inicio -->
-                <li class="nav-item">
-                    <a class="nav-item nav-link fw-bold" href="{% url 'inicio' %}">Inicio</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link nav-link fw-bold" href="{% url 'gestion_usuarios' %}">Gestión de Usuarios</a>
-                </li>
-
-                {% if user.is_staff or user.is_superuser %}
-
-                <li class="nav-item">
-                    <a class="nav-item nav-link fw-bold" href="{% url 'administracion_laboratorios' %}">Administrar Laboratorios</a>
-                </li>
-
-                <li class="nav-item dropdown">
-                    <a class="nav-item nav-link fw-bold dropdown-toggle" href="#" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">
-                        Reportes
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{% url 'listar_reportes' %}">Uso de Lab</a></li>
-                    </ul>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-item nav-link fw-bold" href="/admin/">Panel</a>
-                </li>
-
-                {% else %}
-                <li class="nav-item">
-                    <a class="nav-item nav-link fw-bold" href="{% url 'reservar_laboratorio' %}">Reservación de Laboratorios</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-item nav-link fw-bold" href="{% url 'solicitar_recursos' %}">Solicitar recursos</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-item nav-link fw-bold" href="{% url 'listar_horarios_lectura' %}">Horarios ocupados</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-item nav-link fw-bold" href="{% url 'listar_reportes' %}">Reportes</a>
-                </li>
+    <header class="header">
+        <div class="container">
+          <!-- Logo -->
+          <a href="https://unp.edu.ni/" target="_blank">
+            <img src="{% static 'img/logoUNP1.png' %}" alt="Logo UNP" class="logo">
+          </a>
+          <!-- Navegación principal -->
+          <nav class="nav">
+            <!-- Todo tipo de usuario -->
+            <!-- INICIO -->
+            <li class="nav-item">
+              <a class="nav-link fw-bold" href="{% url 'inicioAplicacion' %}">
+                Inicio
+              </a>
+            </li>
+            <!-- MI PERFIL -->
+            <!-- Opción con ajuste fino -->
+            <li class="nav-item">
+              <a class="nav-link fw-bold d-flex align-items-center py-1" href="{% url 'editar_perfil' %}">
+                <div class="d-flex align-items-center">
+                  {% if user.userprofile.profile_picture %}
+                  <img src="{{ user.userprofile.profile_picture.url }}" alt="Foto de perfil" class="rounded-circle me-2"
+                    width="30" height="30" style="margin-top: -2px;">
+                  {% else %}
+                  <i class="bi bi-person-circle me-2" style="font-size: 1.2rem; margin-top: -2px;"></i>
+                  {% endif %}
+                  <span>Perfil</span>
+                </div>
+              </a>
+            </li>
+            <!-- BUZÓN DE MENSAJES -->
+            <li class="nav-item position-relative">
+              <a class="nav-link fw-bold position-relative d-inline-block" href="{% url 'listar_usuarios_chat' %}">
+                Buzón 📬
+                {% if mensajes_no_leidos > 0 %}
+                <span class="badge rounded-pill bg-danger notificacion-buzon">
+                  {{ mensajes_no_leidos }}
+                </span>
                 {% endif %}
-
-                <!-- Cerrar Sesión -->
-                <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <button class="btn btn-danger ms-3" type="submit"
-                            onclick="return confirm('¿Estás seguro de que deseas cerrar tu sesión?')">
-                        <i class="bi bi-box-arrow-right"></i>
-                        Cerrar sesión
-                    </button>
-                </form>
-            </div>
+              </a>
+            </li>
+            <!-- Opciones según el tipo de usuario -->
+            {% if user.is_staff or user.is_superuser %}
+            <!-- Admin / Superuser -->
+            <li class="nav-item dropdown fw-bold">
+              <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                Inventario
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item fw-bold" href="{% url 'agregar_producto' %}">➕ Agregar Producto</a></li>
+                <li><a class="dropdown-item fw-bold" href="{% url 'menu_catalogos' %}">📚 Gestionar Catálogos</a></li>
+                <li><a class="dropdown-item fw-bold" href="{% url 'listar_productos' %}">📋 Listar Productos</a></li>
+                <li><a class="dropdown-item fw-bold" href="{% url 'registrar_inventario' %}">📦 Inventario Físico</a></li>
+                <li><a class="dropdown-item fw-bold" href="{% url 'transferencia_producto' %}">🔄 Transferencias</a></li>
+                <li><a class="dropdown-item fw-bold" href="#">📥📤 Entradas y Salidas</a></li>
+                <li><a class="dropdown-item fw-bold" href="#">📦➡️ Movimientos</a></li>
+              </ul>
+            </li>
+            <li class="nav-item dropdown fw-bold">
+              <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                Laboratorios
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item fw-bold" href="{% url 'administracion_laboratorios' %}">🏥 Administrar
+                    Laboratorios</a></li>
+                <li><a class="dropdown-item fw-bold" href="{% url 'administracion_recursos' %}">🗂 Administrar Recursos</a>
+                </li>
+              </ul>
+            </li>
+            <li class="nav-item dropdown fw-bold">
+              <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                Reportes
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item fw-bold" href="#">📦 Inventario General</a></li>
+                <li><a class="dropdown-item fw-bold" href="#">📋 Inventario Físico</a></li>
+                <li><a class="dropdown-item fw-bold" href="#">🔁 Transferencias</a></li>
+                <li><a class="dropdown-item fw-bold" href="#">📥📤 Entradas y Salidas del Inventario</a></li>
+                <li><a class="dropdown-item fw-bold" href="#">🔄 Movimientos del Inventario</a></li>
+                <li><a class="dropdown-item fw-bold" href="{% url 'listar_reportes' %}">📊 Actividad Lab y Recursos</a></li>
+              </ul>
+            </li>
+            <li class="nav-item dropdown fw-bold">
+              <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                Administración
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item fw-bold" href="{% url 'gestion_usuarios' %}">👨‍🔬👩‍🏫 Usuarios y Roles</a>
+                </li>
+              </ul>
+            </li>
+            {% else %}
+            <!-- Usuario común -->
+            <li class="nav-item dropdown fw-bold">
+              <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                Solicitudes
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item fw-bold" href="{% url 'reservar_laboratorio' %}?modo=laboratorios">🏥
+                    Laboratorios</a></li>
+                <li><a class="dropdown-item fw-bold" href="{% url 'solicitar_productos' %}">📦 Recursos</a></li>
+                <li><a class="dropdown-item fw-bold" href="{% url 'reservar_laboratorio' %}?modo=ambos">🏥 Laboratorio + 📦
+                    Recursos</a></li>
+              </ul>
+            </li>
+            <li class="nav-item dropdown fw-bold">
+              <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                Reportes
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item fw-bold" href="{% url 'listar_reportes' %}">📊 Actividad Lab y Recursos</a></li>
+              </ul>
+            </li>
+            {% endif %}
+          </nav>
+    
+          <!-- Botón Cerrar Sesión -->
+          <form action="{% url 'logout' %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button class="eva-btn" type="submit" onclick="return confirm('¿Estás seguro de que deseas cerrar tu sesión?')">
+              <a>Cerrar Sesión</a>
+            </button>
+          </form>
         </div>
-    </nav>
+      </header>
     {% endif %}
 
     <!-- Contenedor principal compatible con todas las páginas -->
@@ -120,8 +166,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <!-- JS personalizado -->
-    <script src="{% static 'js/gestionCategorias.js' %}"></script>
     <script src="{% static 'js/appGestionLaboratorio.js' %}"></script>
+    <script src="{% static 'js/horarios.js' %}"></script>
 
     <!-- Ocultar mensajes automáticamente -->
     <script>

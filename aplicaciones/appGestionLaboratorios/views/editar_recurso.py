@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
-from aplicaciones.appGestionInventario.models import UsoItemLaboratorio
+from aplicaciones.appGestionLaboratorios.models import UsoItemLaboratorio
 from django.contrib import messages
 from decimal import Decimal, InvalidOperation
 from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_unidades

@@ -7,7 +7,14 @@ from inventario_nuevo.models import Color
 from inventario_nuevo.forms import ColorForm
 from django.views.decorators.http import require_GET
 
+# Decorador para verificar si el usuario es administrador
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+
 # Color
+@admin_required #Verifica si el usuario es administrador
 def gestionar_color(request):
     color_form = ColorForm()
 

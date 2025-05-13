@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% load widget_tweaks %}
+
 {% block body %}
 <div class="container mt-4">
   <!-- Mensajes mejorados -->
@@ -13,7 +15,9 @@
     {% endfor %}
   </div>
 
-  <h2 class="mb-4 text-center">Agregar producto</h2>
+  <h1 class="mb-4 text-center fw-bold" style="color: black; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+    Agregar Producto
+  </h1>
 
   <form method="post" id="formProducto">
     {% csrf_token %}
@@ -22,14 +26,14 @@
 
     <!-- Sección de información básica -->
     <div class="card mb-4">
-      <div class="card-header bg-primary text-white">
-        Información Básica *
+      <div class="card-header text-white" style="background-color: #102165;">
+        <strong>Información Básica *</strong>
       </div>
       <div class="card-body">
         <div class="row">
           <div class="col-md-6">
             <div class="mb-3">
-              {{ form.nombre.label_tag }}
+              <strong>{{ form.nombre.label_tag }}</strong>
               {{ form.nombre }}
               <div class="invalid-feedback">{{ form.nombre.errors }}</div>
             </div>
@@ -37,12 +41,12 @@
           <div class="col-md-6">
             <div class="mb-3 row align-items-center g-2">
                 <div class="col-md-6">
-                    <label class="form-label small mb-0">Usuario</label>
+                    <label class="form-label small mb-0"><strong>Usuario</strong></label>
                     <input type="text" class="form-control form-control-sm bg-light" 
-                           value="{{ request.user.get_full_name|default:request.user.username }}" readonly>
+                           value="{{ request.user.username }}" readonly>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label small mb-0">Fecha de agregado</label>
+                    <label class="form-label small mb-0"><strong>Fecha de agregado</strong></label>
                     <input type="text" class="form-control form-control-sm bg-light" 
                            value="{{ hoy|date:'SHORT_DATE_FORMAT' }}" readonly>
                 </div>
@@ -51,25 +55,38 @@
         </div>
 
         <div class="row">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="mb-3">
-              {{ form.cantidad_disponible.label_tag }}
-              {{ form.cantidad_disponible }}
+              <strong>{{ form.cantidad_disponible.label_tag }}</strong>
+             {{ form.cantidad_disponible }}
               <div class="invalid-feedback">{{ form.cantidad_disponible.errors }}</div>
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="mb-3">
-              {{ form.unidad_medida.label_tag }}
+             <strong>{{ form.unidad_medida.label_tag }} </strong> 
                 {{ form.unidad_medida }}
               <div class="invalid-feedback">{{ form.unidad_medida.errors }}</div>
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="mb-3">
-              {{ form.estado.label_tag }}
+              <strong>{{ form.estado.label_tag }} </strong>
               {{ form.estado }}
               <div class="invalid-feedback">{{ form.estado.errors }}</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="mb-3">
+              <strong>{{ form.ubicacion.label_tag }}</strong>
+              <div class="input-group">
+                {{ form.ubicacion }}
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                  data-bs-target="#modalUbicacion">
+                  <i class="fas fa-plus"></i>+
+                </button>
+              </div>
+              <div class="invalid-feedback">{{ form.ubicacion.errors }}</div>
             </div>
           </div>
         </div>
@@ -78,14 +95,14 @@
 
   <!-- Sección de categorización -->
 <div class="card mb-4">
-  <div class="card-header bg-primary text-white">
-    Categorización *
+  <div class="card-header text-white" style="background-color: #102165;">
+    <strong>Categorización *</strong>
   </div>
   <div class="card-body">
     <div class="row">
       <div class="col-md-6">
         <div class="mb-3">
-          {{ form.categoria.label_tag }}
+         <strong>{{ form.categoria.label_tag }} </strong> 
           <div class="input-group">
             <select class="form-select" id="id_categoria" name="categoria">
               {% for choice in form.categoria.field.choices %}
@@ -102,7 +119,7 @@
       </div>
       <div class="col-md-6">
         <div class="mb-3">
-          {{ form.subcategoria.label_tag }}
+          <strong>{{ form.subcategoria.label_tag }} </strong>
           <div class="input-group">
             <select class="form-select" id="id_subcategoria" name="subcategoria">
               {% for choice in form.subcategoria.field.choices %}
@@ -167,67 +184,61 @@
   
     <!-- Sección de información adicional -->
 <div class="card mb-4">
-  <div class="card-header bg-primary text-white">
-      Información Adicional
+  <div class="card-header text-white" style="background-color: #102165;">
+    <strong>Información Adicional</strong>
   </div>
   <div class="card-body">
       <div class="row">
           <div class="col-md-4">
               <div class="mb-3">
-                  {{ form.codigo.label_tag }}
+                  <strong>{{ form.codigo.label_tag }} </strong>
                   {{ form.codigo }}
-                  <small class="text-muted">(Debe ser único si se especifica)</small>
-                  <div class="invalid-feedback">{{ form.codigo.errors }}</div>
-              </div>
+                  <small class="text-muted"><strong>(Debe ser único si se especifica)</strong></small>
+                  <div class="invalid-feedback d-block">
+                    {% for error in form.codigo.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>              
+                </div>
           </div>
           <div class="col-md-4">
               <div class="mb-3">
-                  {{ form.num_cat.label_tag }}
+                  <strong>{{ form.num_cat.label_tag }} </strong>
                   {{ form.num_cat }}
-                  <small class="text-muted">(Debe ser único si se especifica)</small>
-                  <div class="invalid-feedback">{{ form.num_cat.errors }}</div>
-              </div>
+                  <small class="text-muted"><strong>(Debe ser único si se especifica)</strong></small>
+                  <div class="invalid-feedback d-block">
+                    {% for error in form.num_cat.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>              
+                </div>
           </div>
           <div class="col-md-4">
               <div class="mb-3">
-                  {{ form.num_serie.label_tag }}
+                  <strong>{{ form.num_serie.label_tag }} </strong>
                   {{ form.num_serie }}
-                  <small class="text-muted">(Debe ser único si se especifica)</small>
-                  <div class="invalid-feedback">{{ form.num_serie.errors }}</div>
-              </div>
+                  <small class="text-muted"><strong>(Debe ser único si se especifica)</strong></small>
+                  <div class="invalid-feedback d-block">
+                    {% for error in form.num_serie.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>
+                </div>
           </div>
       </div>
-      
       <div class="row">
           <div class="col-md-6">
               <div class="mb-3">
-                  {{ form.descripcion.label_tag }}
+                 <strong> {{ form.descripcion.label_tag }}</strong>
                   {{ form.descripcion }}
                   <div class="invalid-feedback">{{ form.descripcion.errors }}</div>
               </div>
           </div>
           <div class="col-md-6">
               <div class="mb-3">
-                  {{ form.observacion.label_tag }}
+                 <strong> {{ form.observacion.label_tag }}</strong>
                   {{ form.observacion }}
                   <div class="invalid-feedback">{{ form.observacion.errors }}</div>
-              </div>
-          </div>
-      </div>
-      
-      <div class="row">
-        <div class="col-md-4 offset-md-4">  <!-- Centra la columna de 4 unidades en pantallas medianas/grandes -->
-          <div class="mb-3 mx-auto" style="max-width: 300px;">
-              {{ form.vencimiento.label_tag }}
-              {{ form.vencimiento }}
-              <div class="invalid-feedback">{{ form.vencimiento.errors }}</div>
-          </div>
-      </div>
-          <div class="col-md-4">
-              <div class="mb-3">
-                  {{ form.fecha_agregado.label_tag }}
-                  {{ form.fecha_agregado }}
-                  <div class="invalid-feedback">{{ form.fecha_agregado.errors }}</div>
               </div>
           </div>
       </div>
@@ -235,14 +246,14 @@
 </div>
     <!-- Sección de características -->
     <div class="card mb-4">
-      <div class="card-header bg-primary text-white">
-        Características
+      <div class="card-header text-white" style="background-color: #102165;">
+        <strong>Características</strong>
       </div>
       <div class="card-body">
         <div class="row">
           <div class="col-md-4">
             <div class="mb-3">
-                {{ form.marca.label_tag }}
+                <strong>{{ form.marca.label_tag }} </strong>
                 <div class="input-group">
                     {{ form.marca }}
                     <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
@@ -255,7 +266,7 @@
         </div>
           <div class="col-md-4">
             <div class="mb-3">
-              {{ form.modelo.label_tag }}
+              <strong>{{ form.modelo.label_tag }}</strong>
               <div class="input-group">
                 {{ form.modelo }}
                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
@@ -268,7 +279,7 @@
           </div>
           <div class="col-md-4">
             <div class="mb-3">
-              {{ form.color.label_tag }}
+              <strong>{{ form.color.label_tag }} </strong>
               <div class="input-group">
                 {{ form.color }}
                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
@@ -280,11 +291,10 @@
             </div>
           </div>
         </div>
-
         <div class="row">
           <div class="col-md-4">
             <div class="mb-3">
-              {{ form.presentacion.label_tag }}
+              <strong>{{ form.presentacion.label_tag }} </strong>
               <div class="input-group">
                 {{ form.presentacion }}
                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
@@ -297,7 +307,7 @@
           </div>
           <div class="col-md-4">
             <div class="mb-3">
-              {{ form.capacidad.label_tag }}
+              <strong>{{ form.capacidad.label_tag }} </strong>
               <div class="input-group">
                 {{ form.capacidad }}
                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
@@ -310,7 +320,7 @@
           </div>
           <div class="col-md-4">
             <div class="mb-3">
-              {{ form.medida.label_tag }}
+              <strong>{{ form.medida.label_tag }} </strong>
               <div class="input-group">
                 {{ form.medida }}
                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
@@ -324,30 +334,16 @@
         </div>
       </div>
     </div>
-
     <!-- Sección de ubicación y otros -->
     <div class="card mb-4">
-      <div class="card-header bg-primary text-white">
-        Ubicación y Detalles
+      <div class="card-header text-white" style="background-color: #102165;">
+        <strong>Otros Detalles</strong>
       </div>
       <div class="card-body">
         <div class="row">
           <div class="col-md-4">
             <div class="mb-3">
-              {{ form.ubicacion.label_tag }}
-              <div class="input-group">
-                {{ form.ubicacion }}
-                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
-                  data-bs-target="#modalUbicacion">
-                  <i class="fas fa-plus"></i>+
-                </button>
-              </div>
-              <div class="invalid-feedback">{{ form.ubicacion.errors }}</div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="mb-3">
-              {{ form.lote.label_tag }}
+             <strong> {{ form.lote.label_tag }} </strong>
               <div class="input-group">
                 {{ form.lote }}
                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
@@ -359,8 +355,15 @@
             </div>
           </div>
           <div class="col-md-4">
+            <div class="mb-3 mx-auto" style="max-width: 300px;">
+              <strong>{{ form.vencimiento.label_tag }}</strong>
+              {{ form.vencimiento }}
+              <div class="invalid-feedback">{{ form.vencimiento.errors }}</div>
+          </div>
+          </div>
+          <div class="col-md-4">
             <div class="mb-3">
-              {{ form.accesorios.label_tag }}
+              <strong>{{ form.accesorios.label_tag }} </strong>
               <div class="input-group">
                 {{ form.accesorios }}
                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
@@ -376,8 +379,14 @@
     </div>
 
     <div class="text-center">
-      <button type="submit" class="btn btn-primary btn-lg">Guardar Producto</button>
-    </div>
+      <button type="submit" class="btn btn-lg text-white fw-bold shadow-sm" style="background-color: #008000; border-radius: 8px; padding: 8px 20px;">
+        <i class="bi bi-save"></i> Guardar Producto
+      </button>
+      
+      <button type="button" id="limpiarFormulario" class="btn btn-lg text-white fw-bold shadow-sm" style="background-color: #e60000; border-radius: 8px; padding: 8px 20px;">
+        <i class="bi bi-eraser"></i> Limpiar Formulario
+      </button>
+    </div> 
   </form>
 </div>
 
@@ -391,14 +400,14 @@
       <input type="hidden" name="form_tipo" value="categoria">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nueva Categoría</h5>
+          <h3 class="modal-title"><strong>Nueva Categoría</strong></h3>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          {{ categoria_form.as_p }}
+         <strong>{{ categoria_form.as_p }} </strong> 
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #008000">Guardar</button>
         </div>
       </div>
     </form>
@@ -414,14 +423,14 @@
       <input type="hidden" name="form_tipo" value="subcategoria">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nueva Subcategoría</h5>
+          <h3 class="modal-title"><strong>Nueva Subcategoría</strong></h3>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          {{ subcategoria_form.as_p }}
+          <strong>{{ subcategoria_form.as_p }} </strong>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #008000">Guardar</button>
         </div>
       </div>
     </form>
@@ -436,32 +445,23 @@
       <input type="hidden" name="form_tipo" value="marca">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nueva Marca</h5>
+          <h3 class="modal-title"><strong>Nueva Marca</strong></h3>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
 
           <!-- Nombre Primero -->
           <div class="mb-3">
-            <label for="{{ marca_form.nombre.id_for_label }}" class="form-label">Nombre (requerido)</label>
+            <label for="{{ marca_form.nombre.id_for_label }}" class="form-label"><strong>Nombre (requerido)</strong></label>
             {{ marca_form.nombre }}
             {% if marca_form.nombre.errors %}
             <div class="text-danger small">{{ marca_form.nombre.errors.0 }}</div>
             {% endif %}
           </div>
 
-          <!-- Código Después -->
-          <div class="mb-3">
-            <label for="{{ marca_form.codigo.id_for_label }}" class="form-label">Código de Marca (opcional)</label>
-            {{ marca_form.codigo }}
-            {% if marca_form.codigo.errors %}
-            <div class="text-danger small">{{ marca_form.codigo.errors.0 }}</div>
-            {% endif %}
-          </div>
-
           <!-- Descripción al Final -->
           <div class="mb-3">
-            <label for="{{ marca_form.descripcion.id_for_label }}" class="form-label">Descripción (opcional)</label>
+            <label for="{{ marca_form.descripcion.id_for_label }}" class="form-label"><strong>Descripción (opcional)</strong></label>
             {{ marca_form.descripcion }}
             {% if marca_form.descripcion.errors %}
             <div class="text-danger small">{{ marca_form.descripcion.errors.0 }}</div>
@@ -469,7 +469,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #008000">Guardar</button>
         </div>
       </div>
     </form>
@@ -484,14 +484,14 @@
       <input type="hidden" name="form_tipo" value="modelo">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nuevo Modelo</h5>
+          <h3 class="modal-title"><strong>Nuevo Modelo</strong></h3>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          {{ modelo_form.as_p }}
+         <strong> {{ modelo_form.as_p }} </strong>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #008000">Guardar</button>
         </div>
       </div>
     </form>
@@ -506,25 +506,21 @@
       <input type="hidden" name="form_tipo" value="color">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nuevo Color</h5>
+          <h3 class="modal-title"><strong>Nuevo Color</strong></h3>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label for="id_nombre" class="form-label">Nombre: <span class="text-danger">*</span></label>
-            {{ color_form.nombre }}
+            <label for="id_nombre" class="form-label"><Strong>Nombre: </Strong><span class="text-danger">*</span></label>
+           <strong> {{ color_form.nombre }} </strong>
           </div>
           <div class="mb-3">
-            <label for="id_codigo" class="form-label">Código:</label>
-            {{ color_form.codigo }}
-          </div>
-          <div class="mb-3">
-            <label for="id_descripcion" class="form-label">Descripción:</label>
-            {{ color_form.descripcion }}
+            <label for="id_descripcion" class="form-label"><strong>Descripción (Opcional):</strong></label>
+            {{ color_form.descripcion }} 
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #008000">Guardar</button>
         </div>
       </div>
     </form>
@@ -539,13 +535,13 @@
       <input type="hidden" name="form_tipo" value="capacidad">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="modalCapacidadLabel">Nueva Capacidad</h5>
+          <h3 class="modal-title" id="modalCapacidadLabel"><strong>Nueva Capacidad</strong></h3>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body">
 
           <div class="mb-3">
-            <label for="id_nombre_capacidad" class="form-label">Nombre: <span class="text-danger">*</span></label>
+            <label for="id_nombre_capacidad" class="form-label"><Strong>Nombre: </Strong> <span class="text-danger">*</span></label>
             {{ capacidad_form.nombre }}
             {% if capacidad_form.nombre.errors %}
             <div class="text-danger small">{{ capacidad_form.nombre.errors.0 }}</div>
@@ -553,7 +549,7 @@
           </div>
 
           <div class="mb-3">
-            <label for="id_descripcion_capacidad" class="form-label">Descripción:</label>
+            <label for="id_descripcion_capacidad" class="form-label"><strong>Descripción (Opcional):</strong></label>
             {{ capacidad_form.descripcion }}
             {% if capacidad_form.descripcion.errors %}
             <div class="text-danger small">{{ capacidad_form.descripcion.errors.0 }}</div>
@@ -562,8 +558,8 @@
 
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Guardar</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #008000"> Guardar</button>
+          <button type="button" class="btn btn-secondary" style="background-color: #e60000" data-bs-dismiss="modal">Cancelar</button>
         </div>
       </div>
     </form>
@@ -579,13 +575,13 @@
       <input type="hidden" name="form_tipo" value="presentacion">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="modalPresentacionLabel">Nueva Presentación</h5>
+          <h3 class="modal-title" id="modalPresentacionLabel"><strong>Nueva Presentación</strong></h3>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body">
 
           <div class="mb-3">
-            <label for="id_nombre_presentacion" class="form-label">Nombre: <span class="text-danger">*</span></label>
+            <label for="id_nombre_presentacion" class="form-label"><Strong>Nombre: </Strong><span class="text-danger">*</span></label>
             {{ presentacion_form.nombre }}
             {% if presentacion_form.nombre.errors %}
             <div class="text-danger small">{{ presentacion_form.nombre.errors.0 }}</div>
@@ -593,7 +589,7 @@
           </div>
 
           <div class="mb-3">
-            <label for="id_descripcion_presentacion" class="form-label">Descripción:</label>
+            <label for="id_descripcion_presentacion" class="form-label"><strong>Descripción (Opcional):</strong></label>
             {{ presentacion_form.descripcion }}
             {% if presentacion_form.descripcion.errors %}
             <div class="text-danger small">{{ presentacion_form.descripcion.errors.0 }}</div>
@@ -602,8 +598,8 @@
 
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Guardar</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #008000">Guardar</button>
+          <button type="button" class="btn btn-secondary" style="background-color: #e60000" data-bs-dismiss="modal">Cancelar</button>
         </div>
       </div>
     </form>
@@ -618,20 +614,20 @@
       <input type="hidden" name="form_tipo" value="accesorios">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="modalAccesoriosLabel">Nuevos Accesorios</h5>
+          <h3 class="modal-title" id="modalAccesoriosLabel"><strong>Nuevos Accesorios</strong></h3>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body">
 
           <div class="mb-3">
-            <label for="id_nombre_accesorio" class="form-label">Nombre: <span class="text-danger">*</span></label>
+            <label for="id_nombre_accesorio" class="form-label"><Strong>Nombre: </Strong><span class="text-danger">*</span></label>
             {{ accesorios_form.nombre }}
             {% if accesorios_form.nombre.errors %}
             <div class="text-danger small">{{ accesorios_form.nombre.errors.0 }}</div>
             {% endif %}
           </div>
           <div class="mb-3">
-            <label for="id_nombre_acesorio" class="form-label">Descripción:</label>
+            <label for="id_nombre_acesorio" class="form-label"><strong>Descripción (Opcional):</strong></label>
             {{ accesorios_form.descripcion }}
             {% if accesorios_form.descripcion.errors %}
             <div class="text-danger small">{{ accesorios_form.descripcion.errors.0 }}</div>
@@ -639,8 +635,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Guardar</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #008000">Guardar</button>
+          <button type="button" class="btn btn-secondary" style="background-color: #e60000" data-bs-dismiss="modal">Cancelar</button>
         </div>
       </div>
     </form>
@@ -655,25 +651,21 @@
       <input type="hidden" name="form_tipo" value="ubicacion">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nueva Ubicación de Producto</h5>
+          <h3 class="modal-title"><strong>Nueva Ubicación de Producto</strong></h3>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label for="id_nombre" class="form-label">Nombre: <span class="text-danger">*</span></label>
+            <label for="id_nombre" class="form-label"><Strong>Nombre: </Strong><span class="text-danger">*</span></label>
             {{ ubicacion_form.nombre }}
           </div>
           <div class="mb-3">
-            <label for="id_codigo" class="form-label">Código:</label>
-            {{ ubicacion_form.codigo }}
-          </div>
-          <div class="mb-3">
-            <label for="id_descripcion" class="form-label">Descripción:</label>
+            <label for="id_descripcion" class="form-label"><strong>Descripción (Opcional):</strong></label>
             {{ ubicacion_form.descripcion }}
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #008000">Guardar</button>
         </div>
       </div>
     </form>
@@ -688,21 +680,21 @@
       <input type="hidden" name="form_tipo" value="lote">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nuevo Lote</h5>
+          <h3 class="modal-title"><strong>Nuevo Lote</strong></h3>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label for="id_codigo" class="form-label">Código: <span class="text-danger">*</span></label>
-            {{ lote_form.codigo }}
+            <label for="id_nombre" class="form-label"><Strong>Nombre: </Strong><span class="text-danger">*</span></label>
+            {{ lote_form.nombre }}
           </div>
           <div class="mb-3">
-            <label for="id_descripcion" class="form-label">Descripción:</label>
+            <label for="id_descripcion" class="form-label"><strong>Descripción (Opcional):</strong></label>
             {{ lote_form.descripcion }}
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #008000">Guardar</button>
         </div>
       </div>
     </form>
@@ -717,21 +709,21 @@
       <input type="hidden" name="form_tipo" value="medida">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nueva Medida</h5>
+          <h3 class="modal-title"><strong>Nueva Medida</strong></h3>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label for="id_nombre" class="form-label">Nombre: <span class="text-danger">*</span></label>
+            <label for="id_nombre" class="form-label"><Strong>Nombre: </Strong><span class="text-danger">*</span></label>
             {{ medida_form.nombre }}
           </div>
           <div class="mb-3">
-            <label for="id_descripcion" class="form-label">Descripción:</label>
+            <label for="id_descripcion" class="form-label"><strong>Descripción (Opcional):</strong></label>
             {{ medida_form.descripcion }}
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #008000">Guardar</button>
         </div>
       </div>
     </form>
@@ -796,6 +788,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById("formProducto");
     const STORAGE_KEY = "formProductoData";
+    const limpiarBtn = document.getElementById("limpiarFormulario");
 
     const savedData = sessionStorage.getItem(STORAGE_KEY);
     let subcategoriaGuardada = null;
@@ -810,12 +803,10 @@
           } else {
             field.value = value;
 
-            // Guardamos subcategoría para restaurarla después de cargar opciones
             if (key === "subcategoria") {
               subcategoriaGuardada = value;
             }
 
-            // Disparamos change en categoría para cargar subcategorías
             if (key === "categoria") {
               field.dispatchEvent(new Event("change"));
             }
@@ -823,18 +814,18 @@
         }
       }
 
-      // Esperamos un poco a que se repueblen las subcategorías, luego restauramos
+      // Restaurar subcategoría después de que las opciones estén disponibles
       if (subcategoriaGuardada) {
         setTimeout(() => {
           const subField = form.elements.namedItem("subcategoria");
           if (subField) {
             subField.value = subcategoriaGuardada;
           }
-        }, 300); // suficiente para cargar opciones
+        }, 300);
       }
     }
 
-    // Guardar datos al escribir
+    // Guardar en sessionStorage al escribir
     form.addEventListener("input", function () {
       const dataToSave = {};
       for (let i = 0; i < form.elements.length; i++) {
@@ -850,7 +841,15 @@
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
     });
 
-    // Limpiar datos si la cookie lo dice
+    // Si se presiona el botón "Limpiar Formulario" (Boton que esta a la par de 'Guardar Producto').
+    if (limpiarBtn) {
+      limpiarBtn.addEventListener("click", function () {
+        form.reset(); // Limpia los valores del formulario
+        sessionStorage.removeItem(STORAGE_KEY); // Borra datos guardados
+      });
+    }
+
+    // Limpieza por cookie (caso automático)
     if (document.cookie.includes("limpiar_datos_producto=true")) {
       sessionStorage.removeItem(STORAGE_KEY);
       document.cookie = "limpiar_datos_producto=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -859,3 +858,4 @@
 </script>
 
 {% endblock %}
+

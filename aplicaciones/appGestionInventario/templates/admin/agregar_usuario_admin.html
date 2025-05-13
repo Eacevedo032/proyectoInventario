@@ -43,7 +43,7 @@
                     {% if form.username.errors %}
                     <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
                     {% else %}
-                    <small class="form-text text-muted">No puede contener espacios ni caracteres especiales.</small>
+                    <small class="form-text text-muted">No puede contener espacios ni caracteres especiales. Este nombre será definitivo.</small>
                     {% endif %}
                 </div>
 
@@ -86,6 +86,8 @@
                     </div>
                     {% if form.email.errors %}
                     <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                    {% else %}
+                    <small class="form-text text-muted">Correo institucional.</small>
                     {% endif %}
                 </div>
 
@@ -116,6 +118,8 @@
                     </div>
                     {% if form.password2.errors %}
                     <div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>
+                    {% else %}
+                    <small class="form-text text-muted">Misma contraseña que la anterior.</small>
                     {% endif %}
                 </div>
 

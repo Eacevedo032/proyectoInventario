@@ -9,7 +9,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import user_passes_test
 from django.core.paginator import Paginator
 from aplicaciones.appGestionInventario.forms import EditProfileForm #Importa a Forms.py
-
+from django.contrib.auth import update_session_auth_hash # Para mantener la sesión activa después de cambiar la contraseña
 
 #Validación de que el usuario ingresado exista, se ingrese correctamente, pendiente o denegado.
 class CustomLoginView(LoginView):
@@ -35,7 +35,7 @@ class CustomLoginView(LoginView):
         if user is not None:
             login(request, user)
             messages.success(request, f"Bienvenido, {user.username}.")
-            return redirect('inicio')  # Lo dirigimos ya logueado al inicio
+            return redirect('inicioAplicacion')  # Lo dirigimos ya logueado al inicio de la app
         else:
             messages.error(request, "Usuario o contraseña no coinciden. Ingréselos correctamente.")
             return redirect('login')
@@ -46,8 +46,17 @@ def edit_profile(request):
         form = EditProfileForm(request.POST, request.FILES, instance=request.user, user=request.user)
         
         if form.is_valid():
-            form.save()
-            messages.success(request, "Perfil actualizado correctamente")
+            user = form.save()
+
+            # Mantener la sesión si se cambió la contraseña
+            if form.cleaned_data.get('password'):
+                update_session_auth_hash(request, user)
+
+            if form.cleaned_data.get('delete_picture'):
+                messages.success(request, "Foto de perfil eliminada correctamente.")
+            else:
+                messages.success(request, "Perfil actualizado correctamente.")
+
             return redirect('editar_perfil')
     else:
         form = EditProfileForm(instance=request.user, user=request.user)
@@ -111,7 +120,7 @@ def gestion_usuarios(request):
     for u in usuarios_list:
         u.profile = getattr(u, 'userprofile', None)
 
-    paginator = Paginator(usuarios_list, 6)
+    paginator = Paginator(usuarios_list, 3)  # 3 usuarios por página
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 

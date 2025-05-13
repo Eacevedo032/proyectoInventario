@@ -7,7 +7,14 @@ from django.http import JsonResponse
 from django.db.models import Count
 from django.views.decorators.http import require_GET
 
+# Decorador para verificar si el usuario es administrador
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+
 # Para los catálogos de Categoría y Subcategoría
+@admin_required #Verifica si el usuario es administrador
 def gestionar_catalogos_categoria(request):
     categoria_form = CategoriaForm()
     subcategoria_form = SubcategoriaForm()
@@ -113,7 +120,7 @@ def gestionar_catalogos_categoria(request):
             messages.success(request, f'Subcategoría "{nombre}" eliminada correctamente.')
         return redirect(request.path + '?' + request.META.get('QUERY_STRING', ''))
 
-    return render(request, 'inventario_nuevo/catalogos_categoria.html', {
+    return render(request, 'catalogos/categoriaSubcategoria.html', {
         'categoria_form': categoria_form,
         'subcategoria_form': subcategoria_form,
         'categorias': categorias,
@@ -123,6 +130,7 @@ def gestionar_catalogos_categoria(request):
         'ver_todas': mostrar_todas,
     })
 
+@admin_required #Verifica si el usuario es administrador
 @require_GET
 def obtener_subcategorias(request):
     categoria_id = request.GET.get('categoria_id')

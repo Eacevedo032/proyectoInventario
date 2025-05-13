@@ -33,11 +33,6 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="{{ marca_form.codigo.id_for_label }}" class="form-label">Código <span class="text-muted">(opcional)</span></label>
-                    {{ marca_form.codigo|add_class:"form-control" }}
-                </div>
-
-                <div class="mb-3">
                     <label for="{{ marca_form.descripcion.id_for_label }}" class="form-label">Descripción <span class="text-muted">(opcional)</span></label>
                     <!-- Estilo para que el campo de descripción no sea tan enorme -->
                     <style>
@@ -87,8 +82,7 @@
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="mb-0 text-primary">{{ marca.nombre }}</h4>
-                    <small><strong>Código:</strong> {{ marca.codigo|default:"(sin código)" }} |
-                           <strong>Descripción:</strong> {{ marca.descripcion|default:"(sin descripción)" }}</small>
+                    <small><strong>Descripción:</strong> {{ marca.descripcion|default:"(sin descripción)" }}</small>
                 </div>
                 <div>
                     <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarMarcaModal{{ marca.id }}">Editar</button>
@@ -151,10 +145,6 @@
                             <div class="mb-3">
                                 <label class="form-label">Nombre</label>
                                 <input type="text" name="nombre" class="form-control" value="{{ marca.nombre }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Código</label>
-                                <input type="text" name="codigo" class="form-control" value="{{ marca.codigo }}">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Descripción</label>

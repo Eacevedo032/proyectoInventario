@@ -8,12 +8,19 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from itertools import groupby
 import json
-from aplicaciones.appGestionInventario.models import SolicitudLaboratorio, UsoItemLaboratorio, HorarioLaboratorio, HistorialInventario
+from aplicaciones.appGestionLaboratorios.models import SolicitudLaboratorio, UsoItemLaboratorio, HorarioLaboratorio, HistorialInventario
 from datetime import datetime, timedelta
 from decimal import Decimal
-
 from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_unidades
+from inventario_nuevo.models import UnidadMedida
 
+# Decorador para verificar si el usuario es administrador
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+
+@admin_required #Verifica si el usuario es administrador
 def administracionLaboratorios(request):
     estado = request.GET.get('estado')
     laboratorio = request.GET.get('laboratorio')
@@ -53,6 +60,7 @@ def administracionLaboratorios(request):
     })
 
 # Vista para aprobar solicitudes
+@admin_required #Verifica si el usuario es administrador
 @csrf_exempt
 def aprobar_solicitud(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id)
@@ -105,18 +113,20 @@ def aprobar_solicitud(request, solicitud_id):
                 items_solicitados = UsoItemLaboratorio.objects.filter(solicitud=solicitud)
 
                 for item in items_solicitados:
-                    inventario_item = item.inventario
-                    unidad_inventario = inventario_item.unidad_medida
-                    unidad_solicitada = item.unidad_medida
-                    cantidad_anterior = Decimal(str(inventario_item.cantidad_disponible))
+                    producto_item = item.producto
+                    unidad_producto = producto_item.unidad_medida
+                    unidad_solicitada = UnidadMedida.objects.get(abreviatura=item.unidad_medida)
+                    cantidad_anterior = Decimal(str(producto_item.cantidad_disponible))
 
-                    if unidad_inventario != unidad_solicitada:
+                    if unidad_producto != unidad_solicitada:
                         try:
                             cantidad_solicitada_convertida = convertir_unidades(
-                                Decimal(str(item.cantidad_utilizada)),
-                                unidad_origen=unidad_solicitada,
-                                unidad_destino=unidad_inventario,
-                            )
+                            Decimal(str(item.cantidad_utilizada)),
+                            unidad_origen=unidad_solicitada.abreviatura,
+                            unidad_destino=unidad_producto.abreviatura,
+                        )
+
+
                         except ValueError as e:
                             return JsonResponse({
                                 'success': False,
@@ -126,11 +136,11 @@ def aprobar_solicitud(request, solicitud_id):
                         cantidad_solicitada_convertida = Decimal(str(item.cantidad_utilizada))
 
                     if cantidad_anterior >= cantidad_solicitada_convertida:
-                        inventario_item.cantidad_disponible = cantidad_anterior - cantidad_solicitada_convertida
-                        inventario_item.save()
+                        producto_item.cantidad_disponible = cantidad_anterior - cantidad_solicitada_convertida
+                        producto_item.save()
 
                         HistorialInventario.objects.create(
-                            inventario=inventario_item,
+                            producto=producto_item,
                             cantidad_cambiada=cantidad_solicitada_convertida,
                             unidad_medida=item.unidad_medida,
                             cantidad_anterior=cantidad_anterior,
@@ -142,7 +152,7 @@ def aprobar_solicitud(request, solicitud_id):
                     else:
                         return JsonResponse({
                             'success': False,
-                            'message': f"No hay suficiente cantidad de {inventario_item.nombre} en inventario."
+                            'message': f"No hay suficiente cantidad de {producto_item.nombre} en inventario."
                         })
 
                 HorarioLaboratorio.objects.create(
@@ -172,6 +182,8 @@ def aprobar_solicitud(request, solicitud_id):
     })
 
 # Vista para rechazar solicitudes
+@admin_required #Verifica si el usuario es administrador
+@csrf_exempt
 def rechazar_solicitud(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id)
     
@@ -185,6 +197,7 @@ def rechazar_solicitud(request, solicitud_id):
     return redirect('administracion_laboratorios')
 
 # Vista para solicitudes pendientes
+@admin_required #Verifica si el usuario es administrador
 def solicitud_pendiente(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id)
     
@@ -198,6 +211,7 @@ def solicitud_pendiente(request, solicitud_id):
     return redirect('administracion_laboratorios')
 
 #para ver los recursos a utilizar en el laboratorio
+@admin_required #Verifica si el usuario es administrado
 def ver_items_solicitud(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id)
     items_solicitados = UsoItemLaboratorio.objects.filter(solicitud=solicitud)

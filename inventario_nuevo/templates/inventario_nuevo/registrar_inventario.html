@@ -2,13 +2,6 @@
 
 {% block head %}
     <style>
-        .container {
-            max-width: 1000px;
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
-        }
         h2 {
             color: #007BFF;
             font-weight: bold;
@@ -35,8 +28,8 @@
     <form method="POST">
         {% csrf_token %}
         <div class="mb-3 text-center">
-            <label for="fecha" class="fw-bold">Seleccionar Fecha:</label> <!-- ✅ Ahora dice "Seleccionar Fecha" -->
-            <input type="date" name="fecha" class="form-control form-control-lg w-50 mx-auto text-center" value="{{ fecha_actual }}" required> <!-- ✅ Fecha más grande y centrada -->
+            <label for="fecha" class="fw-bold">Seleccionar Fecha:</label> <!-- "Seleccionar Fecha" -->
+            <input type="date" name="fecha" class="form-control form-control-lg w-50 mx-auto text-center" value="{{ fecha_actual }}" required> <!--Fecha más grande y centrada -->
         </div>
 
         <table class="table table-hover">

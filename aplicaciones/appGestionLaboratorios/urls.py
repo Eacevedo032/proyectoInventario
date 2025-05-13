@@ -9,22 +9,34 @@ urlpatterns = [
     path('editar_laboratorio/<int:solicitud_id>/', views.editar_laboratorio, name='editar_laboratorio'),
     path('eliminar_solicitud/<int:solicitud_id>/', views.eliminar_solicitud, name='eliminar_solicitud'),
 
-    # URLs para formulario y tabla de recursos
+    # URLs para formulario y tabla de recursos utilizados en el laboratorio
     path('solicitar_recursos/', views.solicitar_recursos, name='solicitar_recursos'),
     path('editar_recurso/<int:uso_id>/', views.editar_recurso, name='editar_recurso'),
     path('eliminar_recurso/<int:uso_id>/', views.eliminar_recurso, name='eliminar_recurso'),
-    
-    #Urls para llamar a las categorias a las que pertenece cada recurso del inventario
-    path('obtener_subcategorias/<int:categoria_id>/', views.obtener_subcategorias, name='obtener_subcategorias'),
-    path('obtener_items/<int:categoria_id>/<int:subcategoria_id>/', views.obtener_items, name='obtener_items'),
 
-    # URLs para usuarios admin
+    #URLS para solicitar productos de inventario
+    path('solicitar-productos/', views.solicitar_productos, name='solicitar_productos'),
+    path('enviar-productos/<int:producto_id>/', views.enviar_productos, name='enviar_productos'),
+    path('editar-productos/<int:producto_id>/', views.editar_productos, name='editar_productos'),
+    path('eliminar-productos/<int:producto_id>/', views.eliminar_productos, name='eliminar_productos'),
+    
+    #Urls para llamar a las categorias a las que pertenece cada recurso de los productos
+    path('obtener_subcategorias/<int:categoria_id>/', views.obtener_subcategorias, name='obtener_subcategorias'),
+    path('obtener_items/', views.obtener_items, name='obtener_items'),
+    
+    # URLs para usuarios admin laboratorios
     path('administracionLaboratorios/', views.administracionLaboratorios, name='administracion_laboratorios'),
     path('ver-items-solicitud/<int:solicitud_id>/', views.ver_items_solicitud, name='ver_items_solicitud'),
     path('aprobar_solicitud/<int:solicitud_id>/', views.aprobar_solicitud, name='aprobar_solicitud'),
     path('rechazar_solicitud/<int:solicitud_id>/', views.rechazar_solicitud, name='rechazar_solicitud'),
     path('solicitud_pendiente/<int:solicitud_id>/', views.solicitud_pendiente, name='solicitud_pendiente'),
-    
+
+    # URLs para usuario admin recursos  
+    path('administracionRecursos/', views.administracionRecursos, name='administracion_recursos'),
+    path('aprobar_solicitud_producto/<int:solicitud_id>/', views.aprobar_solicitud_producto, name='aprobar_solicitud_producto'),
+    path('rechazar_solicitud_producto/<int:solicitud_id>/', views.rechazar_solicitud_producto, name='rechazar_solicitud_producto'),
+    path('solicitud_pendiente_producto/<int:solicitud_id>/', views.solicitud_pendiente_producto, name='solicitud_pendiente_producto'),
+
     #Urls para horarios de laboratorio
     path('listar_horarios/', views.listar_horarios, name='listar_horarios'),
     path('editar_horario/<int:horario_id>/', views.editar_horario, name='editar_horario'),

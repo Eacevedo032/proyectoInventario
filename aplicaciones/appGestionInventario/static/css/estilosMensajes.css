@@ -1,0 +1,71 @@
+  /* Listar usuarios y sus estilos */
+  
+  .list-group-item {
+    transition: background-color 0.2s ease;
+    border-left: 4px solid #e30613;
+  }
+  
+  .list-group-item:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .btn-outline-primary {
+    border-color: #010D42;
+    color: #010D42;
+  }
+  
+  .btn-outline-primary:hover {
+    background-color: #010D42;
+    color: white;
+  }
+  
+  .btn-danger {
+    background-color: #e30613;
+    border: none;
+  }
+  
+  .btn-danger:hover {
+    background-color: #c60011;
+  }
+  
+  .shadow-sm {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+
+/* Para el fondo en la plantilla de listar_usuarios */
+
+  .fondo-chat-global {
+    background-image: url('/static/img/img_fondoChat.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.contenedor-chat {
+    background-color: rgba(255, 255, 255, 0.95); /* Fondo blanco semi opaco */
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+/* Para el fondo en la plantilla de chat_con_usuario */
+
+.fondo-chat {
+  background-image: url('/static/img/img_fondoChatUsuario.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+}
+
+.notificacion-buzon {
+  position: absolute;
+  top: 4px; /* Estaba en 2px, la subimos un poco */
+  right: 0px;
+  font-size: 0.65rem;
+  padding: 3px 6px;
+  transform: translate(5%, -30%); /* Estaba en -50%, ahora más bajo */
+  z-index: 10;
+}

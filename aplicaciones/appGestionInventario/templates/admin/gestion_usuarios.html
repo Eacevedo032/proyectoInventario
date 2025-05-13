@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{% static 'css/gestionUsuarios.css' %}">
 {% endblock %}
 
-{% block content_wrapper%}
+{% block content_wrapper %}
 
 <!-- Mensajes -->
 {% if messages %}
@@ -18,14 +18,54 @@
     {% endfor %}
 </div>
 {% endif %}
-
+<br>
 <div class="usuarios-header text-center mb-4">
-    <h1>Gestión de Usuarios</h1>
-    <a href="{% url 'agregar_usuario_admin' %}" class="btn btn-crear-usuario btn-borde-rojo mt-3">
+    <h1 style="color: black;">Gestión de Usuarios</h1>
+    
+    <!-- Tabla dinámica con los roles de usuario -->
+    <style>
+        .tabla-roles {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+      
+        .tabla-roles:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+      </style>
+      
+      <div class="mt-4 mb-4 d-flex justify-content-center">
+        <div style="max-width: 700px; width: 100%;">
+          <h5 class="mb-3" style="color: #010D42;">
+            <strong>🔎 Roles en el sistema</strong>
+          </h5>
+          <table class="table table-bordered tabla-roles">
+            <thead style="background-color: #e60000; color: white;">
+              <tr>
+                <th>Actor</th>
+                <th>Descripción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Usuario administrador</strong></td>
+                <td>Administra todo el sistema. Gestiona inventario, usuarios, laboratorios y reportes generales.</td>
+              </tr>
+              <tr>
+                <td><strong>Usuario común</strong></td>
+                <td>Solicita insumos, reserva laboratorios y revisa sus propias actividades.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <a href="{% url 'agregar_usuario_admin' %}" class="btn btn-crear-usuario btn-borde-rojo mt-1">
         Agregar nuevo usuario
     </a>
 </div>
-
+<br>
+<br>
+<h3 style="color: black;" class="text-center">Usuarios del sistema</h3>
 <div class="user-cards-container">
     {% for usuario in page_obj %}
     <div class="user-card">
@@ -142,15 +182,14 @@
         </span>
 
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}"
-           class="pagination-link">
-            <strong>Siguiente</strong>
-        </a>
-        <a href="?page={{ page_obj.paginator.num_pages }}"
-           class="pagination-link">
-            <strong>Última &raquo;</strong>
-        </a>
-        {% endif %}
+    <a href="?page={{ page_obj.next_page_number }}" class="pagination-link">
+        <strong>Siguiente</strong>
+    </a>
+    <span class="pagination-separator">|</span>
+    <a href="?page={{ page_obj.paginator.num_pages }}" class="pagination-link">
+        <strong>Última &raquo;</strong>
+    </a>
+{% endif %}
     </div>
 </div>
 

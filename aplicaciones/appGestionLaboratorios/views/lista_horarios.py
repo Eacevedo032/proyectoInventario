@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from aplicaciones.appGestionInventario.models import HorarioLaboratorio
+from aplicaciones.appGestionLaboratorios.models import HorarioLaboratorio
 from datetime import date
 
 #ver horarios que ya estan ocupados en los laboratorios por usuario sin provilegios

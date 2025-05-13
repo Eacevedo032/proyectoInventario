@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content_wrapper %}
+
+{% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Fondo chat global, en el ccs, que carga el fondo y un contenedor dentro del fondo -->
+<div class="fondo-chat-global">
+    <div class="container contenedor-chat">
+
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <!-- Ícono a la izquierda -->
+            <div class="back-arrow" onclick="history.back()" style="cursor: pointer; font-size: 2rem; color: #010D42;">
+                <i class="bi bi-arrow-left-circle-fill"></i>
+            </div>
+
+            <!-- Título centrado con espacio automático a los lados -->
+            <div class="flex-grow-1 text-center">
+                <h2 class="fw-bold mb-0" style="color: black;">
+                    📫 Buzón de Mensajes
+                </h2>
+            </div>
+            <!-- Espacio a la derecha para compensar visualmente -->
+            <div style="width: 2rem;"></div>
+        </div>
+        <br>
+        <div class="row">
+            <!-- Usuarios del sistema -->
+            <div class="col-md-5 mb-4">
+                <h4 class="mb-3" style="color: #010D42;">👨‍👨‍👦‍👦 Usuarios del sistema</h4>
+                <ul class="list-group shadow-sm">
+                    {% for usuario in usuarios_info %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center"
+                        style="background-color: #010D42; color: white;">
+                        <div class="d-flex align-items-center">
+                            {% if usuario.userprofile and usuario.userprofile.profile_picture %}
+                            <img src="{{ usuario.userprofile.profile_picture.url }}" class="rounded-circle me-2"
+                                width="35" height="35">
+                            {% else %}
+                            <i class="bi bi-person-circle fs-4 text-light me-2"></i>
+                            {% endif %}
+                            <div>
+                                <span style="color: white;"><strong>{{ usuario.username }}</strong></span>
+                                {% if usuario.is_superuser %}
+                                <span class="badge bg-secondary ms-2">Admin</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <a href="{% url 'chat_con_usuario' usuario.id %}" class="btn btn-sm btn-light">
+                            <i class="bi bi-chat-left-text me-1"></i> Chat
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Conversaciones activas -->
+            <div class="col-md-7 mb-4">
+                <h4 class="mb-3" style="color: #010D42;">📩 Conversaciones activas</h4>
+                {% if conversaciones_activas %}
+                <ul class="list-group shadow-sm">
+                    {% for info in conversaciones_activas %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            {% if info.usuario.userprofile and info.usuario.userprofile.profile_picture %}
+                            <img src="{{ info.usuario.userprofile.profile_picture.url }}" class="rounded-circle me-2"
+                                width="35" height="35">
+                            {% else %}
+                            <i class="bi bi-person-circle fs-4 text-secondary me-2"></i>
+                            {% endif %}
+                            <div>
+                                <strong>{{ info.usuario.username }}</strong>
+                                {% if info.es_reconexion %}
+                                <span class="badge bg-warning ms-2">Reconexión</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            {% if info.no_leidos > 0 %}
+                            <span class="badge bg-success me-2">{{ info.no_leidos }}</span>  <!-- notificaciones de mensajes nuevos -->
+                            {% endif %}
+                            <a href="{% url 'chat_con_usuario' info.usuario.id %}"
+                                class="btn btn-sm btn-outline-primary me-2">
+                                <i class="bi bi-envelope-open"></i>
+                            </a>
+                            <form method="post" action="{% url 'eliminar_conversacion' info.usuario.id %}"
+                                onsubmit="return confirm('¿Seguro que deseas eliminar este chat? Se perderá tu historial.')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="alert alert-info">
+                    No tienes conversaciones activas. Selecciona un usuario para comenzar a chatear.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

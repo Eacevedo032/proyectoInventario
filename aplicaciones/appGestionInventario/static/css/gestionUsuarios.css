@@ -7,6 +7,21 @@ body {
 }
 
 /* Estilos para la sección de usuarios */
+
+/* Estilos para el botón de "Agregar Usuario" */
+.btn-borde-rojo {
+    border: 2px solid #e60000;
+    background-color: white;
+    color: #e60000;
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  .btn-borde-rojo:hover {
+    background-color: #e60000;
+    color: white; /* mantiene el texto blanco al hacer hover */
+  }
+
 .user-cards-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -110,7 +125,7 @@ body {
     background-color: #003f7f;
 }
 
-/* Estilos para el fondo de la pagina de gestion de usuarios */
+/* Estilos para el fondo de la pagina de gestion de usuarios, imagen de fondo en agregar usuarios */
 .fondo-admin {
     position: relative;
     min-height: 100vh;
@@ -122,7 +137,7 @@ body {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url('/static/img/diseñolab.png'); 
+    background-image: url('/static/img/img5.jpg'); 
     background-size: cover;
     background-position: center;
     opacity: 1; /* Más transparente */
@@ -518,3 +533,31 @@ h1 {
         text-align: center;
     }
 }
+
+/* Estilos para la paginación de varios usuarios*/
+.pagination-link {
+    margin: 0 6px;
+    color: #010D42;
+    text-decoration: none;
+  }
+  
+  .pagination-separator {
+    margin: 0 4px;
+    color: #999;
+  }
+
+/* Estilos para la tabla de usuarios y sus roles */
+  .table th, .table td {
+    vertical-align: middle;
+    font-size: 0.95rem;
+  }
+  
+  .table th {
+    background-color: #010D42;
+    color: white;
+  }
+  
+  .table-striped tbody tr:nth-of-type(odd) {
+    background-color: #f8f9fa;
+  }
+  

@@ -1,0 +1,398 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Inicio | Aplicación</title>
+  <!-- Font Awesome 6 CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Bootstrap 5.3.3 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/estilosInicioAplicacion.css' %}">
+  <link rel="stylesheet" href="{% static 'css/estilosMensajes.css' %}">
+  <link rel="icon" href="{% static 'img/logoUNP.ico' %}">
+</head>
+
+<body>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  {% if messages %}
+  <div class="alert alert-dismissible alert-success">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Script para ocultar -->
+  <script>
+    $(document).ready(function () {
+      setTimeout(function () {
+        $(".alert").alert('close');
+      }, 3000);
+    });
+  </script>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span><i class="fas fa-phone-alt"></i> 2289 - 7740</span>
+      <span><i class="fas fa-map-marker-alt"></i> Managua, Costado Sur Colonia Rubén Darío</span>
+    </div>
+    <div class="topbar-right">
+      <a href="https://www.facebook.com/unpnicaragua"><i class="fab fa-facebook-f"></i></a>
+      <a href="https://www.instagram.com/unp_nicaragua/"><i class="fab fa-instagram"></i></a>
+      <a href="https://www.youtube.com/@universidadnacionalpolitecnica"><i class="fab fa-youtube"></i></a>
+      <a href="mailto:info@unp.edu.ni"><i class="fas fa-envelope"></i></a>
+      <a href="https://login.microsoftonline.com/common/oauth2/authorize?response_type=code&client_id=c55fcb47-bbbc-4e17-b420-daeec58237e5&scope=openid%20profile%20email&nonce=N66ac53c18ab70&response_mode=form_post&state=r3YHuZfF7cDRzQp&redirect_uri=https%3A%2F%2Feva.unp.edu.ni%2Fauth%2Foidc%2F&resource=https%3A%2F%2Fgraph.microsoft.com&domain_hint=unp.edu.ni&sso_reload=true"
+        class="eva-btn">EVA UNP <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+
+  <!-- Header con logo -->
+  <header class="header">
+    <div class="container">
+      <!-- Logo -->
+      <a href="https://unp.edu.ni/" target="_blank">
+        <img src="{% static 'img/logoUNP1.png' %}" alt="Logo UNP" class="logo">
+      </a>
+      <!-- Navegación principal -->
+      <nav class="nav">
+        <!-- Todo tipo de usuario -->
+        <!-- INICIO -->
+        <li class="nav-item">
+          <a class="nav-link fw-bold" href="{% url 'inicioAplicacion' %}">
+            Inicio
+          </a>
+        </li>
+        <!-- MI PERFIL -->
+        <!-- Opción con ajuste fino -->
+        <li class="nav-item">
+          <a class="nav-link fw-bold d-flex align-items-center py-1" href="{% url 'editar_perfil' %}">
+            <div class="d-flex align-items-center">
+              {% if user.userprofile.profile_picture %}
+              <img src="{{ user.userprofile.profile_picture.url }}" alt="Foto de perfil" class="rounded-circle me-2"
+                width="30" height="30" style="margin-top: -2px;">
+              {% else %}
+              <i class="bi bi-person-circle me-2" style="font-size: 1.2rem; margin-top: -2px;"></i>
+              {% endif %}
+              <span>Perfil</span>
+            </div>
+          </a>
+        </li>
+        <!-- BUZÓN DE MENSAJES -->
+        <li class="nav-item position-relative">
+          <a class="nav-link fw-bold position-relative d-inline-block" href="{% url 'listar_usuarios_chat' %}">
+            Buzón 📬
+            {% if mensajes_no_leidos > 0 %}
+            <span class="badge rounded-pill bg-danger notificacion-buzon">
+              {{ mensajes_no_leidos }}
+            </span>
+            {% endif %}
+          </a>
+        </li>
+        <!-- Opciones según el tipo de usuario -->
+        {% if user.is_staff or user.is_superuser %}
+        <!-- Admin / Superuser -->
+        <li class="nav-item dropdown fw-bold">
+          <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Inventario
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item fw-bold" href="{% url 'agregar_producto' %}">➕ Agregar Producto</a></li>
+            <li><a class="dropdown-item fw-bold" href="{% url 'menu_catalogos' %}">📚 Gestionar Catálogos</a></li>
+            <li><a class="dropdown-item fw-bold" href="{% url 'listar_productos' %}">📋 Listar Productos</a></li>
+            <li><a class="dropdown-item fw-bold" href="{% url 'registrar_inventario' %}">📦 Inventario Físico</a></li>
+            <li><a class="dropdown-item fw-bold" href="{% url 'transferencia_producto' %}">🔄 Transferencias</a></li>
+            <li><a class="dropdown-item fw-bold" href="#">📥📤 Entradas y Salidas</a></li>
+            <li><a class="dropdown-item fw-bold" href="#">📦➡️ Movimientos</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown fw-bold">
+          <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Laboratorios
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item fw-bold" href="{% url 'administracion_laboratorios' %}">🏥 Administrar
+                Laboratorios</a></li>
+            <li><a class="dropdown-item fw-bold" href="{% url 'administracion_recursos' %}">🗂 Administrar Recursos</a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown fw-bold">
+          <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Reportes
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item fw-bold" href="#">📦 Inventario General</a></li>
+            <li><a class="dropdown-item fw-bold" href="#">📋 Inventario Físico</a></li>
+            <li><a class="dropdown-item fw-bold" href="#">🔁 Transferencias</a></li>
+            <li><a class="dropdown-item fw-bold" href="#">📥📤 Entradas y Salidas del Inventario</a></li>
+            <li><a class="dropdown-item fw-bold" href="#">🔄 Movimientos del Inventario</a></li>
+            <li><a class="dropdown-item fw-bold" href="{% url 'listar_reportes' %}">📊 Actividad Lab y Recursos</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown fw-bold">
+          <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Administración
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item fw-bold" href="{% url 'gestion_usuarios' %}">👨‍🔬👩‍🏫 Usuarios y Roles</a>
+            </li>
+          </ul>
+        </li>
+        {% else %}
+        <!-- Usuario común -->
+        <li class="nav-item dropdown fw-bold">
+          <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Solicitudes
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item fw-bold" href="{% url 'reservar_laboratorio' %}?modo=laboratorios">🏥
+                Laboratorios</a></li>
+            <li><a class="dropdown-item fw-bold" href="{% url 'solicitar_productos' %}">📦 Recursos</a></li>
+            <li><a class="dropdown-item fw-bold" href="{% url 'reservar_laboratorio' %}?modo=ambos">🏥 Laboratorio + 📦
+                Recursos</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown fw-bold">
+          <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Reportes
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item fw-bold" href="{% url 'listar_reportes' %}">📊 Actividad Lab y Recursos</a></li>
+          </ul>
+        </li>
+        {% endif %}
+      </nav>
+
+      <!-- Botón Cerrar Sesión -->
+      <form action="{% url 'logout' %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button class="eva-btn" type="submit" onclick="return confirm('¿Estás seguro de que deseas cerrar tu sesión?')">
+          <a>Cerrar Sesión</a>
+        </button>
+      </form>
+    </div>
+  </header>
+
+
+  <section class="banner">
+    <h1>Bienvenidos al Sistema de Gestión de Inventario y Laboratorios</h1>
+    <p>Ingeniería en Biotecnología Industrial - UNP</p>
+  </section>
+
+  <main class="container my-4">
+
+    <!-- Misión -->
+    <section
+      class="info-section d-flex flex-column flex-md-row align-items-center text-center justify-content-between mb-5">
+      <div class="text-content me-md-4">
+        <h2 class="section-title text-center">Misión de la carrera</h2>
+        <p class="section-text text-justify">
+          Generar innovaciones en áreas de seguridad alimentaria, sostenibilidad ambiental y producción agrícola, esto
+          para fortalecer la estrategia con los <strong>Lineamientos 6 y 7 del Plan Nacional de Lucha contra la Pobreza
+            y para el Desarrollo Humano 2022 - 2026 de Nicaragua</strong>.
+        </p>
+      </div>
+      <div class="image-content mt-4 mt-md-0 zoom-hover">
+        <img src="{% static 'img/misionImagen.jpg' %}" alt="Misión" class="img-fluid rounded shadow"
+          style="max-width: 350px;">
+      </div>
+    </section>
+
+    <!-- Visión -->
+    <section
+      class="info-section d-flex flex-column flex-md-row align-items-center text-center justify-content-between mb-5">
+      <div class="image-content mt-4 mt-md-0 me-md-4 zoom-hover">
+        <img src="{% static 'img/vision.jpg' %}" alt="Visión" class="img-fluid rounded shadow vision-img"
+          style="max-width: 350px;">
+      </div>
+      <div class="text-content">
+        <h2 class="section-title text-center">Visión de la carrera</h2>
+        <p class="section-text text-justify">
+          Perfilarnos como pioneros en infraestructura científica - biotecnológica a nivel universitario, ya que somos
+          la única institución en ofrecer la carrera de Ingeniería en Biotecnología Industrial.
+        </p>
+      </div>
+    </section>
+
+    <!-- Servicios y Valores -->
+    <section class="servicios-valores-section pt-5 pb-0">
+      <div class="container">
+        <div class="row align-items-start">
+          <!-- Servicios -->
+          <div class="col-md-6 text-center mb-4 mb-md-0">
+            <div class="zoom-hover">
+              <img src="{% static 'img/imagenServicios.jpg' %}" alt="Servicios" class="img-fluid servicios-img"
+                style="max-width: 350px;">
+            </div>
+            <h3 class="section-title mt-3 text-center">Servicios</h3>
+            <p class="section-text text-center">
+              Se ofrecen servicios y productos con finalidades investigativas y de ámbitos académicos.
+            </p>
+          </div>
+
+          <!-- Valores -->
+          <div class="col-md-6 text-center">
+            <h3 class="section-title text-center">Valores</h3>
+            <div class="row text-center">
+              <!-- Fila 1 -->
+              <div class="col-4 mb-4">
+                <i class="fas fa-handshake valor-icon"></i>
+                <div class="valor-label">Respeto</div>
+              </div>
+              <div class="col-4 mb-4">
+                <i class="fas fa-users valor-icon"></i>
+                <div class="valor-label">Trabajo en Equipo</div>
+              </div>
+              <div class="col-4 mb-4">
+                <i class="fas fa-hands-helping valor-icon"></i>
+                <div class="valor-label">Solidaridad</div>
+              </div>
+              <!-- Fila 2 -->
+              <div class="col-4 mb-4">
+                <i class="fas fa-user-check valor-icon"></i>
+                <div class="valor-label">Compromiso</div>
+              </div>
+              <div class="col-4 mb-4">
+                <i class="fas fa-user-tie valor-icon"></i>
+                <div class="valor-label">Disciplina</div>
+              </div>
+              <div class="col-4 mb-4">
+                <i class="fas fa-award valor-icon"></i>
+                <div class="valor-label">Calidad</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="fondo-gris">
+    <section class="normativas-video-section">
+      <div class="container">
+        <div class="row d-flex align-items-center justify-content-between flex-wrap">
+
+          <!-- Normativas -->
+          <div class="col-md-6 mb-4 px-6 text-center">
+            <h2 class="section-title text-center mb-4">Normativas de los Laboratorios</h2>
+            <ul class="normativas-list">
+              <strong>
+                <li>Uso de gabacha.</li>
+              </strong>
+              <strong>
+                <li>Uso de mascarillas.</li>
+              </strong>
+              <strong>
+                <li>Uso de guantes.</li>
+              </strong>
+              <strong>
+                <li>No se permite comida.</li>
+              </strong>
+              <strong>
+                <li>No tocarse la cara mientras se esté en los laboratorios.</li>
+              </strong>
+              <strong>
+                <li>Prohibido el uso de pulseras, anillos, aretes, relojes u otros accesorios.</li>
+              </strong>
+              <strong>
+                <li>Recogerse el cabello.</li>
+              </strong>
+              <strong>
+                <li>Andar cortas las uñas.</li>
+              </strong>
+              <strong>
+                <li>No consumir bebidas.</li>
+              </strong>
+              <strong>
+                <li>Mantener el orden.</li>
+              </strong>
+              <strong>
+                <li>Respetar a los demás.</li>
+              </strong>
+              <strong>
+                <li>Realizar limpieza antes y después de cada procedimiento.</li>
+              </strong>
+              <strong>
+                <li>Seguir las normas declaradas por los responsables y/o docentes.</li>
+              </strong>
+            </ul>
+          </div>
+
+          <!-- Video -->
+          <div class="col-md-6 mb-4 px-5">
+            <h2 class="section-title text-center mb-4">Carrera de Ingeniería en Biotecnología Industrial</h2>
+            <div class="video-box mb-3">
+              <iframe
+                src="https://www.facebook.com/plugins/video.php?height=315&href=https%3A%2F%2Fwww.facebook.com%2Funpnicaragua%2Fvideos%2F574921547300923%2F&show_text=false&width=560&t=0"
+                width="100%" height="315" style="border-radius: 12px; border:none; overflow:hidden;" scrolling="no"
+                frameborder="0" allowfullscreen="true"
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+              </iframe>
+            </div>
+            <p class="video-description text-center">
+              <em>Fortaleciendo la calidad de nuestros estudiantes a través de las prácticas profesionales.</em>
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-section">
+        <h3>CONTACTO</h3>
+        <p><i class="fa fa-map-marker"></i> Managua, costado sur<br>Colonia Rubén Darío</p>
+        <p><i class="fa fa-phone"></i> 2289 - 7740</p>
+        <p><i class="fa fa-envelope"></i> infounp@unp.edu.ni</p>
+      </div>
+
+      <div class="footer-section">
+        <h3>ACERCA</h3>
+        <p>La Universidad Nacional Politécnica fue aprobada el 07 de febrero del 2022. Publicada en La Gaceta, Diario
+          Oficial N.º 25, del 08 de febrero de 2022.</p>
+        <a href="https://unp.edu.ni/filosofia-institucional/" class="btn-footer">Leer más</a>
+      </div>
+
+      <div class="footer-section">
+        <h3>REDES SOCIALES</h3>
+        <div class="social-icons">
+          <a href="https://www.facebook.com/unpnicaragua"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://www.youtube.com/@universidadnacionalpolitecnica"><i class="fab fa-youtube"></i></a>
+          <a href="https://www.instagram.com/unp_nicaragua/"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>COPYRIGHT © 2025 UNIVERSIDAD NACIONAL POLITÉCNICA</p>
+    </div>
+  </footer>
+
+  <!-- Scripts Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-dRm8E0UxHqwvAC5EkLZAZXpiIqqy5Ap6tYAkQZ3XQH5N3MnlNo3L9TLhzwXCEcfI"
+    crossorigin="anonymous"></script>
+</body>
+
+</html>

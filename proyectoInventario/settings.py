@@ -39,13 +39,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',  # Para filtros como intcomma
-    'inventario_nuevo', #Inventario nuevo modificado
-    'widget_tweaks', # Para poder usar atributos en los formularios de Django
+    'widget_tweaks', # Para poder usar atributos en los formularios de Django hacer esto: pip install django-widget-tweaks
 
     # Apps propias
     'aplicaciones.appGestionInventario',
     'aplicaciones.appGestionLaboratorios',
-    'aplicaciones.appReportes'
+    'aplicaciones.appReportes',
+    'inventario_nuevo', #Inventario nuevo modificado
+    'appMensajes', # App de mensajes   
 ]
 
 MIDDLEWARE = [
@@ -71,6 +72,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth', #Esto hará que request.user esté disponible en todas las plantillas.
                 'django.contrib.messages.context_processors.messages',
+                'appMensajes.context_processors.notificaciones_mensajes', # Context processor para mensajes no leídos usando context_processors.py
             ],
         },
     },

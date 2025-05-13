@@ -1,4 +1,3 @@
-<!--ver horarios ocupados desde lado de usuario sin privilegios (no puede modificar. es solo de lectura)-->
 {% extends "./base.html" %}
 
 {% block title %}Horarios Ocupados y Bloqueados{% endblock %}
@@ -30,8 +29,8 @@
                             {% for horario in laboratorio1_ocupados %}
                             <tr>
                                 <td>{{ horario.fecha_reserva }}</td>
-                                <td>{{ horario.hora_inicio }}</td>
-                                <td>{{ horario.hora_fin }}</td>
+                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
+                                <td class="hora-12h">{{ horario.hora_fin }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -54,8 +53,8 @@
                             {% for horario in laboratorio1_bloqueados %}
                             <tr>
                                 <td>{{ horario.fecha_reserva }}</td>
-                                <td>{{ horario.hora_inicio }}</td>
-                                <td>{{ horario.hora_fin }}</td>
+                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
+                                <td class="hora-12h">{{ horario.hora_fin }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -67,7 +66,6 @@
             </div>
         </div>
 
-        <!-- Repite lo mismo para Laboratorio Planta Baja y Laboratorio Microbiana -->
         <!-- Laboratorio Planta Baja -->
         <div class="col-md-4">
             <div class="card mb-3">
@@ -89,8 +87,8 @@
                             {% for horario in laboratorio2_ocupados %}
                             <tr>
                                 <td>{{ horario.fecha_reserva }}</td>
-                                <td>{{ horario.hora_inicio }}</td>
-                                <td>{{ horario.hora_fin }}</td>
+                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
+                                <td class="hora-12h">{{ horario.hora_fin }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -113,8 +111,8 @@
                             {% for horario in laboratorio2_bloqueados %}
                             <tr>
                                 <td>{{ horario.fecha_reserva }}</td>
-                                <td>{{ horario.hora_inicio }}</td>
-                                <td>{{ horario.hora_fin }}</td>
+                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
+                                <td class="hora-12h">{{ horario.hora_fin }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -147,8 +145,8 @@
                             {% for horario in laboratorio3_ocupados %}
                             <tr>
                                 <td>{{ horario.fecha_reserva }}</td>
-                                <td>{{ horario.hora_inicio }}</td>
-                                <td>{{ horario.hora_fin }}</td>
+                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
+                                <td class="hora-12h">{{ horario.hora_fin }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -171,8 +169,8 @@
                             {% for horario in laboratorio3_bloqueados %}
                             <tr>
                                 <td>{{ horario.fecha_reserva }}</td>
-                                <td>{{ horario.hora_inicio }}</td>
-                                <td>{{ horario.hora_fin }}</td>
+                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
+                                <td class="hora-12h">{{ horario.hora_fin }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

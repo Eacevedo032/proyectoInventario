@@ -5,7 +5,14 @@ from inventario_nuevo.models import Producto
 from inventario_nuevo.models import Presentacion
 from inventario_nuevo.forms import PresentacionForm
 
+# Decorador para verificar si el usuario es administrador
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+
 #Gestionar el catálogo de Presentación
+@admin_required #Verifica si el usuario es administrador
 def gestionar_presentacion(request):
     presentacion_form = PresentacionForm()
 

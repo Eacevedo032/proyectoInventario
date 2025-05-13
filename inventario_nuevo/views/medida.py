@@ -4,6 +4,13 @@ from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convert
 from inventario_nuevo.models import Producto, Medida
 from inventario_nuevo.forms import MedidaForm
 
+# Decorador para verificar si el usuario es administrador
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+
+@admin_required #Verifica si el usuario es administrador
 #Vista de Medida del Producto
 def gestionar_medida(request):
     medida_form = MedidaForm()

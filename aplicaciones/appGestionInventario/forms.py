@@ -9,161 +9,102 @@ from aplicaciones.appGestionInventario.models import UserProfile
 
 class EditProfileForm(forms.ModelForm):
     current_password = forms.CharField(
-        widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
-            'autocomplete': 'off'
-        }),
-        required=True,
-        label="Contraseña Actual *",
-        help_text="Requerida para confirmar cualquier cambio realizado en esta sección.",
-        error_messages={
-            'required': 'Debe ingresar su contraseña actual para realizar cambios'
-        }
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        required=False,
+        label="Contraseña Actual"
     )
-    
+
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
-            'autocomplete': 'new-password'
-        }), 
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         required=False,
-        label="Nueva Contraseña (Opcional)",
-        help_text="Mínimo 8 caracteres con letras, números, signos. En caso de no desear actualizarla, dejar campo en blanco."
+        label="Cambiar contraseña (Opcional)",
+        help_text="Dejar en blanco si no desea cambiarla."
     )
-    
+
     confirm_password = forms.CharField(
-        widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
-            'autocomplete': 'off'
-        }), 
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         required=False,
-        label="Confirmar Contraseña (Solo si se ingresó una nueva)",
-        help_text="Sino se agregó una nueva contraseña, no confirmar."
+        label="Confirmar Contraseña"    
     )
 
-    class Meta:
-        model = User
-        fields = ['username', 'first_name', 'last_name', 'email']
-        widgets = {
-            'username': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nombre de usuario'
-            }),
-            'first_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Tus nombres'
-            }),
-            'last_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Tus apellidos'
-            }),
-            'email': forms.EmailInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'tu@email.com'
-            }),
-        }
-        labels = {
-            'username': _('Nombre de Usuario *'),
-            'first_name': _('Nombres *'),
-            'last_name': _('Apellidos *'),
-            'email': _('Correo Electrónico *')
-        }
-        error_messages = {
-            'username': {
-                'required': 'El nombre de usuario es obligatorio',
-                'unique': 'Este nombre de usuario ya está en uso'
-            }
-        }
-
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        self.fields['username'].required = True
-        self.fields['first_name'].required = True
-        self.fields['last_name'].required = True
-        self.fields['email'].required = True
-
-    def clean_current_password(self):
-        current_password = self.cleaned_data.get('current_password')
-        if not current_password:
-            raise ValidationError("Debe ingresar su contraseña actual")
-            
-        if not self.user.check_password(current_password):
-            raise ValidationError("La contraseña actual no es correcta")
-        return current_password
-
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        if not username:
-            raise ValidationError("El nombre de usuario es obligatorio")
-            
-        # Verificar si el username cambió y si ya existe
-        if username != self.instance.username and User.objects.filter(username=username).exists():
-            raise ValidationError("Este nombre de usuario ya está registrado")
-        return username
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        try:
-            validate_email(email)
-        except ValidationError:
-            raise ValidationError("Ingrese un correo electrónico válido (ejemplo: usuario@dominio.com)")
-        
-        # Solo validar unicidad si el email cambió
-        if email != self.instance.email and User.objects.filter(email=email).exists():
-            raise ValidationError("Este correo ya está registrado")
-        return email
-
-    def clean_password(self):
-        password = self.cleaned_data.get('password')
-        if password:
-            if len(password) < 8:
-                raise ValidationError("La contraseña debe tener al menos 8 caracteres")
-            if not any(char.isdigit() for char in password):
-                raise ValidationError("La contraseña debe contener al menos un número")
-            if not any(char.isalpha() for char in password):
-                raise ValidationError("La contraseña debe contener al menos una letra")
-            if password == self.cleaned_data.get('current_password'):
-                raise ValidationError("La nueva contraseña no puede ser igual a la actual")
-        return password
-
-    def clean(self):
-        cleaned_data = super().clean()
-        
-        # Validar coincidencia de contraseñas
-        password = cleaned_data.get("password")
-        confirm_password = cleaned_data.get("confirm_password")
-
-        if password and password != confirm_password:
-            self.add_error('confirm_password', "Las contraseñas no coinciden")
-
-        return cleaned_data
-    
     delete_picture = forms.BooleanField(
         required=False,
         label="Eliminar foto actual",
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
 
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+        }
+        labels = {
+            'username': _('Nombre de Usuario'),
+            'first_name': _('Nombres'),
+            'last_name': _('Apellidos'),
+            'email': _('Correo Institucional')
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        # Hacer opcionales
+        self.fields['first_name'].required = False
+        self.fields['last_name'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirm_password = cleaned_data.get("confirm_password")
+        current_password = cleaned_data.get("current_password")
+
+        # Si se intenta cambiar contraseña, verificar requisitos
+        if password or confirm_password:
+            if not current_password:
+                self.add_error('current_password', "Debe ingresar su contraseña actual para cambiar la contraseña.")
+            elif not self.user.check_password(current_password):
+                self.add_error('current_password', "La contraseña actual no es correcta.")
+
+            if password != confirm_password:
+                self.add_error('confirm_password', "La nueva contraseña y su confirmación no coinciden.")
+            else:
+                # Validaciones de seguridad para contraseña
+                if password and len(password) < 8:
+                    self.add_error('password', "La nueva contraseña debe tener al menos 8 caracteres.")
+                if password and not any(c.isdigit() for c in password):
+                    self.add_error('password', "Debe contener al menos un número.")
+                if password and not any(c.isalpha() for c in password):
+                    self.add_error('password', "Debe contener al menos una letra.")
+                if password == current_password:
+                    self.add_error('password', "La nueva contraseña no puede ser igual a la actual.")
+
+        return cleaned_data
+
     def save(self, commit=True):
         user = super().save(commit=False)
         profile, created = UserProfile.objects.get_or_create(user=user)
-        
-        # Eliminar foto si se marcó el checkbox
+
         if self.cleaned_data.get('delete_picture'):
             profile.delete_profile_picture()
-        
-        # Actualizar foto si se subió una nueva
+
         if 'profile_picture' in self.files:
-            # Eliminar la anterior si existe
             if profile.profile_picture:
                 profile.delete_profile_picture()
             profile.profile_picture = self.files['profile_picture']
-        
+
+        # Guardar nueva contraseña si se proporcionó
+        new_password = self.cleaned_data.get('password')
+        if new_password:
+            user.set_password(new_password)
+
         if commit:
             user.save()
             profile.save()
-        
+
         return user
 
 #Form NUEVO para agregar un usuario por parte de un admin

@@ -33,11 +33,6 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="{{ color_form.codigo.id_for_label }}" class="form-label">Código <span class="text-muted">(opcional)</span></label>
-                    {{ color_form.codigo|add_class:"form-control" }}
-                </div>
-
-                <div class="mb-3">
                     <label for="{{ color_form.descripcion.id_for_label }}" class="form-label">Descripción <span class="text-muted">(opcional)</span></label>
                     <style>
                         textarea.form-control {
@@ -86,8 +81,7 @@
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="mb-0 text-primary">{{ color.nombre }}</h4>
-                    <small><strong>Código:</strong> {{ color.codigo|default:"(sin código)" }} |
-                           <strong>Descripción:</strong> {{ color.descripcion|default:"(sin descripción)" }}</small>
+                    <small><strong>Descripción:</strong> {{ color.descripcion|default:"(sin descripción)" }}</small>
                 </div>
                 <div>
                     <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarColorModal{{ color.id }}">Editar</button>
@@ -156,10 +150,6 @@
                             <div class="mb-3">
                                 <label class="form-label">Nombre</label>
                                 <input type="text" name="nombre" class="form-control" value="{{ color.nombre }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Código</label>
-                                <input type="text" name="codigo" class="form-control" value="{{ color.codigo }}">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Descripción</label>

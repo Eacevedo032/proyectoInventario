@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% load widget_tweaks %}
 
 {% block head %}
@@ -19,7 +18,8 @@
         </div>
 
         {% if messages %}
-        <div class="alert alert-dismissible {% if messages.tags %}{{ messages.tags }}{% else %}alert-info{% endif %}">
+        <div
+            class="alert alert-dismissible {% if messages.tags %}{{ messages.tags }}{% else %}alert-info{% endif %} mt-2">
             {% for message in messages %}
             <strong>{{ message }}</strong>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -27,23 +27,59 @@
         </div>
         {% endif %}
 
-        <h2 class="titulo-institucional">
-            <i class="bi bi-person-gear" style="font-size: 3rem;"></i><br>
-            Editar Perfil
-        </h2>
+        <!-- Imagen pequeña del perfil justo arriba del contenedor -->
+        <div class="text-center my-3">
+            {% if user.userprofile.profile_picture %}
+            <img src="{{ user.userprofile.profile_picture.url }}" alt="Foto de perfil actual" class="rounded-circle"
+                style="width: 150px; height: 150px; object-fit: cover;">
+            {% else %}
+            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center"
+                style="width: 100px; height: 100px;">
+                <i class="bi bi-person" style="font-size: 40px; color: #6c757d;"></i>
+            </div>
+            <div class="mt-1 text-muted" style="font-size: 0.9rem;"><strong>Sin foto de perfil</strong></div>
+            {% endif %}
+        </div>
 
-        <div class="tarjeta-institucional">
+        <div class="tarjeta-institucional mt-4">
+            <!-- Título principal -->
+            <h2 style="font-weight: bold; color: #000; font-size: 2.3rem;" class="text-center">
+                🛠🙍‍♂️ Editar Perfil de Usuario
+            </h2> <br>
             <form method="POST" enctype="multipart/form-data" autocomplete="off" novalidate>
                 {% csrf_token %}
                 <div class="row">
                     <!-- Columna izquierda -->
                     <div class="col-md-6">
-                        <h5 class="mb-3 text-primary"><i class="bi bi-person-lines-fill"></i> Información Personal</h5>
+                        <h5 class="mb-3 text-primary"><strong>🧾 Información Personal</strong></h5>
 
                         {% for field in form %}
-                        {% if field.name in 'username,first_name,last_name,email' %}
+                        {% if field.name == 'username' %}
                         <div class="mb-3">
                             <label class="label-institucional">{{ field.label }}</label>
+                            {{ field|add_class:"input-institucional"|attr:"readonly" }}
+                            <small class="form-text text-muted">Este campo no es editable.</small>
+                        </div>
+
+                        {% elif field.name == 'email' %}
+                        <div class="mb-3">
+                            <label class="label-institucional">{{ field.label }}</label>
+                            {{ field|add_class:"input-institucional"|attr:"readonly" }}
+                            <small class="form-text text-muted">Este campo no es editable.</small>
+                        </div>
+
+                        {% elif field.name == 'first_name' %}
+                        <div class="mb-3">
+                            <label class="label-institucional">{{ field.label }} <span>(Opcional)</span></label>
+                            {{ field|add_class:"input-institucional" }}
+                            {% if field.errors %}
+                            <div class="invalid-feedback d-block">{{ field.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        {% elif field.name == 'last_name' %}
+                        <div class="mb-3">
+                            <label class="label-institucional">{{ field.label }} <span>(Opcional)</span></label>
                             {{ field|add_class:"input-institucional" }}
                             {% if field.errors %}
                             <div class="invalid-feedback d-block">{{ field.errors.0 }}</div>
@@ -52,60 +88,78 @@
                         {% endif %}
                         {% endfor %}
                     </div>
-
                     <!-- Columna derecha -->
                     <div class="col-md-6">
-                        <h5 class="mb-3 text-primary"><i class="bi bi-shield-lock"></i> Seguridad</h5>
+                        <h5 class="mb-3 text-primary"><strong>🔒 Seguridad</strong></h5>
 
-                        {% for field in form %}
-                        {% if field.name in 'current_password,password,confirm_password' %}
+                        {% if form.password %}
                         <div class="mb-3">
-                            <label class="label-institucional">{{ field.label }}</label>
-                            {{ field|add_class:"input-institucional" }}
-                            {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
-                            {% endif %}
-                            {% if field.errors %}
-                            <div class="invalid-feedback d-block">{{ field.errors.0 }}</div>
+                            <label class="label-institucional">{{ form.password.label }}</label>
+                            {{ form.password|add_class:"input-institucional" }}
+                            <small class="form-text text-muted">Dejar en blanco si no desea cambiarla.</small>
+                            {% if form.password.errors %}
+                            <div class="invalid-feedback d-block">{{ form.password.errors.0 }}</div>
                             {% endif %}
                         </div>
                         {% endif %}
-                        {% endfor %}
 
-                        <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-camera"></i> Foto de Perfil (Opcional)</h5>
-
-                        <div class="text-center mb-3">
-                            {% if user.userprofile.profile_picture %}
-                            <img src="{{ user.userprofile.profile_picture.url }}"
-                                class="img-thumbnail rounded-circle profile-picture-container" id="profilePicture"
-                                data-bs-toggle="modal" data-bs-target="#pictureModal"
-                                style="width: 200px; height: 200px; object-fit: cover;">
-
-                            <div class="form-check form-switch d-flex justify-content-center align-items-center mb-3">
-                                <input class="form-check-input me-2" type="checkbox" id="delete_picture"
-                                    name="delete_picture">
-                                <label class="form-check-label text-danger" for="delete_picture">
-                                    <i class="bi bi-trash"></i> Eliminar foto actual
-                                </label>
-                            </div>
-                            {% else %}
-                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center profile-picture-container"
-                                style="width: 200px; height: 200px;" id="profilePicture" data-bs-toggle="modal"
-                                data-bs-target="#pictureModal">
-                                <i class="bi bi-person" style="font-size: 80px;"></i>
-                            </div>
+                        {% if form.confirm_password %}
+                        <div class="mb-3">
+                            <label class="label-institucional">{{ form.confirm_password.label }}</label>
+                            {{ form.confirm_password|add_class:"input-institucional" }}
+                            <small class="form-text text-muted">Confirmación de nueva contraseña.</small>
+                            {% if form.confirm_password.errors %}
+                            <div class="invalid-feedback d-block">{{ form.confirm_password.errors.0 }}</div>
                             {% endif %}
-
-                            <div class="mb-3 mt-3">
-                                <input type="file" name="profile_picture" class="form-control input-institucional"
-                                    accept="image/*">
-                                <small class="form-text text-muted">Formatos: JPG, PNG.</small>
-                            </div>
                         </div>
+                        {% endif %}
+
+                        {% if form.current_password %}
+                        <div class="mb-3">
+                            <label class="label-institucional">{{ form.current_password.label }}</label>
+                            {{ form.current_password|add_class:"input-institucional" }}
+                            <small class="form-text text-muted">Requerida solo si cambia la contraseña.</small>
+                            {% if form.current_password.errors %}
+                            <div class="invalid-feedback d-block">{{ form.current_password.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <!-- Foto de perfil centrada -->
+                <h5 class="mb-3 mt-4 text-primary text-center"><strong>📷 Foto de Perfil (Opcional)</strong></h5>
+                </h5>
+                <div class="text-center mb-3">
+                    {% if user.userprofile.profile_picture %}
+                    <img src="{{ user.userprofile.profile_picture.url }}"
+                        class="img-thumbnail rounded-circle profile-picture-container" id="profilePicture"
+                        data-bs-toggle="modal" data-bs-target="#pictureModal"
+                        style="width: 200px; height: 200px; object-fit: cover;">
+
+                    <div class="form-check form-switch d-flex justify-content-center align-items-center my-3">
+                        <input class="form-check-input me-2" type="checkbox" id="delete_picture" name="delete_picture">
+                        <label class="form-check-label text-danger" for="delete_picture">
+                            <i class="bi bi-trash"></i> Eliminar foto actual
+                        </label>
+                    </div>
+                    {% else %}
+                    <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center profile-picture-container"
+                        style="width: 200px; height: 200px;" id="profilePicture" data-bs-toggle="modal"
+                        data-bs-target="#pictureModal">
+                        <i class="bi bi-person" style="font-size: 80px;"></i>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3 mt-3 d-flex flex-column align-items-center">
+                        <input type="file" name="profile_picture" class="form-control input-institucional"
+                            accept="image/*" style="max-width: 300px;">
+                        <small class="form-text text-muted text-center">Formatos: JPG, PNG.</small>
                     </div>
                 </div>
 
-                <!-- Botones centrados debajo de ambas columnas -->
+                <!-- Botones -->
                 <div class="d-flex justify-content-center gap-3 mt-4">
                     <button type="button" onclick="history.back()" class="btn"
                         style="background-color: #e30613; color: white;">
@@ -157,7 +211,7 @@
 
         function validatePassword() {
             if (password.value && password.value !== confirm_password.value) {
-                confirm_password.setCustomValidity("Las contraseñas no coinciden");
+                confirm_password.setCustomValidity("La nueva contraseña y su confirmación no coinciden.");
             } else {
                 confirm_password.setCustomValidity('');
             }
@@ -190,31 +244,33 @@
         const form = document.querySelector('form');
         form.addEventListener('submit', function (e) {
             let isValid = true;
+            const password = document.querySelector('[name="password"]');
+            const confirm_password = document.querySelector('[name="confirm_password"]');
+            const current_password = document.querySelector('[name="current_password"]');
 
-            ['username', 'first_name', 'last_name', 'email', 'current_password'].forEach(fieldName => {
-                const field = document.querySelector(`[name="${fieldName}"]`);
-                if (field && !field.value.trim()) {
-                    field.classList.add('is-invalid');
-                    if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('invalid-feedback')) {
-                        const errorDiv = document.createElement('div');
-                        errorDiv.className = 'invalid-feedback d-block';
-                        errorDiv.textContent = 'Este campo es obligatorio';
-                        field.parentNode.appendChild(errorDiv);
-                    }
+            // Solo exigir contraseña actual si se intenta cambiar la contraseña
+            if ((password && password.value.trim()) || (confirm_password && confirm_password.value.trim())) {
+                if (!current_password || !current_password.value.trim()) {
+                    current_password.classList.add('is-invalid');
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback d-block';
+                    errorDiv.textContent = 'Debe ingresar la contraseña actual para cambiar la contraseña';
+                    current_password.parentNode.appendChild(errorDiv);
                     isValid = false;
                 }
-            });
+            }
 
             if (!isValid) {
                 e.preventDefault();
                 const alertDiv = document.createElement('div');
                 alertDiv.className = 'alert alert-danger position-fixed top-0 start-50 translate-middle-x mt-3';
                 alertDiv.style.zIndex = '1100';
-                alertDiv.textContent = 'Por favor complete todos los campos obligatorios';
+                alertDiv.textContent = 'Por favor complete los campos requeridos';
                 document.body.appendChild(alertDiv);
                 setTimeout(() => alertDiv.remove(), 3000);
             }
         });
+
     });
 </script>
 {% endblock %}

@@ -1,4 +1,3 @@
-<!--admin-->
 {% extends "./base.html" %}
 
 {% block title %}Horario para clases y Maestros en los laboratorios{% endblock %}
@@ -24,7 +23,7 @@
             </div>
             {% endif %}
 
-            <form method="post" action="" class="needs-validation" novalidate>
+            <form method="post" action="" class="needs-validation" novalidate id="horarioForm">
                 {% csrf_token %}
                 <div class="mb-3">
                     <label for="laboratorio" class="form-label">Laboratorio:</label>
@@ -54,20 +53,64 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="hora_inicio" class="form-label">Hora de Inicio:</label>
-                    <input type="time" id="hora_inicio" name="hora_inicio" class="form-control" value="{{ hora_inicio|default:'' }}" required>
-                    <div class="invalid-feedback">
-                        Por favor, ingresa la hora de inicio.
+                    <label class="form-label">Hora de Inicio:</label>
+                    <div class="row">
+                        <div class="col-5">
+                            <select id="hora_inicio" name="hora_inicio" class="form-control" required>
+                                <option value="">Hora</option>
+                                {% for i in "x"|rjust:"12" %}
+                                <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-5">
+                            <select id="minuto_inicio" name="minuto_inicio" class="form-control" required>
+                                <option value="">Minutos</option>
+                                {% for i in "x"|rjust:"60" %}
+                                <option value="{{ forloop.counter0 }}">{{ forloop.counter0|stringformat:"02d" }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            <select id="periodo_inicio" name="periodo_inicio" class="form-control" required>
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="hora_fin" class="form-label">Hora de Fin:</label>
-                    <input type="time" id="hora_fin" name="hora_fin" class="form-control" value="{{ hora_fin|default:'' }}" required>
-                    <div class="invalid-feedback">
-                        Por favor, ingresa la hora de fin.
+                    <label class="form-label">Hora de Fin:</label>
+                    <div class="row">
+                        <div class="col-5">
+                            <select id="hora_fin" name="hora_fin" class="form-control" required>
+                                <option value="">Hora</option>
+                                {% for i in "x"|rjust:"12" %}
+                                <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-5">
+                            <select id="minuto_fin" name="minuto_fin" class="form-control" required>
+                                <option value="">Minutos</option>
+                                {% for i in "x"|rjust:"60" %}
+                                <option value="{{ forloop.counter0 }}">{{ forloop.counter0|stringformat:"02d" }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            <select id="periodo_fin" name="periodo_fin" class="form-control" required>
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Campos ocultos para el formato militar que se enviará al servidor -->
+                <input type="hidden" id="hora_inicio_militar" name="hora_inicio_militar">
+                <input type="hidden" id="hora_fin_militar" name="hora_fin_militar">
 
                 <div class="text-center">
                     <button type="submit" class="btn btn-primary">Guardar Horario</button>

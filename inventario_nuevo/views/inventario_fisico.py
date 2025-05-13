@@ -11,7 +11,14 @@ from django.urls import reverse
 from django.http import HttpResponse
 import pandas as pd
 
+# Decorador para verificar si el usuario es administrador
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+
 # REGISTRAR INVENTARIO FÍSICO
+@admin_required #Verifica si el usuario es administrador
 def registrar_inventario(request):
     if request.method == 'POST':
         fecha = request.POST.get('fecha', None)
@@ -52,6 +59,7 @@ def registrar_inventario(request):
     return render(request, 'inventario_nuevo/registrar_inventario.html', {'productos': productos})
     
 # REPORTE GENERAL DE INVENTARIO
+@admin_required #Verifica si el usuario es administrador
 def reporte_inventario_diario(request, fecha):
     movimientos = InventarioDiario.objects.filter(fecha=fecha).order_by('producto')
 
@@ -59,14 +67,17 @@ def reporte_inventario_diario(request, fecha):
 
     return render(request, 'inventario_nuevo/reporte_inventario_diario.html', {'movimientos': movimientos, 'fecha': fecha})
 
+@admin_required #Verifica si el usuario es administrador
 def seleccion_reportes(request):
     return render(request, 'inventario_nuevo/seleccion_reportes.html')
 
+@admin_required #Verifica si el usuario es administrador
 def reporte_inventario(request):
     movimientos = InventarioDiario.objects.all().order_by('-fecha')
     return render(request, 'inventario_nuevo/reporte_inventario.html', {'movimientos': movimientos})
 
 #TRANSFERENCIA REGISTRA Y ACTUALIZA
+@admin_required #Verifica si el usuario es administrador
 def transferencia_producto(request):
     productos = Producto.objects.all()
     estados = ["Dado de baja", "Mantenimiento", "No Disponible", "Prestado", "Ingreso"]
@@ -103,11 +114,13 @@ def transferencia_producto(request):
 
     return render(request, 'inventario_nuevo/transferencia_producto.html', {'productos': productos, 'estados': estados})
 
+@admin_required #Verifica si el usuario es administrador
 def historial_transferencias(request):
     transferencias = TransferenciaProducto.objects.all().order_by('-fecha_transferencia')
     return render(request, 'inventario_nuevo/historial_transferencias.html', {'transferencias': transferencias})
 
 # REPORTE DE INVENTARIO DIARIO
+@admin_required #Verifica si el usuario es administrador
 def reporte_inventario_diario(request):
     fecha_str = request.GET.get('fecha')  #Obtener fecha de la solicitud
     try:
@@ -128,6 +141,7 @@ def reporte_inventario_diario(request):
     })
 
 # PDFfrom django.http import HttpResponse
+@admin_required #Verifica si el usuario es administrador
 def exportar_pdf(request):
     #Cargar la plantilla HTML del reporte de inventario
     template = get_template("inventario_nuevo/reporte_inventario.html")  
@@ -157,6 +171,7 @@ def exportar_pdf(request):
     return response
 
 # EXCEL
+@admin_required #Verifica si el usuario es administrador
 def exportar_excel(request):
     movimientos = InventarioDiario.objects.all().values('fecha', 'producto__nombre', 'usuario__username', 'cantidad_inicial', 'cantidad_final', 'diferencia')  # Corrección aquí
 

@@ -5,7 +5,14 @@ from inventario_nuevo.models import Producto
 from inventario_nuevo.models import Capacidad
 from inventario_nuevo.forms import CapacidadForm
 
+# Decorador para verificar si el usuario es administrador
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+
 #Gestionar catálogo de la capacidad
+@admin_required #Verifica si el usuario es administrador
 def gestionar_capacidad(request):
     capacidad_form = CapacidadForm()
 

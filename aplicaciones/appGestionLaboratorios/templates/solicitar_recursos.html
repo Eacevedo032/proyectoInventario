@@ -1,5 +1,7 @@
 <!-- plantilla para usuario sin privilegios -->
 {% extends "./base.html" %}
+
+{% load static %}
 {% block title %}Reservación de Laboratorio{% endblock %}
 {% block body %}
 
@@ -23,7 +25,8 @@
                     <div class="form-group row align-items-center justify-content-center">
                         <div class="col-12 col-md-6 mb-3">
                             <label for="usuario" class="text-center w-100">Usuario:</label>
-                            <input type="text" class="form-control text-center" value="{{ request.user.username }}" readonly>
+                            <input type="text" class="form-control text-center" value="{{ request.user.username }}"
+                                readonly>
                             <input type="hidden" name="usuario" value="{{ request.user.id }}">
                         </div>
                     </div>
@@ -46,65 +49,70 @@
                             <input type="date" id="fecha_uso" class="form-control" readonly>
                             <input type="hidden" name="fecha_uso" id="hidden_fecha_uso">
                         </div>
-                    </div>
-
-                    <div class="item-entry">
-                        <div class="form-group row align-items-center justify-content-center">
-                            <div class="col-12 col-md-6 mb-3">
-                                <label for="categoria" class="text-center w-100">Categoría:</label>
-                                <select name="categoria[]" class="form-control categoria" required onchange="actualizarSubcategorias()">
-                                    <option value="">Selecciona una categoría</option>
-                                    {% for categoria in categorias %}
-                                    <option value="{{ categoria.id_categoria }}">{{ categoria.nombre_categoria }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-12 col-md-6 mb-3">
-                                <label for="subcategoria" class="text-center w-100">Subcategoría:</label>
-                                <select name="subcategoria[]" class="form-control subcategoria" required onchange="actualizarItems()">
-                                    <option value="">Selecciona una subcategoría</option>
-                                    {% for subcategoria in subcategorias %}
-                                    <option value="{{ subcategoria.id_subcategoria }}" data-categoria="{{ subcategoria.categoria.id_categoria }}">
-                                        {{ subcategoria.nombre }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
                         </div>
+                        
+                        <div class="item-entry">
+                            <div class="form-group row align-items-center justify-content-center">
+                                <div class="col-12 col-md-6 mb-3">
+                                    <label for="categoria" class="text-center w-100">Categoría:</label>
+                                    <select name="categoria[]" class="form-control categoria" required onchange="actualizarSubcategorias(this)">
+                                        <option value="">Seleccione categoría</option>
+                                        {% for categoria in categorias %}
+                                        <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6 mb-3">
+                                    <label for="subcategoria" class="text-center w-100">Subcategoría:</label>
+                                    <select name="subcategoria[]" class="form-control subcategoria" required onchange="actualizarItems(this)"
+                                        disabled>
+                                        <option value="">Primero seleccione una categoría</option>
+                                        {% for subcategoria in subcategorias %}
+                                        <option value="{{ subcategoria.id }}" data-categoria="{{ subcategoria.categoria.id }}">
+                                            {{ subcategoria.nombre }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
 
                         <div class="form-group row align-items-center justify-content-center">
                             <div class="col-12 col-md-6 mb-3">
                                 <label for="item" class="text-center w-100">Ítem:</label>
-                                <select name="inventario[]" class="form-control item" required>
-                                    <option value="">Selecciona un ítem</option>
+                                <select name="producto[]" class="form-control item" required disabled>
+                                    <option value="">Primero seleccione una subcategoría</option>
                                     {% for item in items %}
-                                    <option value="{{ item.id }}" data-subcategoria="{{ item.subcategoria.id_subcategoria }}">
-                                        {{ item.nombre }} (Cantidad: {{ item.cantidad_existente }} {{ item.unidad_medida }})
+                                    <option value="{{ item.id }}" data-subcategoria="{{ item.subcategoria.id }}"
+                                        data-cantidad="{{ item.cantidad_disponible }}"
+                                        data-unidad="{{ item.unidad_medida.abreviatura }}" style="display: none;">
+                                        {{ item.nombre }} ({{ item.cantidad_disponible }} {{
+                                        item.unidad_medida.abreviatura }})
                                     </option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div class="col-6 col-md-3 mb-3">
                                 <label for="cantidad_utilizada" class="text-center w-100">Cantidad a Utilizar:</label>
-                                <input type="number" name="cantidad_utilizada[]" step="0.01" class="form-control" required>
+                                <input type="number" name="cantidad_utilizada[]" step="0.01" class="form-control"
+                                    required>
                             </div>
                             <div class="col-6 col-md-3 mb-3">
                                 <label for="unidad_medida" class="text-center w-100">Unidad de Medida:</label>
                                 <select name="unidad_medida[]" class="form-control" required>
-                                    <option value="unidades">unidades</option>
-                                    <option value="kg">kg</option>
-                                    <option value="g">g</option>
-                                    <option value="mg">mg</option>
-                                    <option value="lb">lb</option>
-                                    <option value="L">L</option>
-                                    <option value="mL">ml</option>
-                                    <option value="cm³">cm³</option>
-                                    <option value="m³">m³</option>
-                                    <option value="gal">gal</option>
-                                    <option value="mm">mm</option>
-                                    <option value="cm">cm</option>
-                                    <option value="m">m</option>
-                                    <option value="in">pulg</option>
+                                    <option value="Unidad">Unidad</option>
+                                    <option value="kg">kg (Kilogramo)</option>
+                                    <option value="g">g (Gramo)</option>
+                                    <option value="mg">mg (Miligramo)</option>
+                                    <option value="lb">lb (Libra)</option>
+                                    <option value="L">L (Litro)</option>
+                                    <option value="mL">mL (Mililitro)</option>
+                                    <option value="cm³">cm³ (Centímetro cúbico)</option>
+                                    <option value="m³">m³ (Metro cúbico)</option>
+                                    <option value="gal">gal (Galón)</option>
+                                    <option value="m">m (Metro)</option>
+                                    <option value="mm">mm (Milímetro)</option>
+                                    <option value="cm">cm (Centímetro)</option>
+                                    <option value="in">in (Pulgada)</option>
                                 </select>
                             </div>
                         </div>
@@ -121,153 +129,26 @@
 
                 <div class="form-group row justify-content-center mt-4 gap-3">
                     <!-- Botón "Agregar otro ítem" -->
-                    <button type="button" 
-                        class="btn btn-primary d-flex align-items-center justify-content-center text-center" 
-                        id="agregar-item" 
-                        style="width: auto; border-radius: 12px; padding: 8px 16px;">
+                    <button type="button"
+                        class="btn btn-primary d-flex align-items-center justify-content-center text-center"
+                        id="agregar-item" style="width: auto; border-radius: 12px; padding: 8px 16px;">
                         <i class="bi bi-plus-circle me-2"></i> Agregar otro ítem
                     </button>
                     <!-- Botón "Guardar" -->
-                    <button type="submit" 
-                        class="btn btn-success d-flex align-items-center justify-content-center text-center" 
+                    <button type="submit"
+                        class="btn btn-success d-flex align-items-center justify-content-center text-center"
                         style="width: auto; border-radius: 12px; padding: 8px 16px;">
                         <i class="bi bi-check-circle me-2"></i> Guardar
                     </button>
+                    <a href="{% url 'reservar_laboratorio' %}?modo=ambos" 
+                     class="btn btn-secondary d-flex align-items-center justify-content-center text-center"
+                     style="width: auto; border-radius: 12px; padding: 8px 16px;">
+                     <i class="bi bi-arrow-left-circle me-2"></i> Volver
+                    </a>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
-<div class="container mt-5">
-    <h2 class="mt-5">Mis Solicitudes De Recursos</h2>
-    <!-- Resumen de solicitudes -->
-    <div class="row mb-4">
-        <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Solicitudes pendientes</h5>
-                    <p class="card-text">{{ solicitudes_pendientes }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Solicitudes aprobadas</h5>
-                    <p class="card-text">{{ solicitudes_aprobadas }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Solicitudes rechazadas</h5>
-                    <p class="card-text">{{ solicitudes_rechazadas }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filtros avanzados -->
-    <form method="get" action="{% url 'solicitar_recursos' %}" class="mb-4">
-        <div class="row g-3">
-            <div class="col-12 col-md-4">
-                <label for="fecha">Fecha:</label>
-                <input type="date" id="fecha" name="fecha" class="form-control" value="{{ request.GET.fecha }}">
-            </div>
-            <div class="col-12 col-md-4">
-                <label for="laboratorio">Laboratorio:</label>
-                <select id="laboratorio" name="laboratorio" class="form-control">
-                    <option value="">Todos</option>
-                    {% for lab in laboratorios %}
-                    <option value="{{ lab.laboratorio }}" {% if request.GET.laboratorio == lab.laboratorio %}selected{% endif %}>
-                        {{ lab.laboratorio }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-12 col-md-4">
-                <button type="submit" class="btn btn-primary w-100">Buscar</button>
-                <a href="{% url 'solicitar_recursos' %}" class="btn btn-secondary w-100 mt-2">Limpiar filtros</a>
-            </div>
-        </div>
-    </form>
-
-<!-- Botón para mostrar/ocultar historial completo -->
-<div class="text-center mb-4">
-    <a href="?page={{ request.GET.page }}&mostrar_historial={% if request.GET.mostrar_historial == 'true' %}false{% else %}true{% endif %}&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}" class="btn btn-info">
-        {% if request.GET.mostrar_historial == 'true' %}
-            Ocultar Historial Completo
-        {% else %}
-            Mostrar Historial Completo
-        {% endif %}
-    </a>
-</div>
-
-<!-- Tabla de solicitudes -->
-<div class="table-responsive">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Ítem</th>
-                <th>Laboratorio</th>
-                <th>Cantidad a utilizar</th>
-                <th>Fecha de uso</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for solicitud in page_obj %}
-            <tr>
-                <td>{{ solicitud.inventario.nombre }}</td>
-                <td>{{ solicitud.solicitud.laboratorio }}</td>
-                <td>{{ solicitud.cantidad_utilizada }} {{ solicitud.unidad_medida }}</td>
-                <td>{{ solicitud.fecha_uso|date:"Y-m-d" }}</td>
-                <td>
-                    {% if solicitud.solicitud.estado == 'pendiente' %}
-                    <a href="{% url 'editar_recurso' solicitud.id %}" class="btn btn-warning">Editar</a>
-                    <a href="{% url 'eliminar_recurso' solicitud.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
-                    {% elif solicitud.solicitud.estado == 'rechazada' %}
-                    <a href="{% url 'eliminar_recurso' solicitud.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
-                    {% else %}
-                    <button class="btn btn-secondary" disabled>Editar</button>
-                    <button class="btn btn-danger" disabled>Eliminar</button>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">No tienes solicitudes de reservación.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- Paginación -->
-<nav aria-label="Paginación">
-    <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
-        <li class="page-item">
-            <a class="page-link" href="?page=1&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Primera</a>
-        </li>
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Anterior</a>
-        </li>
-        {% endif %}
-        <li class="page-item disabled">
-            <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-        </li>
-        {% if page_obj.has_next %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Siguiente</a>
-        </li>
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&fecha={{ request.GET.fecha }}&laboratorio={{ request.GET.laboratorio }}&mostrar_historial={{ request.GET.mostrar_historial }}">Última</a>
-        </li>
-        {% endif %}
-    </ul>
-</nav>
-
 {% endblock %}
+<script src="{% static 'js/appGestionLaboratorio.js' %}"></script>

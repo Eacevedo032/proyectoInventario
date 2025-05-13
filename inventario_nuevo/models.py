@@ -24,7 +24,6 @@ class Subcategoria(models.Model):
         return self.nombre
 
 class Marca(models.Model):
-    codigo = models.CharField(max_length=50, blank=True, null=True)
     nombre = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(blank=True, null=True)
 
@@ -32,7 +31,6 @@ class Marca(models.Model):
         return self.nombre
 
 class Modelo(models.Model):
-    codigo = models.CharField(max_length=50, blank=True, null=True)
     nombre = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(blank=True, null=True)
 
@@ -47,7 +45,6 @@ class Presentacion(models.Model):
         return self.nombre
 
 class Color(models.Model):
-    codigo = models.CharField(max_length=50, blank=True, null=True)
     nombre = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(blank=True, null=True)
 
@@ -71,10 +68,9 @@ class Accesorios(models.Model):
 class EstadoRecurso(models.Model):
     ESTADOS = [
         ('disponible', 'Disponible'),
-        ('prestado', 'Prestado'),
-        ('baja', 'Dado de Baja'),
-        ('mantenimiento', 'Mantenimiento'),
-        ('no_disponible', 'No Disponible'),
+        ('prestado', 'Prestado (No disponible)'),
+        ('mantenimiento', 'Mantenimiento (No disponible)'),
+        ('baja', 'Dado de baja'),
     ]
     estado = models.CharField(max_length=50, choices=ESTADOS, unique=True)
 
@@ -83,7 +79,6 @@ class EstadoRecurso(models.Model):
 
 class Ubicacion(models.Model):
     nombre = models.CharField(max_length=150, unique=True)
-    codigo = models.CharField(max_length=100, blank=True, null=True)
     descripcion = models.TextField(blank=True, null=True)
 
     def __str__(self):
@@ -99,12 +94,12 @@ class UnidadMedida(models.Model):
 
 #Tabla de Lote
 class Lote(models.Model):
-    codigo = models.CharField(max_length=50, unique=True)
+    nombre = models.CharField(max_length=50, unique=True)
     descripcion = models.TextField(blank=True, null=True)
     fecha_vencimiento = models.DateField(blank=True, null=True)
 
     def __str__(self):
-        return self.codigo
+        return self.nombre
     
 #Tabla de Medidas de los Productos
 class Medida(models.Model):
@@ -163,7 +158,7 @@ class Producto(models.Model):
     accesorios = models.ForeignKey(Accesorios, on_delete=models.SET_NULL, null=True, blank=True)
     medida = models.ForeignKey(Medida, on_delete=models.SET_NULL, null=True, blank=True)
     estado = models.ForeignKey(EstadoRecurso, on_delete=models.PROTECT)
-    ubicacion = models.ForeignKey(Ubicacion, on_delete=models.SET_NULL, null=True, blank=True)
+    ubicacion = models.ForeignKey(Ubicacion, on_delete=models.PROTECT)  # Sin null ni blank
     codigo = models.CharField(max_length=200, unique=True, blank=True, null=True)
     num_cat = models.CharField("Número de catálogo", max_length=200, unique=True, blank=True, null=True)
     num_serie = models.CharField("Número de serie", max_length=200, unique=True, blank=True, null=True)
@@ -174,32 +169,11 @@ class Producto(models.Model):
 
     def __str__(self):
         return self.nombre
-
-#ASIGNACIÓN, POR SI ACASO
-class AsignacionProducto(models.Model):
-    producto = models.ForeignKey('Producto', on_delete=models.CASCADE)
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    cantidad = models.PositiveIntegerField()
-    
-    fecha_asignacion = models.DateField(auto_now_add=True)
-    fecha_estimada_devolucion = models.DateField(null=True, blank=True)
-    fecha_devolucion = models.DateField(null=True, blank=True)
-    
-    ubicacion = models.ForeignKey('Ubicacion', on_delete=models.SET_NULL, null=True)
-    observacion = models.TextField(blank=True, null=True)
-
-    class Meta:
-        verbose_name = "Asignación de Producto"
-        verbose_name_plural = "Asignaciones de Productos"
-        ordering = ['-fecha_asignacion']
-
-    def __str__(self):
-        return f"{self.producto.nombre} → {self.usuario.username} ({self.cantidad})"
-    
-    # DIFERENCIAS DE INVENTARIO, TRANSFERENCIAS, CIERRE DE INVENTARIO
+ 
+# DIFERENCIAS DE INVENTARIO, TRANSFERENCIAS, CIERRE DE INVENTARIO
 class InventarioDiario(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  #Nuevo campo
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  
     fecha = models.DateField()
     cantidad_inicial = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     cantidad_final = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -229,3 +203,4 @@ class TransferenciaProducto(models.Model):
 
     def __str__(self):
         return f"{self.usuario.username} transfirió {self.cantidad} de {self.producto.nombre} a {self.estado_destino} ({self.fecha_transferencia})"
+    

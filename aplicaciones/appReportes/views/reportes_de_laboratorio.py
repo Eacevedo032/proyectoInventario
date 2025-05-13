@@ -1,7 +1,8 @@
 from urllib.parse import urljoin
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from aplicaciones.appGestionInventario.models import ReporteUsoLaboratorio, SolicitudLaboratorio, ReporteFoto
+from aplicaciones.appReportes.models import ReporteUsoLaboratorio, ReporteFoto
+from aplicaciones.appGestionLaboratorios.models import SolicitudLaboratorio
 
 def crear_reporte(request):
     """Vista para crear un nuevo reporte vinculado a una solicitud aprobada."""

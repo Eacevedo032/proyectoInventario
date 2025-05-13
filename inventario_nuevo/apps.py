@@ -6,5 +6,3 @@ class InventarioNuevoConfig(AppConfig):
 
     def ready(self):
         import inventario_nuevo.signals
-
-

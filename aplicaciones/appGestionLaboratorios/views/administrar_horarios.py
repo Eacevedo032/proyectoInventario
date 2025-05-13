@@ -1,13 +1,20 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
-from aplicaciones.appGestionInventario.models import HorarioLaboratorio
+from aplicaciones.appGestionLaboratorios.models import HorarioLaboratorio
 from django.contrib import messages  # Importa para mostrar mensajes en la interfaz
 from datetime import date
 from django.utils.dateparse import parse_date
 from django.db.models import Q
 
+# Decorador para verificar si el usuario es administrador
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+
 #configuraciones para el horario de laboratorios desde admin
 @login_required
+@admin_required #Verifica si el usuario es administrador
 def agregar_horario(request):
     if request.method == 'POST':
         laboratorio = request.POST.get('laboratorio')
@@ -50,6 +57,7 @@ def agregar_horario(request):
     return render(request, 'agregar_horario.html')
 
 #listar horario
+@admin_required #Verifica si el usuario es administrador
 def listar_horarios(request):
     horarios = HorarioLaboratorio.objects.filter(
         Q(fecha_reserva__gte=date.today())
@@ -68,12 +76,15 @@ def listar_horarios(request):
     })
 
 #Eliminar horario
+@login_required
+@admin_required #Verifica si el usuario es administrador
 def eliminar_horario(request, horario_id):
     horario = get_object_or_404(HorarioLaboratorio, id=horario_id)
     horario.delete()
     return redirect('listar_horarios')
 
 #Editar horario
+@admin_required #Verifica si el usuario es administrador
 def editar_horario(request, horario_id):
     # Buscar el horario a editar
     horario = get_object_or_404(HorarioLaboratorio, id=horario_id)

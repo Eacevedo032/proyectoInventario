@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content_wrapper%}  <!-- Botón para ocupar todo el espacio en pantalla-->
+
+{% if messages %}
+  <div class="container mt-3">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="fondo-institucional fondo-chat py-4">
+  <div class="container contenido-principal">
+
+    <div class="back-arrow" onclick="history.back()" style="cursor: pointer; font-size: 2.5rem; color: #010D42;">
+     <i class="bi bi-arrow-left-circle-fill"></i>
+    </div>
+
+    <h2 class="titulo-institucional text-center mb-4">
+      💬<br>
+      <strong>Chat con {{ usuario_destino.username }}</strong>
+    </h2>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card" style="max-width: 850px; margin: 0 auto;">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Conversación con {{ usuario_destino.username }}</h5>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-sm btn-secondary" onclick="cerrarChat()">Cerrar chat</button>
+              <form method="post" action="{% url 'eliminar_conversacion' usuario_destino.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar este chat?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger" style="background-color: #e60000; color: white;">Eliminar chat</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="card-body chat-messages" style="height: 400px; overflow-y: auto;">
+            {% for mensaje in mensajes %}
+              <div class="mb-3 {% if mensaje.remitente == request.user %}text-end{% endif %}">
+                <div class="d-flex {% if mensaje.remitente == request.user %}justify-content-end{% endif %}">
+                  <div class="{% if mensaje.remitente == request.user %}bg-primary text-white{% else %}bg-light{% endif %} p-3 rounded" style="max-width: 70%;">
+                    <small class="d-block {% if mensaje.remitente == request.user %}text-white-50{% else %}text-muted{% endif %}">
+                      {% if mensaje.remitente == request.user %}Tú{% else %}{{ mensaje.remitente.username }}{% endif %} - {{ mensaje.fecha_envio|date:"d/m/Y h:i A" }}
+                    </small>
+                    {% if mensaje.texto %}
+                      <p class="mb-0">{{ mensaje.texto }}</p>
+                    {% endif %}
+                    {% if mensaje.archivo %}
+                      <div class="d-flex align-items-center gap-2 mt-2">
+                        <span class="{% if mensaje.remitente == request.user %}text-white{% else %}text-primary{% endif %}">
+                          {{ mensaje.archivo.name|slice:"9:" }}
+                        </span>
+                        {% if mensaje.archivo.name|lower|slice:"-4:" in '.jpg,.png,.gif,.bmp,.jpeg,.webp' or mensaje.archivo.name|lower|slice:"-5:" in '.jpeg,.webp' %}
+                          | <a href="{{ mensaje.archivo.url }}" target="_blank" class="{% if mensaje.remitente == request.user %}text-white{% else %}text-primary{% endif %}">🖼️ Ver</a>
+                        {% endif %}
+                        | <a href="{{ mensaje.archivo.url }}" download="{{ mensaje.archivo.name|slice:'9:' }}" class="{% if mensaje.remitente == request.user %}text-white{% else %}text-primary{% endif %}">⬇️ Descargar</a>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-muted text-center mt-4">No hay mensajes en esta conversación.</p>
+            {% endfor %}
+          </div>
+
+          <div class="card-footer">
+            <form method="post" enctype="multipart/form-data" id="form-mensaje">
+                {% csrf_token %}
+                <div class="input-group mb-2">
+                    {% render_field form.texto class="form-control" placeholder="Escribe tu mensaje..." %}
+                    
+                    <!-- Botón de adjuntar -->
+                    <label class="input-group-text" for="id_archivo" style="cursor:pointer; background-color: #e60000; color: white;">
+                        📎
+                        {% render_field form.archivo class="d-none" onchange="mostrarNombreArchivo()" %}
+                    </label>
+                    
+                    <!-- Botón de enviar: solo ícono estilo WhatsApp -->
+                    <button type="submit" class="btn" style="background-color: #010D42; color: white; font-size: 1.25rem; border-radius: 50%; padding: 0.5rem 0.7rem; border: 2px solid white;">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </div>
+        
+                <!-- Vista previa del archivo -->
+                <div id="archivo-seleccionado" class="text-muted small mb-2"></div>
+        
+                <!-- Errores -->
+                {% if form.texto.errors %}
+                    <div class="text-danger small">{{ form.texto.errors.0 }}</div>
+                {% endif %}
+                {% if form.archivo.errors %}
+                    <div class="text-danger small">{{ form.archivo.errors.0 }}</div>
+                {% endif %}
+                {% if form.non_field_errors %}
+                    <div class="text-danger small">{{ form.non_field_errors.0 }}</div>
+                {% endif %}
+            </form>
+        </div>
+        
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.querySelector('.chat-messages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    document.getElementById('form-mensaje').addEventListener('submit', function(e) {
+      const texto = document.querySelector('textarea[name="texto"]').value.trim();
+      const archivo = document.querySelector('input[type="file"]').files[0];
+      if (!texto && !archivo) {
+        e.preventDefault();
+        alert("No puedes enviar un mensaje vacío.");
+      }
+    });
+  });
+
+  function mostrarNombreArchivo() {
+    const input = document.getElementById("id_archivo");
+    const divVista = document.getElementById("archivo-seleccionado");
+    divVista.textContent = input.files.length > 0 ? "Archivo seleccionado: " + input.files[0].name : "";
+  }
+
+  function cerrarChat() {
+    window.history.back();
+  }
+</script>
+
+{% endblock %}

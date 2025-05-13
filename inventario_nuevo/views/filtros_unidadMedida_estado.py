@@ -4,7 +4,14 @@ from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convert
 from inventario_nuevo.models import Categoria, Producto
 from inventario_nuevo.models import EstadoRecurso, UnidadMedida
 
+# Decorador para verificar si el usuario es administrador
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+
 # Vista para filtrar los estados de un Productos
+@admin_required #Verifica si el usuario es administrador
 def filtrar_por_estados(request):
     estados = EstadoRecurso.objects.all()
     productos = Producto.objects.select_related(
@@ -45,6 +52,7 @@ def filtrar_por_estados(request):
     return render(request, 'inventario_nuevo/filtrar_por_estado.html', context)
 
 #Filtrar Productos por unidades
+@admin_required #Verifica si el usuario es administrador
 def filtrar_por_unidades(request):
     unidades = UnidadMedida.objects.all()
     productos = Producto.objects.select_related(

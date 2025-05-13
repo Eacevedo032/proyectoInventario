@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2 class="text-center text-primary">Gestión de Categorías y Subcategorías</h2>
+
+    {% if messages %}
+        <div class="alert alert-success mt-3">
+            {% for message in messages %}
+                <strong class="text-dark">{{ message }}</strong>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Formularios -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h5 class="text-center text-primary">Agregar Categoría</h5>
+            <form method="post" class="shadow-sm p-3 border rounded">
+                {% csrf_token %}
+                {{ categoria_form.as_p }}
+                <div class="text-center mb-2">
+                    <button type="submit" name="guardar_categoria" class="btn btn-primary">Guardar Categoría</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <h5 class="text-center text-success">Agregar Subcategoría</h5>
+            <form method="post" class="shadow-sm p-3 border rounded">
+                {% csrf_token %}
+                {{ subcategoria_form.as_p }}
+                <div class="text-center mb-2">
+                    <button type="submit" name="guardar_subcategoria" class="btn btn-success">Guardar Subcategoría</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filtro -->
+    <h3 class="text-center text-primary">Filtrar Categorías</h3>
+    <div class="card p-3 mb-4 shadow-sm border-primary">
+        <form method="get" class="form-inline justify-content-between flex-wrap">
+            <div class="form-group mb-2 mr-2">
+                <label for="categorias">Seleccionar Categorías:</label>
+                <select name="categorias" id="categorias" class="form-control ml-2" multiple>
+                    {% for cat in todas_categorias %}
+                        <option value="{{ cat.id }}" {% if cat.id in categorias_seleccionadas %}selected{% endif %}>{{ cat.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">Usa Ctrl o Cmd para seleccionar múltiples.</small>
+            </div>
+            <div class="form-check mb-2 mr-2">
+                <input type="checkbox" class="form-check-input" id="ver_todas" name="ver_todas" value="1" {% if ver_todas %}checked{% endif %}>
+                <label class="form-check-label" for="ver_todas">Ver todas las categorías</label>
+            </div>
+            <div class="mb-2 text-center">
+                <button type="submit" class="btn btn-primary">Aplicar Filtro</button>
+                <a href="{% url 'gestionar_catalogos_categoria' %}" class="btn btn-secondary">Dejar de filtrar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Categorías y Subcategorías -->
+    {% if categorias %}
+        {% for categoria in categorias %}
+        <div class="card mb-4 shadow-sm border border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0">{{ categoria.nombre }}</h5>
+                    <small>{{ categoria.descripcion|default_if_none:"Sin descripción" }}
+                    </small><br>
+                    <small>Agregada el: {{ categoria.fecha_creacion|date:"d M Y" }}</small>
+                </div>
+                <div>
+                    <!-- Form editar categoría (manteniendo tus inputs exactamente igual) -->
+                    <form method="post" class="me-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="categoria_id" value="{{ categoria.id }}">
+                        <input type="text" name="nombre" placeholder="Nombre de Categoría" 
+                               value="{{ categoria.nombre }}" class="form-control form-control-sm mb-1" required>
+                        <textarea name="descripcion" placeholder="Descripción de Categoría" 
+                                  class="form-control form-control-sm mb-1">{{ categoria.descripcion|default_if_none:"Sin descripción" }}
+                                </textarea>
+                        
+                        <!-- Botones ajustados -->
+                        <div class="d-inline-flex gap-2">
+                            <button type="submit" name="editar_categoria" class="btn btn-warning btn-sm">Actualizar</button>
+                            <button type="submit" name="eliminar_categoria" 
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm('¿Estás seguro de eliminar esta categoría?');">
+                                Eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <h6 class="text-secondary">Subcategorías ({{ categoria.subcategoria_set.count }})</h6>
+                <ul class="list-group">
+                    {% for sub in categoria.subcategoria_set.all %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ sub.nombre }}</strong>: {{ sub.descripcion|default_if_none:"Sin descripción" }}
+                                    <br>
+                                    <small class="text-muted">Agregada el {{ sub.fecha_creacion|date:"d M Y" }}</small>
+                                </div>
+                                <div class="d-flex align-items-start mb-3">
+                                    <!-- Formulario de edición (inputs intactos) -->
+                                    <form method="post" class="me-2">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="subcategoria_id" value="{{ sub.id }}">
+                                        <input type="text" name="nombre" placeholder="Nombre de Subcategoría" 
+                                               value="{{ sub.nombre }}" class="form-control form-control-sm mb-1" required>
+                                        <textarea name="descripcion" placeholder="Descripción de Subcategoría" 
+                                                  class="form-control form-control-sm mb-1">{{ sub.descripcion|default_if_none:"Sin descripción" }}
+                                                </textarea>
+                                        
+                                        <!-- Botones con separación controlada -->
+                                        <div class="d-inline-flex gap-2">
+                                            <button type="submit" name="editar_subcategoria" class="btn btn-warning btn-sm">Actualizar</button>
+                                            <button type="submit" name="eliminar_subcategoria" 
+                                                    class="btn btn-danger btn-sm"
+                                                    onclick="return confirm('¿Estás seguro de eliminar esta subcategoría?');">
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            {% if sub.producto_set.all %}
+                            <ul class="mt-2 ml-3">
+                                {% for prod in sub.producto_set.all %}
+                                    <li>{{ prod.nombre }} - {{ prod.cantidad_disponible }} {{ prod.unidad_medida.abreviatura }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted ml-3 mb-0">Sin productos asociados.</p>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted text-center">Filtre categorías para mostrar información.</p>
+    {% endif %}
+</div>
+{% endblock %}

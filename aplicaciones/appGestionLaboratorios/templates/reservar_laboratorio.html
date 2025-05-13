@@ -14,7 +14,7 @@
     <h1 class="text-center mb-4">Gestión de Solicitudes de laboratorio</h1>
 
     <!-- Formulario de reservación de laboratorio -->
-    <form method="post">
+    <form method="post" id="reservaForm">
         {% csrf_token %}
         <div class="card mb-4">
             <div class="card-body text-center">
@@ -32,15 +32,37 @@
                         <input type="date" id="fecha_reserva" name="fecha_reserva" class="form-control" required>
                     </div>
                     <div class="form-group col-md-4 mb-3">
-                        <label for="hora_inicio">Hora de Inicio (Hora militar):</label>
-                        <input type="time" id="hora_inicio" name="hora_inicio" class="form-control" required>
-                        <label for="hora_fin">Hora de Fin (Hora militar):</label>
-                        <input type="time" id="hora_fin" name="hora_fin" class="form-control" required>
+                        <label for="hora_inicio">Hora de Inicio:</label>
+                        <div class="input-group">
+                            <input type="number" id="hora_inicio" name="hora_inicio" class="form-control" min="1" max="12" placeholder="Hora" required>
+                            <input type="number" id="minuto_inicio" name="minuto_inicio" class="form-control" min="0" max="59" placeholder="Min" required>
+                            <select id="hora_inicio_periodo" name="hora_inicio_periodo" class="form-control" required>
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                        
+                        <label for="hora_fin">Hora de Fin:</label>
+                        <div class="input-group">
+                            <input type="number" id="hora_fin" name="hora_fin" class="form-control" min="1" max="12" placeholder="Hora" required>
+                            <input type="number" id="minuto_fin" name="minuto_fin" class="form-control" min="0" max="59" placeholder="Min" required>
+                            <select id="hora_fin_periodo" name="hora_fin_periodo" class="form-control" required>
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Campos ocultos para enviar el formato militar a la base de datos -->
+                        <input type="hidden" id="hora_inicio_militar" name="hora_inicio">
+                        <input type="hidden" id="hora_fin_militar" name="hora_fin">
                     </div>
                 </div>
             </div>
             <div class="card-footer text-center">
                 <button type="submit" class="btn btn-primary">Solicitar Reservación</button>
+                {% if mostrar_boton_recursos %}
+                <a href="{% url 'solicitar_recursos' %}" class="btn btn-primary">Ir a Solicitar Productos</a>
+                {% endif %}
             </div>
         </div>
     </form>
@@ -110,14 +132,13 @@
         </a>
     </div>
 
-    <!-- Tabla de solicitudes -->
     <h2>Mis Solicitudes de Reservación</h2>
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Laboratorio</th>
-                    <th>Fecha de Solicitud</th>
+                    <th>Fecha</th>
                     <th>Hora de Inicio</th>
                     <th>Hora de Fin</th>
                     <th>Estado</th>
@@ -129,39 +150,43 @@
                 <tr>
                     <td>{{ solicitud.laboratorio }}</td>
                     <td>{{ solicitud.fecha_reserva }}</td>
-                    <td>{{ solicitud.hora_inicio }}</td>
-                    <td>{{ solicitud.hora_fin }}</td>
+                    <td>{{ solicitud.hora_inicio|date:"g:i A"  }}</td>
+                    <td>{{ solicitud.hora_fin|date:"g:i A"  }}</td>
                     <td>
                         <span class="badge 
-                        {% if solicitud.estado == 'aprobada' %}bg-success
-                        {% elif solicitud.estado == 'rechazada' %}bg-danger
-                        {% elif solicitud.estado == 'pendiente' %}bg-warning
-                        {% elif solicitud.estado == 'en_revision' %}bg-info
-                        {% endif %}">
-                        {{ solicitud.estado }}
+                            {% if solicitud.estado == 'aprobada' %}bg-success
+                            {% elif solicitud.estado == 'rechazada' %}bg-danger
+                            {% elif solicitud.estado == 'pendiente' %}bg-warning
+                            {% elif solicitud.estado == 'en_revision' %}bg-info
+                            {% endif %}">
+                            {{ solicitud.estado }}
                         </span>
                     </td>
                     <td>
-                        {% if solicitud.estado == 'pendiente' %}
-                            <a href="{% url 'editar_laboratorio' solicitud.id %}" class="btn btn-warning">Editar</a>
-                            <a href="{% url 'eliminar_solicitud' solicitud.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
-                            <a href="{% url 'enviar_solicitud' solicitud.id %}" class="btn btn-primary">Enviar</a> <!-- Nuevo botón -->
-                        {% elif solicitud.estado == 'rechazada' %}
-                            <a href="{% url 'eliminar_solicitud' solicitud.id %}" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
-                        {% else %}
-                            <button class="btn btn-secondary" disabled>Editar</button>
-                            <button class="btn btn-danger" disabled>Eliminar</button>
+                        {% if mostrar_boton_recursos %}
+                                <a href="{% url 'ver_items_solicitud' solicitud.id %}" class="btn btn-info btn-sm me-2">Ver Ítems</a>
                         {% endif %}
-                    </td>                    
+                        
+                        {% if solicitud.estado == 'pendiente' %}
+                            <a href="{% url 'editar_laboratorio' solicitud.id %}" class="btn btn-warning btn-sm">Editar</a>
+                            <a href="{% url 'eliminar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
+                            <a href="{% url 'enviar_solicitud' solicitud.id %}" class="btn btn-primary btn-sm">Enviar</a>
+                        {% elif solicitud.estado == 'rechazada' %}
+                            <a href="{% url 'eliminar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
+                        {% else %}
+                            <button class="btn btn-secondary btn-sm" disabled>Editar</button>
+                            <button class="btn btn-danger btn-sm" disabled>Eliminar</button>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6">No tienes solicitudes de reservación.</td>
+                    <td colspan="7" class="text-center">No tienes solicitudes de reservación.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-    </div>
+    </div>    
 
     <!-- Paginación -->
     <nav aria-label="Paginación">

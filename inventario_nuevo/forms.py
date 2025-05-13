@@ -7,10 +7,13 @@ from django.core.exceptions import ValidationError
 from .models import Presentacion, Capacidad, Accesorios
 from .models import Ubicacion, Lote, Medida, EstadoRecurso, UnidadMedida
 
+from django.core.exceptions import ValidationError
+from .models import Producto
+
 class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
-        exclude = ['fecha_agregado']  # Excluirlo del formulario
+        exclude = ['fecha_agregado']
         widgets = {
             'vencimiento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
@@ -22,22 +25,21 @@ class ProductoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # Configuración inicial de campos
         self.set_required_fields()
         self.set_optional_fields()
         self.apply_bootstrap_classes()
         self.setup_category_filtering()
         self.order_choices_for_ux()
 
-        # Asegurar IDs específicos para los selects
         self.fields['categoria'].widget.attrs.update({'id': 'id_categoria'})
         self.fields['subcategoria'].widget.attrs.update({'id': 'id_subcategoria'})
+        self.fields['cantidad_disponible'].label = "Cantidad"
+
 
     def set_required_fields(self):
         required_fields = [
             'nombre', 'cantidad_disponible', 'unidad_medida',
-            'categoria', 'subcategoria', 'estado', 'agregado_por',
+            'categoria', 'subcategoria', 'estado', 'agregado_por', 'ubicacion'
         ]
         for field in required_fields:
             self.fields[field].required = True
@@ -45,7 +47,7 @@ class ProductoForm(forms.ModelForm):
     def set_optional_fields(self):
         optional_fields = [
             'lote', 'marca', 'modelo', 'color', 'presentacion',
-            'capacidad', 'accesorios', 'medida', 'ubicacion',
+            'capacidad', 'accesorios', 'medida',
             'codigo', 'num_cat', 'num_serie', 'vencimiento'
         ]
         for field in optional_fields:
@@ -57,16 +59,35 @@ class ProductoForm(forms.ModelForm):
                 field.widget.attrs['class'] = 'form-select' if isinstance(field.widget, forms.Select) else 'form-control'
 
     def setup_category_filtering(self):
-        """El queryset de subcategoría vacío, se cargará por AJAX."""
         self.fields['subcategoria'].queryset = Subcategoria.objects.none()
 
     def order_choices_for_ux(self):
-        """Acá se ordena opciones para mejor experiencia de usuario"""
         if hasattr(self.fields['categoria'], 'queryset'):
             self.fields['categoria'].queryset = self.fields['categoria'].queryset.order_by('nombre')
-
         if hasattr(self.fields['unidad_medida'], 'queryset'):
             self.fields['unidad_medida'].queryset = self.fields['unidad_medida'].queryset.order_by('nombre')
+
+    # ⬇️ Aquí añadimos la validación de campos únicos
+    def clean(self):
+        cleaned_data = super().clean()
+        codigo = cleaned_data.get('codigo')
+        num_cat = cleaned_data.get('num_cat')
+        num_serie = cleaned_data.get('num_serie')
+
+        # Importante: excluir el producto actual en edición
+        qs = Producto.objects.all()
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        if codigo and qs.filter(codigo=codigo).exists():
+            self.add_error('codigo', 'Este código ya está en uso.')
+
+        if num_cat and qs.filter(num_cat=num_cat).exists():
+            self.add_error('num_cat', 'Este número de catálogo ya existe.')
+
+        if num_serie and qs.filter(num_serie=num_serie).exists():
+            self.add_error('num_serie', 'Este número de serie ya está registrado.')
+
 
 #Gestionar categoría y subcategorías por medio de un form para la vista de catálogos de categoría que manda a llamar a la subcategoría asociada
 class CategoriaForm(forms.ModelForm):
@@ -114,10 +135,9 @@ class SubcategoriaForm(forms.ModelForm):
 class MarcaForm(forms.ModelForm):
     class Meta:
         model = Marca
-        fields = ['nombre', 'codigo', 'descripcion']
+        fields = ['nombre', 'descripcion']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'codigo': forms.TextInput(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
@@ -132,10 +152,9 @@ class MarcaForm(forms.ModelForm):
 class ModeloForm(forms.ModelForm): 
     class Meta:
         model = Modelo
-        fields = ['nombre', 'codigo', 'descripcion']
+        fields = ['nombre', 'descripcion']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'codigo': forms.TextInput(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
@@ -143,7 +162,6 @@ class ModeloForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Modificar las etiquetas de los campos
         self.fields['nombre'].label = 'Nombre (requerido)'
-        self.fields['codigo'].label = 'Código (opcional)'
         self.fields['descripcion'].label = 'Descripción (opcional)'
 
     def clean_nombre(self):
@@ -158,14 +176,12 @@ class ModeloForm(forms.ModelForm):
 class ColorForm(forms.ModelForm):
     class Meta:
         model = Color
-        fields = ['codigo', 'nombre', 'descripcion']
+        fields = ['nombre', 'descripcion']
         labels = {
-            'codigo': 'Código de Color',
             'nombre': 'Nombre',
             'descripcion': 'Descripción'
         }
         widgets = {
-            'codigo': forms.TextInput(attrs={'class': 'form-control'}),
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
@@ -249,14 +265,12 @@ class AccesoriosForm(forms.ModelForm):
 class UbicacionForm(forms.ModelForm):
     class Meta:
         model = Ubicacion
-        fields = ['codigo', 'nombre', 'descripcion']
+        fields = ['nombre', 'descripcion'] 
         labels = {
-            'codigo': 'Código de Ubicación',
             'nombre': 'Nombre',
             'descripcion': 'Descripción'
         }
         widgets = {
-            'codigo': forms.TextInput(attrs={'class': 'form-control'}),
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
@@ -268,19 +282,20 @@ class UbicacionForm(forms.ModelForm):
         elif Ubicacion.objects.filter(nombre__iexact=nombre).exists():
             raise forms.ValidationError("Ya existe una ubicación con ese nombre.")
         return nombre
+
     
 #Form de Lote
 class LoteForm(forms.ModelForm):
     class Meta:
         model = Lote
-        fields = ['codigo', 'descripcion', 'fecha_vencimiento']
+        fields = ['nombre', 'descripcion', 'fecha_vencimiento']
         labels = {
-            'codigo': 'Código de Lote',
+            'nombre': 'Nombre del Lote',
             'descripcion': 'Descripción',
             'fecha_vencimiento': 'Fecha de Vencimiento'
         }
         widgets = {
-        'codigo': forms.TextInput(attrs={'class': 'form-control'}),
+        'nombre': forms.TextInput(attrs={'class': 'form-control'}),
         'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         'fecha_vencimiento': forms.DateInput(attrs={
             'type': 'date',
@@ -288,13 +303,13 @@ class LoteForm(forms.ModelForm):
             }),
         }
 
-    def clean_codigo(self):
-        codigo = self.cleaned_data.get('codigo', '').strip()
-        if not codigo:
-            raise forms.ValidationError("El código del lote no puede estar vacío.")
-        elif Lote.objects.filter(codigo__iexact=codigo).exists():
-            raise forms.ValidationError("Ya existe un lote con ese código.")
-        return codigo
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre', '').strip()
+        if not nombre:
+            raise forms.ValidationError("El nombre del lote no puede estar vacío.")
+        elif Lote.objects.filter(nombre__iexact=nombre).exists():
+            raise forms.ValidationError("Ya existe un lote con ese nombre.")
+        return nombre
 
 #Form de las medidas de los Productos
 class MedidaForm(forms.ModelForm):

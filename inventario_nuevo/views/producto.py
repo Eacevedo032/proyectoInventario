@@ -12,8 +12,15 @@ from inventario_nuevo.forms import PresentacionForm, CapacidadForm, AccesoriosFo
 from inventario_nuevo.forms import MarcaForm, ModeloForm, ColorForm, UbicacionForm, LoteForm, MedidaForm
 from django.utils import timezone
 
+# Decorador para verificar si el usuario es administrador
+from django.contrib.auth.decorators import user_passes_test
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+
 #Vista principal de agregar el producto
 @login_required
+@admin_required #Verifica si el usuario es administrador
 def agregar_producto(request):
     form = ProductoForm()
     categoria_form = CategoriaForm()
@@ -164,11 +171,11 @@ def agregar_producto(request):
 
         elif form_tipo == 'lote':
             lote_form = LoteForm(request.POST)
-            codigo = request.POST.get('codigo', '').strip()
-            if not codigo:
-                messages.warning(request, "El código del Lote es obligatorio.")
-            elif Lote.objects.filter(codigo__iexact=codigo).exists():
-                messages.warning(request, f"Ya existe un Lote con el código '{codigo}'.")
+            nombre = request.POST.get('nombre', '').strip()
+            if not nombre:
+                messages.warning(request, "El nombre del Lote es obligatorio.")
+            elif Lote.objects.filter(nombre__iexact=nombre).exists():
+                messages.warning(request, f"Ya existe un Lote con el Nombre '{nombre}'.")
             elif lote_form.is_valid():
                 lote_form.save()
                 messages.success(request, "Lote agregado correctamente.")
@@ -270,6 +277,7 @@ def agregar_producto(request):
         'hoy': timezone.now().date(),  # Fecha actual en formato date
     })
 
+@admin_required #Verifica si el usuario es administrador
 def listar_productos(request):
     productos = Producto.objects.all()
     return render(request, 'inventario_nuevo/listar_productos.html', {'productos': productos})
