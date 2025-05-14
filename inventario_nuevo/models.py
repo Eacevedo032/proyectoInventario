@@ -166,10 +166,34 @@ class Producto(models.Model):
     fecha_agregado = models.DateField(auto_now_add=True)
     agregado_por = models.ForeignKey(User, on_delete=models.PROTECT, related_name='agrega_producto')
 
-
     def __str__(self):
         return self.nombre
- 
+    
+#NUEVA TABLA - LA PUEDEN EDITAR SI LO DESEAN-----------------------------------------------------
+# Historial de Inventario
+class HistorialInventario(models.Model):
+    TIPOS_MOVIMIENTO = [
+        ('ingreso_inicial', 'Ingreso Inicial'),
+        # Se pueden añadir más tipos como: ('traslado', 'Traslado'), ('salida', 'Salida'), etc.
+    ]
+
+    producto = models.ForeignKey('Producto', on_delete=models.CASCADE, related_name='historiales_inventario') #Es útil el related_name para identificativos
+    nombre_producto = models.CharField(max_length=300)
+    categoria = models.ForeignKey('Categoria', on_delete=models.PROTECT)
+    subcategoria = models.ForeignKey('Subcategoria', on_delete=models.PROTECT)
+    cantidad_inicial = models.DecimalField(max_digits=8, decimal_places=2)
+    unidad_medida = models.ForeignKey('UnidadMedida', on_delete=models.PROTECT)
+    ubicacion_inicial = models.ForeignKey('Ubicacion', on_delete=models.PROTECT)
+    estado_inicial = models.ForeignKey('EstadoRecurso', on_delete=models.PROTECT)
+    fecha_agregado = models.DateField()
+    agregado_por = models.ForeignKey(User, on_delete=models.PROTECT, related_name='movimientos_agregados')
+    tipo_movimiento = models.CharField(max_length=50, choices=TIPOS_MOVIMIENTO, default='ingreso_inicial')
+
+    def __str__(self):
+        return f"{self.nombre_producto} - {self.get_tipo_movimiento_display()} - {self.fecha_agregado}"
+
+ #---------------------------------------------------------------------------------------------
+
 # DIFERENCIAS DE INVENTARIO, TRANSFERENCIAS, CIERRE DE INVENTARIO
 class InventarioDiario(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)

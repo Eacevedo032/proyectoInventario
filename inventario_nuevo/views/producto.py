@@ -12,6 +12,7 @@ from inventario_nuevo.forms import PresentacionForm, CapacidadForm, AccesoriosFo
 from inventario_nuevo.forms import MarcaForm, ModeloForm, ColorForm, UbicacionForm, LoteForm, MedidaForm
 from django.utils import timezone
 from django.utils.timezone import localtime
+from inventario_nuevo.models import HistorialInventario
 
 # Decorador para verificar si el usuario es administrador
 from django.contrib.auth.decorators import user_passes_test
@@ -203,18 +204,21 @@ def agregar_producto(request):
                         messages.warning(request, error)
         
         elif form_tipo == 'producto':
-            if request.method == 'POST':
-                form = ProductoForm(request.POST)
+            form = ProductoForm(request.POST or None)
 
-        # Cargar subcategorías válidas antes de validar
-        categoria_id = request.POST.get('categoria')
-        if categoria_id:
-            form.fields['subcategoria'].queryset = Subcategoria.objects.filter(categoria_id=categoria_id)
+    # Cargar subcategorías válidas antes de validar
+    categoria_id = request.POST.get('categoria')
+    if categoria_id:
+        form.fields['subcategoria'].queryset = Subcategoria.objects.filter(categoria_id=categoria_id)
 
+    if request.method == 'POST':
         if form.is_valid():
             producto = form.save(commit=False)
 
-            # Validación que la cantidad disponible no sea negativa
+            # Asignar usuario actual
+            producto.agregado_por = request.user
+
+            # Validar que cantidad no sea negativa
             if producto.cantidad_disponible < 0:
                 messages.error(request, "La cantidad disponible no puede ser negativa.")
                 return render(request, 'inventario_nuevo/agregar_producto.html', {
@@ -224,7 +228,7 @@ def agregar_producto(request):
                     'marca_form': marca_form,
                     'modelo_form': modelo_form,
                     'color_form': color_form,
-                    'capacidad_form': capacidad_form, 
+                    'capacidad_form': capacidad_form,
                     'presentacion_form': presentacion_form,
                     'accesorios_form': accesorios_form,
                     'ubicacion_form': ubicacion_form,
@@ -246,7 +250,7 @@ def agregar_producto(request):
                     'marca_form': marca_form,
                     'modelo_form': modelo_form,
                     'color_form': color_form,
-                    'capacidad_form': capacidad_form, 
+                    'capacidad_form': capacidad_form,
                     'presentacion_form': presentacion_form,
                     'accesorios_form': accesorios_form,
                     'ubicacion_form': ubicacion_form,
@@ -256,10 +260,27 @@ def agregar_producto(request):
 
             producto.fecha_agregado = localtime(timezone.now()).date()
             producto.save()
+
+            # Crear historial
+            HistorialInventario.objects.create(
+                producto=producto,
+                nombre_producto=producto.nombre,
+                categoria=producto.categoria,
+                subcategoria=producto.subcategoria,
+                cantidad_inicial=producto.cantidad_disponible,
+                unidad_medida=producto.unidad_medida,
+                ubicacion_inicial=producto.ubicacion,
+                estado_inicial=producto.estado,
+                fecha_agregado=producto.fecha_agregado,
+                agregado_por=producto.agregado_por,
+                tipo_movimiento='ingreso_inicial'
+            )
+
             messages.success(request, "Producto agregado correctamente.")
             return redirect('listar_productos')
-
-        messages.error(request, "Formulario inválido. Verifica los campos.")
+        else:
+            print(form.errors)  # 👈 para depurar errores silenciosos
+            messages.error(request, "Formulario inválido. Verifica los campos.")
 
     return render(request, 'inventario_nuevo/agregar_producto.html', {
         'form': form,
@@ -274,8 +295,7 @@ def agregar_producto(request):
         'ubicacion_form': ubicacion_form,
         'lote_form': lote_form,
         'medida_form': medida_form,
-
-        'hoy': localtime(timezone.now()).date()  # Fecha actual en formato date
+        'hoy': localtime(timezone.now()).date()
     })
 
 @admin_required #Verifica si el usuario es administrador

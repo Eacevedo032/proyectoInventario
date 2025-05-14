@@ -27,4 +27,5 @@ urlpatterns = [
     path('seleccion-reportes/', views.seleccion_reportes, name='seleccion_reportes'),  #
     path('exportar-pdf/', views.exportar_pdf, name='exportar_pdf'),
     path('exportar-excel/', views.exportar_excel, name='exportar_excel'),  # Agregamos la ruta correcta
+    path('tabla_historial_inventario/', views.tabla_historial_inventario, name='tabla_historial_inventario'),
 ]

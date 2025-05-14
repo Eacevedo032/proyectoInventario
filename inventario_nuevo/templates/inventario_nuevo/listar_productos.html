@@ -12,9 +12,18 @@
 {% endif %}
 
 <div class="container mt-4">
-    <h2>Lista de Productos</h2>
-    <a href="{% url 'agregar_producto' %}" class="btn btn-primary mb-3">Agregar Producto</a>
-    <table class="table table-striped">
+    <div class="d-flex align-items-center position-relative">
+<a href="{% url 'agregar_producto' %}" class="btn btn-sm" style="background-color: #0000FF; color: white;font-size: medium;">
+    ⬅ <strong>Agregar Producto</strong>
+</a>    <div class="flex-grow-1 d-flex justify-content-center">
+        <h1 class="fw-bold text-center" style="color: black; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+            Listado de Productos
+        </h1>
+    </div>
+</div>
+    <br>
+    <div class="table-responsive">
+    <table class="table table-bordered align-middle">
         <thead>
             <tr>
                 <th>Nombre</th>
@@ -25,10 +34,11 @@
                 <th>Estado</th>
                 <th>Ubicación</th>
                 <th>Fecha Agregado</th>
+                <th>Opciones</th>
 
             </tr>
         </thead>
-        <tbody>
+    <tbody style="background-color: white;">
             {% for producto in productos %}
             <tr>
                 <td>{{ producto.nombre }}</td>
@@ -39,14 +49,22 @@
                 <td>{{ producto.estado.get_estado_display }}</td>
                 <td>{{ producto.ubicacion.nombre }}</td>
                 <td>{{ producto.fecha_agregado }}</td>
-
+                <td>{{ producto.opciones }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7">No hay productos registrados.</td>
+                <td colspan="7" class="text-center">No hay productos registrados.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<style>
+    thead th {
+    background-color: #102165 !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+</style>
 {% endblock %}
