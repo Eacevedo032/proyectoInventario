@@ -11,6 +11,7 @@ from inventario_nuevo.models import Marca, Modelo, Color, Presentacion, Capacida
 from inventario_nuevo.forms import PresentacionForm, CapacidadForm, AccesoriosForm
 from inventario_nuevo.forms import MarcaForm, ModeloForm, ColorForm, UbicacionForm, LoteForm, MedidaForm
 from django.utils import timezone
+from django.utils.timezone import localtime
 
 # Decorador para verificar si el usuario es administrador
 from django.contrib.auth.decorators import user_passes_test
@@ -253,7 +254,7 @@ def agregar_producto(request):
                     'medida_form': medida_form,
                 })
 
-            producto.fecha_agregado = timezone.now()
+            producto.fecha_agregado = localtime(timezone.now()).date()
             producto.save()
             messages.success(request, "Producto agregado correctamente.")
             return redirect('listar_productos')
@@ -274,7 +275,7 @@ def agregar_producto(request):
         'lote_form': lote_form,
         'medida_form': medida_form,
 
-        'hoy': timezone.now().date(),  # Fecha actual en formato date
+        'hoy': localtime(timezone.now()).date()  # Fecha actual en formato date
     })
 
 @admin_required #Verifica si el usuario es administrador

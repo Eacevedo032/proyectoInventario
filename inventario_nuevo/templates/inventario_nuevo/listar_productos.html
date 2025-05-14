@@ -24,6 +24,8 @@
                 <th>Unidad de medida</th>
                 <th>Estado</th>
                 <th>Ubicación</th>
+                <th>Fecha Agregado</th>
+
             </tr>
         </thead>
         <tbody>
@@ -36,6 +38,8 @@
                 <td>{{ producto.unidad_medida }}</td>
                 <td>{{ producto.estado.get_estado_display }}</td>
                 <td>{{ producto.ubicacion.nombre }}</td>
+                <td>{{ producto.fecha_agregado }}</td>
+
             </tr>
             {% empty %}
             <tr>

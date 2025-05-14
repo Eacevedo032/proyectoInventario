@@ -59,40 +59,46 @@
     </div>
   </div>
 
-  <!-- Header con logo -->
-  <header class="header">
-    <div class="container">
-      <!-- Logo -->
-      <a href="https://unp.edu.ni/" target="_blank">
-        <img src="{% static 'img/logoUNP1.png' %}" alt="Logo UNP" class="logo">
-      </a>
-      <!-- Navegación principal -->
-      <nav class="nav">
-        <!-- Todo tipo de usuario -->
-        <!-- INICIO -->
+<!-- Inicio de mi header -->
+<header class="header">
+  <nav class="navbar navbar-expand-lg navbar-light px-3 w-100">
+
+    <!-- Logo a la izquierda -->
+    <a href="https://unp.edu.ni/" target="_blank">
+      <img src="{% static 'img/logoUNP1.png' %}" alt="Logo UNP" class="logo">
+    </a>
+
+    <!-- Botón hamburguesa -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+      aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Contenido colapsable: items a la derecha -->
+    <div class="collapse navbar-collapse justify-content-end" id="navbarContent">
+      <ul class="navbar-nav d-flex flex-wrap gap-3 text-start text-lg-end">
+        <!-- Inicio -->
         <li class="nav-item">
-          <a class="nav-link fw-bold" href="{% url 'inicioAplicacion' %}">
-            Inicio
-          </a>
+          <a class="nav-link fw-bold text-white" href="{% url 'inicioAplicacion' %}">Inicio</a>
         </li>
-        <!-- MI PERFIL -->
-        <!-- Opción con ajuste fino -->
+        <!-- Perfil -->
         <li class="nav-item">
-          <a class="nav-link fw-bold d-flex align-items-center py-1" href="{% url 'editar_perfil' %}">
+          <a class="nav-link fw-bold d-flex align-items-center py-1 text-white" href="{% url 'editar_perfil' %}">
             <div class="d-flex align-items-center">
               {% if user.userprofile.profile_picture %}
               <img src="{{ user.userprofile.profile_picture.url }}" alt="Foto de perfil" class="rounded-circle me-2"
-                width="30" height="30" style="margin-top: -2px;">
+                width="30" height="30">
               {% else %}
-              <i class="bi bi-person-circle me-2" style="font-size: 1.2rem; margin-top: -2px;"></i>
+              <i class="bi bi-person-circle me-2" style="font-size: 1.2rem;"></i>
               {% endif %}
               <span>Perfil</span>
             </div>
           </a>
         </li>
-        <!-- BUZÓN DE MENSAJES -->
+
+        <!-- Buzón -->
         <li class="nav-item position-relative">
-          <a class="nav-link fw-bold position-relative d-inline-block" href="{% url 'listar_usuarios_chat' %}">
+          <a class="nav-link fw-bold position-relative d-inline-block text-white" href="{% url 'listar_usuarios_chat' %}">
             Buzón 📬
             {% if mensajes_no_leidos > 0 %}
             <span class="badge rounded-pill bg-danger notificacion-buzon">
@@ -101,9 +107,10 @@
             {% endif %}
           </a>
         </li>
-        <!-- Opciones según el tipo de usuario -->
+
+        <!-- Menús condicionales -->
         {% if user.is_staff or user.is_superuser %}
-        <!-- Admin / Superuser -->
+<!-- Admin / Superuser -->
         <li class="nav-item dropdown fw-bold">
           <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown"
             aria-expanded="false">
@@ -154,7 +161,7 @@
             <li><a class="dropdown-item fw-bold" href="{% url 'gestion_usuarios' %}">👨‍🔬👩‍🏫 Usuarios y Roles</a>
             </li>
           </ul>
-        </li>
+        </li>        
         {% else %}
         <!-- Usuario común -->
         <li class="nav-item dropdown fw-bold">
@@ -178,20 +185,20 @@
           <ul class="dropdown-menu">
             <li><a class="dropdown-item fw-bold" href="{% url 'listar_reportes' %}">📊 Actividad Lab y Recursos</a></li>
           </ul>
-        </li>
+        </li>        
         {% endif %}
-      </nav>
-
-      <!-- Botón Cerrar Sesión -->
-      <form action="{% url 'logout' %}" method="post" style="display:inline;">
+         <!-- Botón Cerrar Sesión alineado a la derecha -->
+      <form class="d-flex" action="{% url 'logout' %}" method="post">
         {% csrf_token %}
-        <button class="eva-btn" type="submit" onclick="return confirm('¿Estás seguro de que deseas cerrar tu sesión?')">
-          <a>Cerrar Sesión</a>
+        <button class="btn btn-danger fw-bold" type="submit"
+          onclick="return confirm('¿Estás seguro de que deseas cerrar tu sesión?')">
+          Cerrar Sesión
         </button>
       </form>
+      </ul>
     </div>
-  </header>
-
+  </nav>
+</header>
 
   <section class="banner">
     <h1>Bienvenidos al Sistema de Gestión de Inventario y Laboratorios</h1>
