@@ -13,6 +13,8 @@ from inventario_nuevo.forms import MarcaForm, ModeloForm, ColorForm, UbicacionFo
 from django.utils import timezone
 from django.utils.timezone import localtime
 from inventario_nuevo.models import HistorialInventario
+from django.core.paginator import Paginator
+from django.db.models import Q
 
 # Decorador para verificar si el usuario es administrador
 from django.contrib.auth.decorators import user_passes_test
@@ -279,7 +281,7 @@ def agregar_producto(request):
             messages.success(request, "Producto agregado correctamente.")
             return redirect('listar_productos')
         else:
-            print(form.errors)  # 👈 para depurar errores silenciosos
+            print(form.errors)  # para depurar errores silenciosos
             messages.error(request, "Formulario inválido. Verifica los campos.")
 
     return render(request, 'inventario_nuevo/agregar_producto.html', {
@@ -298,7 +300,102 @@ def agregar_producto(request):
         'hoy': localtime(timezone.now()).date()
     })
 
+
 @admin_required #Verifica si el usuario es administrador
 def listar_productos(request):
     productos = Producto.objects.all()
-    return render(request, 'inventario_nuevo/listar_productos.html', {'productos': productos})
+    
+    nombre = request.GET.get('nombre')
+    codigo = request.GET.get('codigo')
+    categoria = request.GET.get('categoria')
+    subcategoria = request.GET.get('subcategoria')
+    marca = request.GET.get('marca')
+    modelo = request.GET.get('modelo')
+    color = request.GET.get('color')
+    estado = request.GET.get('estado')
+    ubicacion = request.GET.get('ubicacion')
+    lote = request.GET.get('lote')
+    num_serie = request.GET.get('num_serie')
+    fecha_agregado_desde = request.GET.get('fecha_agregado_desde')
+    fecha_agregado_hasta = request.GET.get('fecha_agregado_hasta')
+    vencimiento_desde = request.GET.get('vencimiento_desde')
+    vencimiento_hasta = request.GET.get('vencimiento_hasta')
+
+    filtros_aplicados = {}
+
+    if nombre:
+        productos = productos.filter(nombre__icontains=nombre)
+        filtros_aplicados['Nombre'] = nombre
+    if codigo:
+        productos = productos.filter(codigo__icontains=codigo)
+        filtros_aplicados['Código'] = codigo
+    if categoria:
+        productos = productos.filter(categoria_id=categoria)
+        filtros_aplicados['Categoría'] = Categoria.objects.get(id=categoria).nombre
+    if subcategoria:
+        productos = productos.filter(subcategoria_id=subcategoria)
+        filtros_aplicados['Subcategoría'] = Subcategoria.objects.get(id=subcategoria).nombre
+    if marca:
+        productos = productos.filter(marca_id=marca)
+        filtros_aplicados['Marca'] = Marca.objects.get(id=marca).nombre
+    if modelo:
+        productos = productos.filter(modelo_id=modelo)
+        filtros_aplicados['Modelo'] = Modelo.objects.get(id=modelo).nombre
+    if color:
+        productos = productos.filter(color_id=color)
+        filtros_aplicados['Color'] = Color.objects.get(id=color).nombre
+    estado_obj = EstadoRecurso.objects.filter(estado=estado).first()
+    if estado_obj:
+        productos = productos.filter(estado=estado_obj)
+        filtros_aplicados['Estado'] = estado_obj.get_estado_display()
+    if ubicacion:
+        productos = productos.filter(ubicacion_id=ubicacion)
+        filtros_aplicados['Ubicación'] = Ubicacion.objects.get(id=ubicacion).nombre
+    if lote:
+        productos = productos.filter(lote_id=lote)
+        filtros_aplicados['Lote'] = Lote.objects.get(id=lote).nombre
+    if num_serie:
+        productos = productos.filter(numero_serie__icontains=num_serie)
+        filtros_aplicados['N° de serie'] = num_serie
+    # Rango de fechas: Fecha de agregado
+    if fecha_agregado_desde and fecha_agregado_hasta:
+        productos = productos.filter(fecha_agregado__range=[fecha_agregado_desde, fecha_agregado_hasta])
+        filtros_aplicados['Fecha de agregado'] = f"{fecha_agregado_desde} a {fecha_agregado_hasta}"
+    elif fecha_agregado_desde:
+        productos = productos.filter(fecha_agregado__gte=fecha_agregado_desde)
+        filtros_aplicados['Fecha de agregado desde'] = fecha_agregado_desde
+    elif fecha_agregado_hasta:
+        productos = productos.filter(fecha_agregado__lte=fecha_agregado_hasta)
+        filtros_aplicados['Fecha de agregado hasta'] = fecha_agregado_hasta
+
+    # Rango de fechas: Fecha de vencimiento
+    if vencimiento_desde and vencimiento_hasta:
+        productos = productos.filter(vencimiento__range=[vencimiento_desde, vencimiento_hasta])
+        filtros_aplicados['Fecha de vencimiento'] = f"{vencimiento_desde} a {vencimiento_hasta}"
+    elif vencimiento_desde:
+        productos = productos.filter(vencimiento__gte=vencimiento_desde)
+        filtros_aplicados['Vencimiento desde'] = vencimiento_desde
+    elif vencimiento_hasta:
+        productos = productos.filter(vencimiento__lte=vencimiento_hasta)
+        filtros_aplicados['Vencimiento hasta'] = vencimiento_hasta
+
+    paginator = Paginator(productos, 15)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'productos': page_obj,
+        'categorias': Categoria.objects.all(),
+        'subcategorias': Subcategoria.objects.all(),
+        'marcas': Marca.objects.all(),
+        'modelos': Modelo.objects.all(),
+        'colores': Color.objects.all(),
+        'estados': EstadoRecurso.objects.all(),
+        'ubicaciones': Ubicacion.objects.all(),
+        'lotes': Lote.objects.all(),
+        'total_resultados': productos.count(),
+        'filtros_aplicados': filtros_aplicados,
+        'params': request.GET.copy(),  # NECESARIO PARA PAGINACIÓN
+    }
+
+    return render(request, 'inventario_nuevo/listar_productos.html', context)
