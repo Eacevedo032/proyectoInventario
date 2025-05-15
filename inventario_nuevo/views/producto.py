@@ -301,9 +301,13 @@ def agregar_producto(request):
     })
 
 
-@admin_required #Verifica si el usuario es administrador
+from django.shortcuts import get_object_or_404
+
+@admin_required
 def listar_productos(request):
-    productos = Producto.objects.all()
+    productos = Producto.objects.all().select_related(
+        'categoria', 'subcategoria', 'marca', 'modelo', 'color', 'estado', 'ubicacion', 'lote'
+    )
     
     nombre = request.GET.get('nombre')
     codigo = request.GET.get('codigo')
@@ -330,34 +334,64 @@ def listar_productos(request):
         productos = productos.filter(codigo__icontains=codigo)
         filtros_aplicados['Código'] = codigo
     if categoria:
-        productos = productos.filter(categoria_id=categoria)
-        filtros_aplicados['Categoría'] = Categoria.objects.get(id=categoria).nombre
+        try:
+            cat = Categoria.objects.get(id=categoria)
+            productos = productos.filter(categoria_id=categoria)
+            filtros_aplicados['Categoría'] = cat.nombre
+        except Categoria.DoesNotExist:
+            pass
     if subcategoria:
-        productos = productos.filter(subcategoria_id=subcategoria)
-        filtros_aplicados['Subcategoría'] = Subcategoria.objects.get(id=subcategoria).nombre
+        try:
+            subcat = Subcategoria.objects.get(id=subcategoria)
+            productos = productos.filter(subcategoria_id=subcategoria)
+            filtros_aplicados['Subcategoría'] = subcat.nombre
+        except Subcategoria.DoesNotExist:
+            pass
     if marca:
-        productos = productos.filter(marca_id=marca)
-        filtros_aplicados['Marca'] = Marca.objects.get(id=marca).nombre
+        try:
+            mar = Marca.objects.get(id=marca)
+            productos = productos.filter(marca_id=marca)
+            filtros_aplicados['Marca'] = mar.nombre
+        except Marca.DoesNotExist:
+            pass
     if modelo:
-        productos = productos.filter(modelo_id=modelo)
-        filtros_aplicados['Modelo'] = Modelo.objects.get(id=modelo).nombre
+        try:
+            mod = Modelo.objects.get(id=modelo)
+            productos = productos.filter(modelo_id=modelo)
+            filtros_aplicados['Modelo'] = mod.nombre
+        except Modelo.DoesNotExist:
+            pass
     if color:
-        productos = productos.filter(color_id=color)
-        filtros_aplicados['Color'] = Color.objects.get(id=color).nombre
-    estado_obj = EstadoRecurso.objects.filter(estado=estado).first()
-    if estado_obj:
-        productos = productos.filter(estado=estado_obj)
-        filtros_aplicados['Estado'] = estado_obj.get_estado_display()
+        try:
+            col = Color.objects.get(id=color)
+            productos = productos.filter(color_id=color)
+            filtros_aplicados['Color'] = col.nombre
+        except Color.DoesNotExist:
+            pass
+    if estado:
+        estado_obj = EstadoRecurso.objects.filter(estado=estado).first()
+        if estado_obj:
+            productos = productos.filter(estado=estado_obj)
+            filtros_aplicados['Estado'] = estado_obj.get_estado_display()
     if ubicacion:
-        productos = productos.filter(ubicacion_id=ubicacion)
-        filtros_aplicados['Ubicación'] = Ubicacion.objects.get(id=ubicacion).nombre
+        try:
+            ubi = Ubicacion.objects.get(id=ubicacion)
+            productos = productos.filter(ubicacion_id=ubicacion)
+            filtros_aplicados['Ubicación'] = ubi.nombre
+        except Ubicacion.DoesNotExist:
+            pass
     if lote:
-        productos = productos.filter(lote_id=lote)
-        filtros_aplicados['Lote'] = Lote.objects.get(id=lote).nombre
+        try:
+            lot = Lote.objects.get(id=lote)
+            productos = productos.filter(lote_id=lote)
+            filtros_aplicados['Lote'] = lot.nombre
+        except Lote.DoesNotExist:
+            pass
     if num_serie:
         productos = productos.filter(numero_serie__icontains=num_serie)
         filtros_aplicados['N° de serie'] = num_serie
-    # Rango de fechas: Fecha de agregado
+    
+    # Rango fechas agregado
     if fecha_agregado_desde and fecha_agregado_hasta:
         productos = productos.filter(fecha_agregado__range=[fecha_agregado_desde, fecha_agregado_hasta])
         filtros_aplicados['Fecha de agregado'] = f"{fecha_agregado_desde} a {fecha_agregado_hasta}"
@@ -368,7 +402,7 @@ def listar_productos(request):
         productos = productos.filter(fecha_agregado__lte=fecha_agregado_hasta)
         filtros_aplicados['Fecha de agregado hasta'] = fecha_agregado_hasta
 
-    # Rango de fechas: Fecha de vencimiento
+    # Rango fechas vencimiento
     if vencimiento_desde and vencimiento_hasta:
         productos = productos.filter(vencimiento__range=[vencimiento_desde, vencimiento_hasta])
         filtros_aplicados['Fecha de vencimiento'] = f"{vencimiento_desde} a {vencimiento_hasta}"
@@ -383,6 +417,10 @@ def listar_productos(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    params = request.GET.copy()
+    if 'page' in params:
+        params.pop('page')
+
     context = {
         'productos': page_obj,
         'categorias': Categoria.objects.all(),
@@ -395,7 +433,7 @@ def listar_productos(request):
         'lotes': Lote.objects.all(),
         'total_resultados': productos.count(),
         'filtros_aplicados': filtros_aplicados,
-        'params': request.GET.copy(),  # NECESARIO PARA PAGINACIÓN
+        'params': params,  # Para usar en la paginación sin duplicar page
     }
 
     return render(request, 'inventario_nuevo/listar_productos.html', context)
