@@ -27,4 +27,11 @@ urlpatterns = [
     path('seleccion-reportes/', views.seleccion_reportes, name='seleccion_reportes'),  #
     path('exportar-pdf/', views.exportar_pdf, name='exportar_pdf'),
     path('exportar-excel/', views.exportar_excel, name='exportar_excel'),  # Agregamos la ruta correcta
+    path('tabla_historial_inventario/', views.tabla_historial_inventario, name='tabla_historial_inventario'),
+    #Para editar el producto
+    path('editar_producto/<int:producto_id>/', views.editar_producto, name='editar_producto'),
+    #Para dar de baja a un producto
+    path('dar_baja_producto/<int:producto_id>/', views.dar_baja_producto, name='dar_baja_producto'),
+    #Exporte del inventario geeral en PDF
+    path('reporte_pdf_inventario/', views.reporte_pdf_inventario, name='reporte_pdf_inventario'),
 ]

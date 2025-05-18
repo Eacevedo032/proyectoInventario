@@ -125,7 +125,7 @@ body {
     background-color: #003f7f;
 }
 
-/* Estilos para el fondo de la pagina de gestion de usuarios, imagen de fondo en agregar usuarios */
+/* Estilos para el fondo de la página */
 .fondo-admin {
     position: relative;
     min-height: 100vh;
@@ -133,6 +133,7 @@ body {
     overflow: hidden;
 }
 
+/* La imagen de fondo */
 .fondo-admin::before {
     content: "";
     position: absolute;
@@ -140,29 +141,35 @@ body {
     background-image: url('/static/img/img5.jpg'); 
     background-size: cover;
     background-position: center;
-    opacity: 1; /* Más transparente */
-    z-index: 0;
+    opacity: 1;
+    z-index: 0;  /* Este z-index coloca la imagen de fondo detrás de todo */
 }
 
+/* Contenido principal */
 .contenido-admin {
     position: relative;
-    z-index: 1;
+    z-index: 1;  /* Asegura que el contenido esté por encima de la imagen */
     padding: 2rem;
 }
 
-/* Para ocupar todo el espacio de pantalla*/
-/* Fuerza el uso completo del viewport */
+/* Asegura que el header esté sobre la imagen de fondo */
+.header {
+    position: relative;
+    z-index: 2;  /* Asegura que el header siempre esté por encima de la imagen */
+}
+
+/* Elimina margen del contenido principal */
+.fondo-admin {
+    padding: 0;
+    margin: 0;
+}
+
+/* Asegurarse de que el fondo no cubra todo el espacio y no afecte a otros elementos */
 body, html {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
-}
-
-/* Elimina margen del contenido principal en esta vista */
-.fondo-admin {
-    padding: 0;
-    margin: 0;
 }
 
 .rol-admin {

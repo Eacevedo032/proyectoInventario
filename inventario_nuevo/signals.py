@@ -43,7 +43,6 @@ def crear_estados_recurso(sender, **kwargs):
     if sender.name == 'inventario_nuevo':  
         ESTADOS_PREDEFINIDOS = [
         ('disponible', 'Disponible'),
-        ('prestado', 'Prestado (No disponible)'),
         ('mantenimiento', 'Mantenimiento (No disponible)'),
         ('baja', 'Dado de baja'),
         ]

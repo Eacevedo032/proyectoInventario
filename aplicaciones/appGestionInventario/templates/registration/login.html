@@ -50,7 +50,7 @@
   /* Estilo para ambas imágenes */
   .login-img {
     width: 100%;
-    max-height: 50vh; /* Limita la altura máxima */
+    max-height: 100vh; /* Limita la altura máxima */
     object-fit: contain; /* Cambiado de cover a contain para ver imágenes completas */
     border-radius: 4px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -82,7 +82,7 @@
   
   /* Contenedor del formulario */
   .login-form-container {
-    width: 45%;
+    width: 50%;
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -269,8 +269,7 @@
 {% else %}
 <div class="login-container">
   <div class="login-image">
-    <img src="{% static 'img/img1.jpg' %}" alt="Imagen 1" class="login-img">
-    <img src="{% static 'img/img2.jpg' %}" alt="Imagen 2" class="login-img">
+    <img src="{% static 'img/inicio.jpg' %}" alt="Imagen 1" class="login-img">
   </div>
     <div class="login-form-container">
       

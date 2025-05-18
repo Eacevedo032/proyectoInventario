@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block body %}
+<div class="container mt-4">
+
+  <!-- Mensajes -->
+  <div id="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Título -->
+  <h1 class="mb-4 text-center fw-bold" style="color: black; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+    Historial de Inventario
+  </h1>
+
+  <!-- Tabla -->
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+    <thead>
+<tr class="text-center">
+            <th class="fw-bold">Producto</th>
+            <th class="fw-bold">Categoría</th>
+            <th class="fw-bold">Subcategoría</th>
+            <th class="fw-bold">Cantidad Inicial</th>
+            <th class="fw-bold">Unidad</th>
+            <th class="fw-bold">Ubicación Inicial</th>
+            <th class="fw-bold">Estado Inicial</th>
+            <th class="fw-bold">Tipo Movimiento</th>
+            <th class="fw-bold">Fecha Agregado</th>
+            <th class="fw-bold">Agregado por</th>
+        </tr>
+    </thead>
+    <tbody style="background-color: white;">
+        {% for item in historial %}
+        <tr class="text-center">
+            <td>{{ item.producto.nombre }}</td>
+            <td>{{ item.categoria.nombre }}</td>
+            <td>{{ item.subcategoria.nombre }}</td>
+            <td>{{ item.cantidad_inicial }}</td>
+            <td>{{ item.unidad_medida.nombre }}</td>
+            <td>{{ item.ubicacion_inicial.nombre }}</td>
+            <td>{{ item.estado_inicial.get_estado_display }}</td>
+            <td><span class="badge bg-success">{{ item.tipo_movimiento }}</span></td>
+            <td>{{ item.fecha_agregado|date:"d/m/Y" }}</td>
+            <td>{{ item.agregado_por.get_full_name|default:item.agregado_por.username }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="10" class="text-center">No hay registros en el historial de inventario.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+  </div>
+
+</div>
+
+<style>
+    thead th {
+    background-color: #102165 !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+</style>
+{% endblock %}

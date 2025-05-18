@@ -12,5 +12,7 @@ from .lote import *
 from .medida import *
 from .filtros_unidadMedida_estado import *
 from .inventario_fisico import *
+from .tablaHistorialInventario import *
+
 
 

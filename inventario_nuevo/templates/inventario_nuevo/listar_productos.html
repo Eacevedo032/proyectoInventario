@@ -4,7 +4,7 @@
 
 <!-- Mensajes -->
 {% if messages %}
-<div class="alert alert-dismissible alert-success">
+<div class="alert alert-dismissible alert-success mt-2">
     {% for message in messages %}
     <strong class="text-dark">{{ message }}</strong>
     {% endfor %}
@@ -12,37 +12,408 @@
 {% endif %}
 
 <div class="container mt-4">
-    <h2>Lista de Productos</h2>
-    <a href="{% url 'agregar_producto' %}" class="btn btn-primary mb-3">Agregar Producto</a>
-    <table class="table table-striped">
-        <thead>
+
+    <!-- Contenedor principal del encabezado -->
+    <div class="container mb-4">
+        <!-- Título -->
+        <div class="row">
+            <div class="col text-center">
+                <h1 class="fw-bold"
+                    style="color: black; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+                    Inventario
+                </h1>
+            </div>
+        </div>
+
+        <!-- Botones debajo del título -->
+        <div class="row mt-3 justify-content-center">
+            <div class="col-auto mb-2">
+                <a href="{% url 'agregar_producto' %}" class="btn btn-sm"
+                    style="background-color: #0000FF; color: white; font-size: medium;">
+                     <strong>Agregar Nuevo Producto</strong>
+                </a>
+            </div>
+            <div class="col-auto mb-2">
+                <button class="btn btn-sm" style="background-color: #e30613; color: white; font-size: medium;"
+                    type="button" data-bs-toggle="collapse" data-bs-target="#filtrosAvanzados" aria-expanded="false"
+                    aria-controls="filtrosAvanzados">
+                    <strong>Mostrar / Ocultar Filtros</strong>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros Avanzados -->
+    <div class="collapse" id="filtrosAvanzados">
+        <form method="get" class="border p-3 rounded shadow-sm mb-4" style="background-color: #f9f9f9;">
+            <div class="row g-3">
+                <h3 class="fw-bold text-center m-0"
+                    style="color: black; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+                    Filtros para buscar Productos
+                </h3>
+
+                <div class="col-md-3">
+                    <label for="nombre" class="form-label"><strong>Nombre o Palabra clave</strong></label>
+                    <input type="text" name="nombre" id="nombre" class="form-control" value="{{ request.GET.nombre }}">
+                </div>
+
+                <div class="col-md-3">
+    <label for="categoria" class="form-label"><strong>Categoría</strong></label>
+    <select name="categoria" class="form-select">
+        <option value="">-- Todas --</option>
+        {% for c in categorias %}
+            {% if request.GET.categoria and request.GET.categoria == c.id|stringformat:"s" %}
+                <option value="{{ c.id }}" selected>{{ c.nombre }}</option>
+            {% else %}
+                <option value="{{ c.id }}">{{ c.nombre }}</option>
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>
+                <div class="col-md-3">
+    <label for="subcategoria" class="form-label"><strong>Subcategoría</strong></label>
+    <select name="subcategoria" class="form-select">
+        <option value="">-- Todas --</option>
+        {% for s in subcategorias %}
+            {% if request.GET.subcategoria and request.GET.subcategoria == s.id|stringformat:"s" %}
+                <option value="{{ s.id }}" selected>{{ s.nombre }}</option>
+            {% else %}
+                <option value="{{ s.id }}">{{ s.nombre }}</option>
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>
+                <div class="col-md-3">
+    <label for="estado" class="form-label"><strong>Estado</strong></label>
+    <select name="estado" class="form-select">
+        <option value="">-- Todos --</option>
+        {% for e in estados %}
+            <option value="{{ e.estado }}" {% if request.GET.estado and request.GET.estado == e.estado %}selected{% endif %}>
+                {{ e.get_estado_display }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+                <div class="col-md-3">
+    <label for="ubicacion" class="form-label"><strong>Ubicación</strong></label>
+    <select name="ubicacion" class="form-select">
+        <option value="">-- Todas --</option>
+        {% for u in ubicaciones %}
+            {% if request.GET.ubicacion and request.GET.ubicacion == u.id|stringformat:"s" %}
+                <option value="{{ u.id }}" selected>{{ u.nombre }}</option>
+            {% else %}
+                <option value="{{ u.id }}">{{ u.nombre }}</option>
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>
+
+                <div class="col-md-3">
+                    <label for="codigo" class="form-label"><strong>Código (único)</strong></label>
+                    <input type="text" name="codigo" class="form-control" value="{{ request.GET.codigo }}">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="num_serie" class="form-label"><strong>N° de serie (único)</strong></label>
+                    <input type="text" name="num_serie" class="form-control" value="{{ request.GET.num_serie }}">
+                </div>
+
+                <div class="col-md-3">
+    <label for="lote" class="form-label"><strong>Lote</strong></label>
+    <select name="lote" class="form-select">
+        <option value="">-- Todos --</option>
+        {% for l in lotes %}
+            {% if request.GET.lote and request.GET.lote == l.id|stringformat:"s" %}
+                <option value="{{ l.id }}" selected>{{ l.nombre }}</option>
+            {% else %}
+                <option value="{{ l.id }}">{{ l.nombre }}</option>
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>
+                <!-- Rango de fechas: Fecha de agregado -->
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-12 text-center">
+                            <label class="form-label"><strong>Fecha de agregado (rango)</strong></label>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="date" name="fecha_agregado_desde" class="form-control"
+                                value="{{ request.GET.fecha_agregado_desde }}">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="date" name="fecha_agregado_hasta" class="form-control"
+                                value="{{ request.GET.fecha_agregado_hasta }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rango de fechas: Fecha de vencimiento -->
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-12 text-center">
+                            <label class="form-label"><strong>Fecha de vencimiento (rango)</strong></label>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="date" name="vencimiento_desde" class="form-control"
+                                value="{{ request.GET.vencimiento_desde }}">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="date" name="vencimiento_hasta" class="form-control"
+                                value="{{ request.GET.vencimiento_hasta }}">
+                        </div>
+                    </div>
+                </div>
+
+               <div class="col-md-4">
+    <label for="marca" class="form-label"><strong>Marca</strong></label>
+    <select name="marca" class="form-select">
+        <option value="">--Todas--</option>
+        {% for m in marcas %}
+            {% if request.GET.marca and request.GET.marca == m.id|stringformat:"s" %}
+                <option value="{{ m.id }}" selected>{{ m.nombre }}</option>
+            {% else %}
+                <option value="{{ m.id }}">{{ m.nombre }}</option>
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>
+
+<div class="col-md-4">
+    <label for="modelo" class="form-label"><strong>Modelo</strong></label>
+    <select name="modelo" class="form-select">
+        <option value="">--Todos--</option>
+        {% for m in modelos %}
+            {% if request.GET.modelo and request.GET.modelo == m.id|stringformat:"s" %}
+                <option value="{{ m.id }}" selected>{{ m.nombre }}</option>
+            {% else %}
+                <option value="{{ m.id }}">{{ m.nombre }}</option>
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>
+
+<div class="col-md-4">
+    <label for="color" class="form-label"><strong>Color</strong></label>
+    <select name="color" class="form-select">
+        <option value="">--Todos--</option>
+        {% for c in colores %}
+            {% if request.GET.color and request.GET.color == c.id|stringformat:"s" %}
+                <option value="{{ c.id }}" selected>{{ c.nombre }}</option>
+            {% else %}
+                <option value="{{ c.id }}">{{ c.nombre }}</option>
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>
+
+                <div class="col-12 text-center mt-3">
+                    <!-- Botón Aplicar Filtros -->
+                    <button type="submit" class="btn me-2" style="background-color: #008f39; color: white;">
+                        <strong>Aplicar Filtros</strong>
+                    </button>
+
+                    <!-- Botón Limpiar Campos del Formulario -->
+                    <button type="reset" class="btn btn-secondary me-2">
+                        <strong>Limpiar Filtros</strong>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="mb-4">
+        {% if filtros_aplicados %}
+        <div class="border border-primary rounded p-3 bg-light d-flex justify-content-between align-items-center">
+            <div>
+                <strong class="text-primary">
+    {{ total_resultados }} resultado{{ total_resultados|pluralize:"s" }} con los filtros aplicados.
+</strong>
+<br>
+                <span class="text-dark fs-5"><strong>Filtrado por:</strong>
+    {% for key, value in filtros_aplicados.items %}
+    <span class="badge bg-primary me-1 fs-6">{{ key }}: {{ value }}</span>
+    {% endfor %}
+</span>
+            </div>
+            <div>
+                <a href="{% url 'listar_productos' %}" class="btn btn-sm btn-outline-danger">
+                    <strong>Quitar filtros</strong>
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="border border-secondary rounded p-3 bg-white">
+            <strong class="text-dark">Registros de Productos: {{ total_resultados }}</strong>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if modo_baja %}
+    <!-- TABLA SOLO PARA PRODUCTOS DADOS DE BAJA -->
+<table class="table table-hover align-middle rounded-table" style="table-layout: auto; width: 100%;">
+    <thead class="table-primary">
             <tr>
-                <th>Nombre</th>
+                <th>#</th>
+                <th>Producto</th>
                 <th>Categoría</th>
                 <th>Subcategoría</th>
                 <th>Cantidad</th>
-                <th>Unidad de medida</th>
-                <th>Estado</th>
-                <th>Ubicación</th>
+                <th>Medida</th>
+                <th>Motivo de baja</th>
+                <th>Observaciones de la baja</th>
+                <th>Fecha de baja</th>
+                <th>Dado de baja por</th>
             </tr>
         </thead>
         <tbody>
             {% for producto in productos %}
+                <tr>
+                    <td>{{ forloop.counter0|add:productos.start_index }}</td>
+                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.categoria.nombre }}</td>
+                    <td>{{ producto.subcategoria.nombre }}</td>
+                    <td>{{ producto.cantidad_disponible }}</td>
+                    <td>{{ producto.unidad_medida }}</td>
+                    <td>{{ producto.baja.motivo }}</td>
+                    <td>{{ producto.baja.observaciones|default:"-" }}</td>
+                    <td>{{ producto.baja.fecha_baja|date:"d/m/Y" }}</td>
+                    <td>{{ producto.baja.usuario.username}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <!-- Tabla de Inventario-->
+    <div class="table-responsive">
+    <table class="table table-hover align-middle rounded-table" style="table-layout: auto; width: 100%;">
+        <thead class="table-primary">
             <tr>
-                <td>{{ producto.nombre }}</td>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Subcategoría</th>
+                <th>Cantidad</th>
+                <th>Medida</th>
+                <th>Estado</th>
+                <th>Ubicación</th>
+                <th>Vence</th>
+                <th>Agregado</th>
+                <th>Opciones</th>
+            </tr>
+        </thead>
+        <tbody style="background-color: white;">
+            {% for producto in productos %}
+            <tr>
+                <td>{{ forloop.counter0|add:productos.start_index }}</td>
+                <td style="width: 20%; text-align: justify; white-space: normal; word-break: break-word;">
+    {{ producto.nombre }}
+</td>
                 <td>{{ producto.categoria.nombre }}</td>
                 <td>{{ producto.subcategoria.nombre }}</td>
                 <td>{{ producto.cantidad_disponible }}</td>
                 <td>{{ producto.unidad_medida }}</td>
-                <td>{{ producto.estado.get_estado_display }}</td>
+                <td style="max-width: 120px; white-space: normal; word-wrap: break-word;">
+    {{ producto.estado.get_estado_display }}
+</td>
+    <!--Este enfoque mantiene auto, pero limita cuánto puede crecer la celda.-->
                 <td>{{ producto.ubicacion.nombre }}</td>
+                <td>{{ producto.vencimiento|date:"d/m/Y" }}</td>
+                <td>{{ producto.fecha_agregado|date:"d/m/Y" }}</td>
+                <td>
+    <strong><div class="d-flex flex-column gap-1">
+        <a href="{% url 'editar_producto' producto.id %}"
+           style="background-color: #102165; color: white; padding: 4px 6px; font-size: 12px; border-radius: 3px; text-decoration: none; text-align: center;">
+            Ver más
+        </a>
+        <a href="{% url 'dar_baja_producto' producto.id %}"
+   style="background-color: #e30613; color: white; padding: 2px 4px; font-size: 11px; border-radius: 3px;
+          text-decoration: none; text-align: center; display: inline-block; max-width: 80px;">
+    Dar de baja
+</a>
+    </div></strong>
+</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7">No hay productos registrados.</td>
+                <td colspan="11" class="text-center">No hay productos.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-{% endblock %}
+{% endif %}
+
+ <a href="{% url 'reporte_pdf_inventario' %}?{{ request.GET.urlencode }}" class="btn btn-danger" target="_blank">
+    <i class="fas fa-file-pdf"></i> Exportar PDF
+</a>
+
+    <nav class="mt-3">
+    <ul class="pagination justify-content-center">
+        {% if productos.has_previous %}
+        <li class="page-item">
+            <a class="page-link"
+                href="?{% for key, value in params.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ productos.previous_page_number }}">
+                Anterior
+            </a>
+        </li>
+        {% endif %}
+
+        {% for i in productos.paginator.page_range %}
+        <li class="page-item {% if productos.number == i %}active{% endif %}">
+            <a class="page-link"
+                href="?{% for key, value in params.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ i }}">
+                {{ i }}
+            </a>
+        </li>
+        {% endfor %}
+
+        {% if productos.has_next %}
+        <li class="page-item">
+            <a class="page-link"
+                href="?{% for key, value in params.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ productos.next_page_number }}">
+                Siguiente
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+
+    <!-- Estilo para la cabecera y de .rounded-table a la etiqueta ultima pertenece a los bordes y lineas de la tabla-->
+    <style>
+        thead th {
+            background-color: #102165 !important;
+            color: white !important;
+            font-weight: bold !important;
+        }
+        .rounded-table {     
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .rounded-table th,
+        .rounded-table td {
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .rounded-table th:first-child {
+            border-top-left-radius: 12px;
+        }
+
+        .rounded-table th:last-child {
+            border-top-right-radius: 12px;
+        }
+
+        .rounded-table tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 12px;
+        }
+
+        .rounded-table tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 12px;
+        }
+    </style>
+    {% endblock %}

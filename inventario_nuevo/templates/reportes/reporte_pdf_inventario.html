@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 11px; }
+        h1 { color: #0000FF; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #999; padding: 4px; text-align: left; }
+        .encabezado { text-align: center; }
+        .filtros { font-size: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="encabezado">
+        <h1>Reporte General del Inventario</h1>
+        {% if filtros_aplicados %}
+            <div class="filtros">
+                <strong>Filtros aplicados:</strong>
+                <ul>
+                    {% for key, value in filtros_aplicados.items %}
+                        <li><strong>{{ key }}:</strong> {{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Código</th>
+                <th>Estado</th>
+                <th>Ubicación</th>
+                <th>Fecha agregado</th>
+                <th>Vencimiento</th>
+                <!-- Agrega más columnas si deseas -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ producto.nombre }}</td>
+                <td>{{ producto.codigo }}</td>
+                <td>{{ producto.estado }}</td>
+                <td>{{ producto.ubicacion }}</td>
+                <td>{{ producto.fecha_agregado|date:"Y-m-d" }}</td>
+                <td>{{ producto.vencimiento|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">No se encontraron productos con los filtros seleccionados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
