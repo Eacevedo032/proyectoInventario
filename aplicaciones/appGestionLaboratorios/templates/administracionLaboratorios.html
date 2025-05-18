@@ -1,6 +1,12 @@
 <!--admin-->
 {% extends "./base.html" %}
 {% block title %}Gestión de Reservaciones{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+{% endblock %}
+
 {% block body %}
 
 {% if messages %}
@@ -13,41 +19,17 @@
 </div>
 {% endif %}
 
-<style>
-    .btn-disabled {
-        background-color: grey !important;
-        border-color: grey !important;
-        pointer-events: none;
-        color: white !important;
-    }
-    .badge {
-        font-size: 0.9em;
-        padding: 0.5em 0.75em;
-    }
-    .bg-success { background-color: #28a745; }
-    .bg-warning { background-color: #ffc107; }
-    .bg-danger { background-color: #dc3545; }
-</style>
-
 <div class="container my-5">
-    <h1 class="text-center mb-4">Administración de Solicitudes de Laboratorios</h1>
-
-     <!-- Botones de Acción -->
-     <div class="d-flex justify-content-start mb-4">
-        <a href="{% url 'agregar_horario' %}" class="btn btn-success btn-sm me-2">Añadir Horario</a>
-        <a href="{% url 'listar_horarios' %}" class="btn btn-success btn-sm ms-2">Ver Horarios</a>
-    </div>
+    <h1 class="solicitud-title text-center mb-4">Administración de Solicitudes de Laboratorios</h1>
 
     <!-- Filtros y Búsqueda -->
     <form method="GET" class="mb-4">
         <div class="row">
             <div class="col-md-3">
                 <select name="estado" class="form-control">
-                    <option value="">Todos los Estados</option>
                     <option value="en_revision">en_revision</option>
                     <option value="pendiente">Pendiente</option>
                     <option value="aprobada">Aprobada</option>
-                    <option value="rechazada">Rechazada</option>
                 </select>
             </div>
             <!-- Filtro por laboratorio -->
@@ -98,6 +80,7 @@
                         <th scope="col">Fecha de Reserva</th>
                         <th scope="col">Hora de Inicio</th>
                         <th scope="col">Hora de Fin</th>
+                        <th scope="col">Requieren recursos</th>
                         <th scope="col">Estado</th>
                         <th scope="col">Acciones</th>
                     </tr>
@@ -113,6 +96,7 @@
                         <td>{{ solicitud.fecha_reserva }}</td>
                         <td>{{ solicitud.hora_inicio }}</td>
                         <td>{{ solicitud.hora_fin }}</td>
+                        <td>{% if solicitud.tiene_recursos %}Sí{% else %}No{% endif %}</td>
                         <td>
                             <span class="badge 
                                 {% if solicitud.estado == 'aprobada' %}bg-success

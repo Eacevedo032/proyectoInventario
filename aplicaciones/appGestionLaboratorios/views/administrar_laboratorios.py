@@ -7,10 +7,11 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from itertools import groupby
+from django.contrib.auth.decorators import login_required
 import json
 from aplicaciones.appGestionLaboratorios.models import SolicitudLaboratorio, UsoItemLaboratorio, HorarioLaboratorio, HistorialInventario
 from datetime import datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_unidades
 from inventario_nuevo.models import UnidadMedida
 
@@ -21,32 +22,40 @@ def admin_required(view_func):
     return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
 
 @admin_required #Verifica si el usuario es administrador
+@login_required
 def administracionLaboratorios(request):
     estado = request.GET.get('estado')
     laboratorio = request.GET.get('laboratorio')
     usuario = request.GET.get('usuario')
 
-    solicitudes = SolicitudLaboratorio.objects.select_related('usuario').exclude(estado='rechazada').order_by('usuario__username')
-
+    # Por defecto solo solicitudes en revisión
     if estado:
-        solicitudes = solicitudes.filter(estado=estado)
+        solicitudes = SolicitudLaboratorio.objects.select_related('usuario').exclude(estado='rechazada').filter(estado=estado)
+    else:
+        solicitudes = SolicitudLaboratorio.objects.select_related('usuario').exclude(estado='rechazada').filter(estado='en_revision')
+
+    # Filtros adicionales
     if laboratorio:
         solicitudes = solicitudes.filter(laboratorio__icontains=laboratorio)
     if usuario:
         solicitudes = solicitudes.filter(usuario__username__icontains=usuario)
 
-     # Ocultar solicitudes aprobadas antiguas (más de 30 días)
+    # Ocultar solicitudes aprobadas antiguas (más de 30 días) si no se solicita historial
     fecha_actual = datetime.now().date()
-    fecha_limite = fecha_actual - timedelta(days=30)  # Mostrar solo las aprobadas en los últimos 30 días
+    fecha_limite = fecha_actual - timedelta(days=30)
 
-    # Si el usuario no ha activado "mostrar historial completo", ocultar las aprobadas antiguas
     if request.GET.get('mostrar_historial') != 'true':
-        solicitudes = solicitudes.exclude(fecha_reserva__lt=fecha_limite)
+        solicitudes = solicitudes.exclude(estado='aprobada', fecha_reserva__lt=fecha_limite)
 
-    paginator = Paginator(solicitudes, 10)  # 10 solicitudes por página
+    # Ordenar por usuario
+    solicitudes = solicitudes.order_by('usuario__username')
+
+    # Paginación
+    paginator = Paginator(solicitudes, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # Agrupar solicitudes por usuario
     solicitudes_por_usuario = {}
     for usuario, solicitudes_usuario in groupby(page_obj, lambda s: s.usuario):
         solicitudes_usuario_list = list(solicitudes_usuario)
@@ -59,9 +68,11 @@ def administracionLaboratorios(request):
         'page_obj': page_obj
     })
 
+
 # Vista para aprobar solicitudes
 @admin_required #Verifica si el usuario es administrador
 @csrf_exempt
+@login_required
 def aprobar_solicitud(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id)
 
@@ -184,6 +195,7 @@ def aprobar_solicitud(request, solicitud_id):
 # Vista para rechazar solicitudes
 @admin_required #Verifica si el usuario es administrador
 @csrf_exempt
+@login_required
 def rechazar_solicitud(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id)
     
@@ -211,7 +223,7 @@ def solicitud_pendiente(request, solicitud_id):
     return redirect('administracion_laboratorios')
 
 #para ver los recursos a utilizar en el laboratorio
-@admin_required #Verifica si el usuario es administrado
+@login_required
 def ver_items_solicitud(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudLaboratorio, id=solicitud_id)
     items_solicitados = UsoItemLaboratorio.objects.filter(solicitud=solicitud)

@@ -1,8 +1,13 @@
 <!-- plantilla para usuario sin privilegios --> 
 {% extends "./base.html" %}
 
-{% load static %}
 {% block title %}Reservación de Laboratorio{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+{% endblock %}
+
 {% block body %}
 
 {% if messages %}
@@ -134,25 +139,25 @@
     <!-- Resumen de solicitudes -->
     <div class="row mb-4">
         <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-primary text-white">
+            <div class="card bg-warning1 text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Solicitudes pendientes</h5>
+                    <h5 class="card-title1">Solicitudes pendientes</h5>
                     <p class="card-text">{{ solicitudes_pendientes }}</p>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-success text-white">
+            <div class="card bg-success1 text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Solicitudes aprobadas</h5>
+                    <h5 class="card-title1">Solicitudes aprobadas</h5>
                     <p class="card-text">{{ solicitudes_aprobadas }}</p>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-danger text-white">
+            <div class="card bg-danger1 text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Solicitudes rechazadas</h5>
+                    <h5 class="card-title1">Solicitudes rechazadas</h5>
                     <p class="card-text">{{ solicitudes_rechazadas }}</p>
                 </div>
             </div>
@@ -190,6 +195,7 @@
         <thead>
             <tr>
                 <th>Producto</th>
+                <th>Ubicacion</th>
                 <th>Cantidad a utilizar</th>
                 <th>Fecha de uso</th>
                 <th>Motivo de uso</th>
@@ -201,6 +207,7 @@
             {% for solicitud in page_obj %}
             <tr>
                 <td>{{ solicitud.producto.nombre }}</td>
+                <td>{{ solicitud.producto.ubicacion.nombre }}</td>
                 <td>{{ solicitud.cantidad_utilizada }} {{ solicitud.unidad_medida }}</td>
                 <td>{{ solicitud.fecha_uso|date:"Y-m-d" }}</td>
                 <td>{{ solicitud.motivo }}</td>

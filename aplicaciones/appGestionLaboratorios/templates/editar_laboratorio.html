@@ -1,5 +1,11 @@
 {% extends "./base.html" %}
 {% block title %}Editar Reserva de Laboratorio{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+{% endblock %}
+
 {% block body %}
 <div class="container mt-5">
     <h2 class="text-center mb-4">Editar Reserva de Laboratorio</h2>
@@ -32,8 +38,11 @@
                 </div>
             </div>
             <div class="card-footer text-center">
-                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                <a href="{% url 'reservar_laboratorio' %}" class="btn btn-secondary">Cancelar</a>
+            <!-- Botón "Guardar" -->
+                    <button type="submit"
+                        class="btn btn-primary"><i class="bi bi-check-circle me-2"></i> Guardar</button>
+                        <!-- Botón para regresar -->
+                        <button onclick="window.history.back()" class="btn btn-secondary me-2">Cancelar</button>
             </div>
         </div>
     </form>

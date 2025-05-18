@@ -89,6 +89,8 @@
                 <li><a class="dropdown-item fw-bold" href="{% url 'administracion_laboratorios' %}">🏥 Administrar
                     Laboratorios</a></li>
                 <li><a class="dropdown-item fw-bold" href="{% url 'administracion_recursos' %}">🗂 Administrar Recursos</a>
+                  <li><a class="dropdown-item fw-bold" href="{% url 'agregar_horario' %}"> ➕ Agregar horarios </a></li>
+                  <li><a class="dropdown-item fw-bold" href="{% url 'listar_horarios' %}"> 🕑 Horarios ocupados </a></li>
                 </li>
               </ul>
             </li>
@@ -129,6 +131,7 @@
                 <li><a class="dropdown-item fw-bold" href="{% url 'solicitar_productos' %}">📦 Recursos</a></li>
                 <li><a class="dropdown-item fw-bold" href="{% url 'reservar_laboratorio' %}?modo=ambos">🏥 Laboratorio + 📦
                     Recursos</a></li>
+                  <li><a class="dropdown-item fw-bold" href="{% url 'listar_horarios_lectura' %}">🕑 Horarios ocupados</a></li>
               </ul>
             </li>
             <li class="nav-item dropdown fw-bold">

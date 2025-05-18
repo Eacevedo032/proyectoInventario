@@ -2,11 +2,15 @@
 
 {% block title %}Editar Horario{% endblock %}
 
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+{% endblock %}
+
 {% block body %}
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <!-- Mostrar mensajes de error/éxito -->
             {% if messages %}
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -16,7 +20,7 @@
                 {% endfor %}
             {% endif %}
 
-            <h1 class="text-center mb-4">Editar Horario</h1>
+            <h1 class=".horario-title text-center mb-4">Editar Horario</h1>
 
             <form method="post" action="" id="editarHorarioForm">
                 {% csrf_token %}
@@ -31,7 +35,7 @@
 
                 <div class="mb-3">
                     <label for="fecha_reserva" class="form-label">Fecha de Reserva:</label>
-                    <input type="date" class="form-control" id="fecha_reserva" name="fecha_reserva" value="{{ horario.fecha_reserva }}" required>
+                    <input type="date" class="form-control" id="fecha_reserva" name="fecha_reserva" value="{{ fecha_reserva }}" required>
                 </div>
 
                 <div class="mb-3">
@@ -98,17 +102,8 @@
                     </div>
                 </div>
 
-                <!-- Campos ocultos para el formato militar que se enviará al servidor -->
-                <input type="hidden" id="hora_inicio_militar" name="hora_inicio" value="{{ horario.hora_inicio }}">
-                <input type="hidden" id="hora_fin_militar" name="hora_fin" value="{{ horario.hora_fin }}">
-
                 <div class="form-check mb-3">
-                    <input 
-                        type="checkbox" 
-                        class="form-check-input" 
-                        id="sin_supervision" 
-                        name="sin_supervision" 
-                        {% if horario.sin_supervision %}checked{% endif %}>
+                    <input type="checkbox" class="form-check-input" id="sin_supervision" name="sin_supervision" {% if horario.sin_supervision %}checked{% endif %}>
                     <label class="form-check-label" for="sin_supervision">Horario bloqueado (sin supervisión)</label>
                 </div>
 
@@ -120,4 +115,41 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar el formulario para convertir a formato militar antes de enviar
+    const form = document.getElementById('editarHorarioForm');
+    
+    form.addEventListener('submit', function(e) {
+        // Convertir hora de inicio
+        const horaInicio = parseInt(document.getElementById('hora_inicio').value);
+        const minutoInicio = document.getElementById('minuto_inicio').value;
+        const periodoInicio = document.getElementById('periodo_inicio').value;
+        
+        let horaInicio24 = horaInicio;
+        if (periodoInicio === 'PM' && horaInicio !== 12) {
+            horaInicio24 += 12;
+        } else if (periodoInicio === 'AM' && horaInicio === 12) {
+            horaInicio24 = 0;
+        }
+        
+        // Convertir hora de fin
+        const horaFin = parseInt(document.getElementById('hora_fin').value);
+        const minutoFin = document.getElementById('minuto_fin').value;
+        const periodoFin = document.getElementById('periodo_fin').value;
+        
+        let horaFin24 = horaFin;
+        if (periodoFin === 'PM' && horaFin !== 12) {
+            horaFin24 += 12;
+        } else if (periodoFin === 'AM' && horaFin === 12) {
+            horaFin24 = 0;
+        }
+        
+        // Actualizar campos ocultos con formato HH:MM
+        document.getElementById('hora_inicio_militar').value = `${horaInicio24.toString().padStart(2, '0')}:${minutoInicio}`;
+        document.getElementById('hora_fin_militar').value = `${horaFin24.toString().padStart(2, '0')}:${minutoFin}`;
+    });
+});
+</script>
 {% endblock %}

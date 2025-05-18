@@ -1,5 +1,11 @@
 {% extends "./base.html" %}
 {% block title %}Reservación de Laboratorio{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+{% endblock %}
+
 {% block body %}
 <div class="container mt-5">
 
@@ -11,7 +17,7 @@
         </div>
     {% endif %}
 
-    <h1 class="text-center mb-4">Gestión de Solicitudes de laboratorio</h1>
+    <h1 class="laboratorio-title text-center mb-4">Gestión de Solicitudes de laboratorio</h1>
 
     <!-- Formulario de reservación de laboratorio -->
     <form method="post" id="reservaForm">
@@ -70,25 +76,25 @@
     <!-- Resumen de solicitudes -->
     <div class="row mb-4">
         <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-warning text-white">
+            <div class="card bg-warning1 text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Solicitudes Pendientes</h5>
+                    <h5 class="card-title1">Solicitudes Pendientes</h5>
                     <p class="card-text">{{ solicitudes_pendientes }}</p>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-success text-white">
+            <div class="card bg-success1 text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Solicitudes Aprobadas</h5>
+                    <h5 class="card-title1">Solicitudes Aprobadas</h5>
                     <p class="card-text">{{ solicitudes_aprobadas }}</p>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-danger text-white">
+            <div class="card bg-danger1 text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Solicitudes Rechazadas</h5>
+                    <h5 class="card-title1">Solicitudes Rechazadas</h5>
                     <p class="card-text">{{ solicitudes_rechazadas }}</p>
                 </div>
             </div>

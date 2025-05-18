@@ -1,0 +1,353 @@
+/* ========== ESTILOS GENERALES ========== */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1, .solicitud-title, .laboratorio-title, .horario-title {
+    color: #010D42;
+    font-size: 3rem;
+    font-weight: 700;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+h1::after, .solicitud-title::after, 
+.laboratorio-title::after, .horario-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background-color: #e30613;
+    border-radius: 2px;
+}
+
+.horario-title {
+    font-size: 2rem;
+}
+
+/* ========== CONTENEDORES ========== */
+.horario-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem;
+    margin: 2rem auto;
+    max-width: 900px;
+    border-top: 5px solid #e30613;
+}
+
+.time-selector {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.item-entry {
+    border-radius: 12px;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+/* ========== CARDS ========== */
+.card, .status-card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    margin-bottom: 25px;
+    height: 100%;
+}
+
+.card:hover, .status-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background-color: #010D42;
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 15px;
+    text-align: center;
+}
+
+.card-header h4 {
+    margin: 0;
+    font-weight: 600;
+    color: #ffffff !important;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.status-card .card-body {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.card-title1 {
+    color: #ffffff !important;
+}
+
+.status-card {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #ffffff !important;
+}
+
+.status-card .card-text {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+/* ========== FORMULARIOS ========== */
+.form-label {
+    color: #010D42;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    border: 1px solid #d1d1d1;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #e30613;
+    box-shadow: 0 0 0 0.25rem rgba(227, 6, 19, 0.25);
+}
+
+.time-selector .form-control {
+    margin-bottom: 0;
+}
+
+.form-check-input:checked {
+    background-color: #e30613;
+    border-color: #e30613;
+}
+
+.form-check-label {
+    color: #495057;
+    font-weight: 500;
+}
+
+.invalid-feedback {
+    color: #e30613;
+    font-size: 0.875rem;
+}
+
+/* ========== BOTONES ========== */
+.btn {
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background-color: #010D42;
+    border-color: #010D42;
+}
+
+.btn-primary:hover {
+    background-color: #b80000;
+    border-color: #b80000;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+.btn-success {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+}
+
+.btn-info {
+    background-color: #808080;
+    border-color: #808080;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 6px;
+    margin: 0.1rem;
+}
+
+.btn-disabled {
+    background-color: #808080 !important;
+    border-color: #808080 !important;
+    pointer-events: none;
+    color: white !important;
+}
+
+/* ========== BADGES ========== */
+.badge {
+    font-size: 0.85rem;
+    padding: 0.35em 0.65em;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+/* ========== TABLAS ========== */
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.table th {
+    background-color: #010D42;
+    color: white;
+    font-weight: 600;
+    padding: 12px;
+}
+
+.table td {
+    padding: 10px 12px;
+    vertical-align: middle;
+}
+
+.table-bordered {
+    border: 1px solid #dee2e6;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ========== ALERTAS ========== */
+.alert {
+    border-radius: 8px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+/* ========== COLORES DE FONDO ========== */
+.bg-primary, .bg-warning1, .bg-danger {
+    background-color: #010D42 !important;
+    color: #ffffff !important;
+}
+
+.bg-success, .bg-success1, .bg-info {
+    background-color: #808080 !important;
+    color: #ffffff !important;
+}
+
+.bg-warning, .bg-danger1 {
+    background-color: #e30613 !important;
+    color: #ffffff !important;
+}
+
+.bg-secondary {
+    background-color: #6c757d !important;
+    color: #ffffff !important;
+}
+
+/* ========== TEXTO ========== */
+.text-primary {
+    color: #010D42 !important;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.text-danger {
+    color: #e30613 !important;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 20px 0 15px 0;
+}
+
+.producto-info {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 992px) {
+    .col-md-4 {
+        margin-bottom: 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    h1, .solicitud-title, .laboratorio-title {
+        font-size: 2rem;
+    }
+    
+    .horario-title {
+        font-size: 1.5rem;
+    }
+    
+    .horario-container {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-header h4 {
+        font-size: 1.2rem;
+    }
+    
+    .text-center {
+        font-size: 1rem;
+    }
+}

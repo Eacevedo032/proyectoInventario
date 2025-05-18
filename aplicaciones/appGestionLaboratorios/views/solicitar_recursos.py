@@ -2,13 +2,14 @@ from itertools import groupby
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
-from aplicaciones.appGestionLaboratorios.models import SolicitudLaboratorio, UsoItemLaboratorio
 from django.contrib import messages  # Importa para mostrar mensajes en la interfaz
 from django.utils.dateparse import parse_date
 from decimal import Decimal, InvalidOperation
 from django.core.paginator import Paginator
 from datetime import datetime, timedelta
+from django.db import transaction
 from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_usando_modelo, convertir_unidades
+from aplicaciones.appGestionLaboratorios.views import SolicitudLaboratorio, UsoItemLaboratorio
 from inventario_nuevo.models import Producto, Subcategoria, Categoria
 
 @login_required
@@ -100,7 +101,13 @@ def solicitar_recursos(request):
 
     # Parte GET de la vista
     categorias = Categoria.objects.all()
-    solicitudes = SolicitudLaboratorio.objects.filter(usuario=request.user, estado='pendiente')
+    
+    # Filtrar solo solicitudes con tiene_recursos=True
+    solicitudes = SolicitudLaboratorio.objects.filter(
+        usuario=request.user, 
+        estado='pendiente',
+        tiene_recursos=True
+    )
 
     # Filtros
     fecha = request.GET.get('fecha')
@@ -143,7 +150,8 @@ def solicitar_recursos(request):
     ).count()
 
     laboratorios = SolicitudLaboratorio.objects.filter(
-        usuario=request.user
+        usuario=request.user,
+        tiene_recursos=True
     ).values('laboratorio').distinct()
 
     context = {
@@ -193,59 +201,112 @@ def obtener_items(request):
     
     return JsonResponse({'status': 'success', 'items': items_data})
 
-
-
 @login_required
 def editar_recurso(request, uso_id):
     uso_item = get_object_or_404(UsoItemLaboratorio, id=uso_id)
+    solicitud = uso_item.solicitud
+    producto = uso_item.producto
     
-    if uso_item.solicitud.estado != 'pendiente':
+    # Verificar permisos
+    es_admin = request.user.is_staff or request.user.is_superuser
+    
+    if not es_admin and solicitud.estado != 'pendiente':
         messages.error(request, "Solo se pueden editar solicitudes pendientes.")
         return redirect('solicitar_recursos')
     
+    if es_admin and solicitud.estado != 'en_revision':
+        messages.error(request, "Solo se pueden editar solicitudes en revisión.")
+        return redirect('revisar_solicitudes')
+
     if request.method == 'POST':
-        cantidad_utilizada = request.POST.get('cantidad_utilizada').replace(',', '.')
-        unidad_medida = request.POST.get('unidad_medida')
-        
         try:
-            cantidad_utilizada_decimal = Decimal(cantidad_utilizada)
-            if cantidad_utilizada_decimal <= 0:
-                messages.error(request, "La cantidad debe ser mayor a 0.")
-                return redirect('editar_recurso', uso_id=uso_item.id)
-        except (InvalidOperation, TypeError):
-            messages.error(request, "Cantidad ingresada no válida.")
-            return redirect('editar_recurso', uso_id=uso_item.id)
-        
-        try:
-            cantidad_convertida = convertir_unidades(cantidad_utilizada_decimal, unidad_medida, uso_item.producto.unidad_medida)
-        except ValueError:
-            messages.error(request, f"No se pueden convertir {unidad_medida} a {uso_item.producto.unidad_medida}.")
-            return redirect('editar_recurso', uso_id=uso_item.id)
-        
-        if cantidad_convertida > uso_item.producto.cantidad_disponible:
-            messages.error(request, "Cantidad solicitada mayor a la existente en inventario.")
-            return redirect('editar_recurso', uso_id=uso_item.id)
-        
-        uso_item.cantidad_utilizada = cantidad_utilizada_decimal
-        uso_item.unidad_medida = unidad_medida
-        uso_item.save()
-        messages.success(request, "Solicitud actualizada correctamente.")
-        return redirect('solicitar_recursos')
+            with transaction.atomic():
+                # Obtener datos del formulario
+                cantidad_utilizada = request.POST.get('cantidad_utilizada', '').replace(',', '.')
+                unidad_medida = request.POST.get('unidad_medida')
+                comentario = request.POST.get('comentario', '')
+                
+                # Validaciones básicas
+                if not cantidad_utilizada or not unidad_medida:
+                    raise ValueError("Todos los campos obligatorios deben completarse")
+                
+                # Validación de cantidad
+                try:
+                    cantidad_decimal = Decimal(cantidad_utilizada)
+                    if cantidad_decimal <= 0:
+                        raise ValueError("La cantidad debe ser mayor a cero")
+                except (InvalidOperation, TypeError):
+                    raise ValueError("Cantidad ingresada no válida")
+                
+                # Obtener representación string de la unidad del producto
+                if hasattr(producto.unidad_medida, 'abreviatura'):
+                    unidad_producto_str = producto.unidad_medida.abreviatura
+                else:
+                    unidad_producto_str = str(producto.unidad_medida)
+                
+                # Verificar si las unidades son iguales (sin conversión necesaria)
+                if unidad_medida.lower() == unidad_producto_str.lower():
+                    cantidad_convertida = cantidad_decimal
+                else:
+                    try:
+                        cantidad_convertida = convertir_unidades(
+                            cantidad_decimal,
+                            unidad_medida,
+                            unidad_producto_str
+                        )
+                    except ValueError as e:
+                        raise ValueError(f"No se puede convertir {unidad_medida} a {unidad_producto_str}")
+                
+                # Validar disponibilidad en inventario
+                if cantidad_convertida > producto.cantidad_disponible:
+                    raise ValueError(
+                        f"No hay suficiente stock. Disponible: {producto.cantidad_disponible} {unidad_producto_str}"
+                    )
+                
+                # Actualizar el ítem
+                uso_item.cantidad_utilizada = cantidad_decimal
+                uso_item.unidad_medida = unidad_medida
+                
+                if es_admin and comentario:
+                    uso_item.comentario_admin = comentario
+                
+                uso_item.save()
+                
+                messages.success(request, "Recurso actualizado correctamente")
+                
+                if es_admin:
+                    return redirect('ver_items_solicitud', solicitud_id=solicitud.id)
+                return redirect('ver_items_solicitud')
+                
+        except Exception as e:
+            messages.error(request, f"Error al actualizar: {str(e)}")
+            return redirect('editar_recurso', uso_id=uso_id)
     
-    return render(request, 'editar_recurso.html', {'uso_item': uso_item})
+    # Obtener la unidad de medida actual para el formulario
+    if uso_item.unidad_medida:
+        unidad_actual = uso_item.unidad_medida
+    else:
+        if hasattr(producto.unidad_medida, 'abreviatura'):
+            unidad_actual = producto.unidad_medida.abreviatura
+        else:
+            unidad_actual = str(producto.unidad_medida)
+    
+    return render(request, 'ver_items_solicitud.html', {
+        'uso_item': uso_item,
+        'unidad_actual': unidad_actual,
+        'es_admin': es_admin
+    })
 
 @login_required
 def eliminar_recurso(request, uso_id):
-    # Obtener la solicitud de recurso
     uso_item = get_object_or_404(UsoItemLaboratorio, id=uso_id)
-    
-    # Verificar si la solicitud está en estado "pendiente" o "rechazada"
-    if uso_item.solicitud.estado not in ['pendiente', 'rechazada']:
-        messages.error(request, "Solo se pueden eliminar solicitudes pendientes o rechazadas.")
+    estado = uso_item.solicitud.estado.lower()
+
+    # Solo eliminar si está en pendiente, en revisión o rechazada
+    if estado not in ['pendiente', 'en_revision', 'rechazada']:
+        messages.error(request, "Solo se pueden eliminar ítems de solicitudes pendientes, en revisión o rechazadas.")
         return redirect('solicitar_recursos')
-    
-    # Eliminar la solicitud
+
     uso_item.delete()
-    messages.success(request, "La solicitud ha sido eliminada correctamente.")
-    
+    messages.success(request, "Ítem eliminado correctamente.")
     return redirect('solicitar_recursos')

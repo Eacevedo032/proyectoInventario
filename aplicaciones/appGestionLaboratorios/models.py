@@ -62,6 +62,7 @@ class SolicitudLaboratorio(models.Model):
      if conflictos.exists():
         raise ValidationError("El laboratorio ya está reservado en el horario solicitado.")
 
+
     def enviar_solicitud(self):
         """Método para cambiar el estado a 'en revisión'."""
         if self.estado != self.PENDIENTE:

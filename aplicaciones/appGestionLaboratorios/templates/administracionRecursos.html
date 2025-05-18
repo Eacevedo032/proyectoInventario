@@ -1,5 +1,11 @@
 {% extends "./base.html" %}
 {% block title %}Gestión de Reservaciones{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+{% endblock %}
+
 {% block body %}
 
 {% if messages %}
@@ -12,31 +18,8 @@
 </div>
 {% endif %}
 
-<style>
-    .btn-disabled {
-        background-color: grey !important;
-        border-color: grey !important;
-        pointer-events: none;
-        color: white !important;
-    }
-    .badge {
-        font-size: 0.9em;
-        padding: 0.5em 0.75em;
-    }
-    .bg-success { background-color: #28a745; }
-    .bg-warning { background-color: #ffc107; }
-    .bg-danger { background-color: #dc3545; }
-    .bg-secondary { background-color: #6c757d; }
-    .producto-info {
-        max-width: 200px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-</style>
-
 <div class="container my-5">
-    <h1 class="text-center mb-4">Administración de Solicitudes de Productos</h1>
+    <h1 class="solicitud-title text-center mb-4">Administración de Solicitudes de Productos</h1>
 
     <!-- Filtros y Búsqueda -->
     <form method="GET" class="mb-4">
@@ -75,6 +58,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Producto</th>
+                        <th>Ubicacion</th>
                         <th>Cantidad Solicitada</th>
                         <th>Cantidad de producto a la fecha de la solicitud</th>
                         <th>Cantidad actual en Inventario</th>
@@ -89,6 +73,9 @@
                         <td>{{ solicitud.id }}</td>
                         <td class="producto-info" title="{{ solicitud.producto.nombre }}">
                             {{ solicitud.producto.nombre }}
+                        </td>
+                        <td>
+                            {{ solicitud.producto.ubicacion.nombre }}
                         </td>
                         <td>
                             {{ solicitud.cantidad_utilizada }} {{ solicitud.unidad_medida }}

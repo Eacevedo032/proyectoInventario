@@ -6,9 +6,10 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.forms import ValidationError
+from django.urls import reverse
 from aplicaciones.appGestionLaboratorios.models import SolicitudLaboratorio, UsoItemLaboratorio
 from django.db import transaction
-
+from django.db.models import Q
 
 @login_required
 def reservar_laboratorio(request):
@@ -24,6 +25,18 @@ def reservar_laboratorio(request):
         # Validación de hora
         if hora_inicio >= hora_fin:
             messages.error(request, "La hora de inicio debe ser anterior a la hora de fin.")
+            return redirect('reservar_laboratorio')
+
+        # Verificar solapamiento con otras solicitudes
+        solapamiento = SolicitudLaboratorio.objects.filter(
+            laboratorio=laboratorio,
+            fecha_reserva=fecha_reserva,
+        ).exclude(
+            Q(hora_fin__lte=hora_inicio) | Q(hora_inicio__gte=hora_fin)
+        ).exists()
+
+        if solapamiento:
+            messages.error(request, "Ya existe una reserva para el horario seleccionado.")
             return redirect('reservar_laboratorio')
 
         # Crear solicitud
@@ -47,11 +60,11 @@ def reservar_laboratorio(request):
             for field, error_list in e.message_dict.items():
                 for error in error_list:
                     messages.error(request, error)
-            return redirect('reservar_laboratorio')
+            return redirect(f"{reverse('reservar_laboratorio')}?modo=ambos")
 
         solicitud.save()
         messages.success(request, 'La solicitud de reserva se ha creado exitosamente.')
-        return redirect('reservar_laboratorio')
+        return redirect(f"{reverse('reservar_laboratorio')}?modo=ambos")
 
     # Filtros
     laboratorio = request.GET.get('laboratorio')
@@ -105,7 +118,7 @@ def reservar_laboratorio(request):
         'solicitudes_aprobadas': solicitudes_aprobadas,
         'solicitudes_rechazadas': solicitudes_rechazadas,
         'laboratorios': laboratorios,
-        'mostrar_historial': mostrar_historial,
+        'mostrar_historial': mostrar_historial == 'true',
         'mostrar_boton_recursos': mostrar_boton_recursos,
     })
 
@@ -115,14 +128,14 @@ def enviar_solicitud(request, solicitud_id):
 
     if solicitud.estado != SolicitudLaboratorio.PENDIENTE:
         messages.error(request, "Solo se pueden enviar solicitudes en estado pendiente.")
-        return redirect('reservar_laboratorio')
+        return redirect(f"{reverse('reservar_laboratorio')}?modo=ambos")
 
     # Cambiar estado a "en revisión"
     solicitud.estado = SolicitudLaboratorio.EN_REVISION
     solicitud.save()
     
     messages.success(request, "La solicitud ha sido enviada y está en revisión.")
-    return redirect('reservar_laboratorio')
+    return redirect(f"{reverse('reservar_laboratorio')}?modo=ambos")
 
 #editar solicitud de laboratorio
 @login_required
@@ -175,7 +188,7 @@ def editar_laboratorio(request, solicitud_id):
 
         solicitud.save()
         messages.success(request, 'La reserva se ha actualizado exitosamente.')
-        return redirect('reservar_laboratorio')
+        return redirect (f"{reverse('reservar_laboratorio')}?modo=ambos")
 
     # Obtener laboratorios para el formulario
     laboratorio = SolicitudLaboratorio.objects.filter(usuario=request.user).values('laboratorio').distinct()
@@ -193,10 +206,10 @@ def eliminar_solicitud(request, solicitud_id):
     # Verificar si la solicitud está en estado "pendiente" o "rechazada"
     if solicitud.estado not in ['pendiente', 'rechazada']:
         messages.error(request, "Solo se pueden eliminar solicitudes pendientes o rechazadas.")
-        return redirect('reservar_laboratorio')
+        return redirect(f"{reverse('reservar_laboratorio')}?modo=ambos")
     
     # Eliminar la solicitud
     solicitud.delete()
     messages.success(request, "La solicitud ha sido eliminada correctamente.")
     
-    return redirect('reservar_laboratorio')
+    return redirect(f"{reverse('reservar_laboratorio')}?modo=ambos")

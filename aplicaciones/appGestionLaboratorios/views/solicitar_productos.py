@@ -212,7 +212,10 @@ def editar_productos(request, producto_id):
         except Exception as e:
             messages.error(request, f"Error al actualizar: {str(e)}")
 
-    return render(request, 'editar_productos', {'solicitud': solicitud})
+        # Obtener la unidad de medida actual de la solicitud
+    unidad_actual = solicitud.unidad_medida
+
+    return render(request, 'editar_productos.html', {'solicitud': solicitud, 'unidad_actual': unidad_actual})
 
 @login_required
 def eliminar_productos(request, producto_id):

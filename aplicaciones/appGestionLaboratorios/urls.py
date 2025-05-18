@@ -42,5 +42,5 @@ urlpatterns = [
     path('editar_horario/<int:horario_id>/', views.editar_horario, name='editar_horario'),
     path('eliminar_horario/<int:horario_id>/', views.eliminar_horario, name='eliminar_horario'),
     path('agregar_horario/', views.agregar_horario, name='agregar_horario'),
-    path('listar_horarios_lectura/', views.listar_horarios_lectura, name='listar_horarios_lectura')
+    path('listar_horarios_lectura/', views.listar_horarios_lectura, name='listar_horarios_lectura'),
 ]

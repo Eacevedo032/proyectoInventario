@@ -1,10 +1,17 @@
 <!-- plantilla para usuario sin privilegios -->
 {% extends "./base.html" %}
 {% block title %}Reservación de Laboratorio{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+{% endblock %}
+
 {% block body %}
 
-<div class="container mt-5">
-    <h2 class="mb-4">Editar Recurso</h2>
+<div class="container text-center mt-5">
+    <div class="card mb-4">
+    <h2 class="solicitud-title mb-4">Editar Recurso</h2>
 
     {% if messages %}
     <ul class="list-group mb-3">
@@ -22,13 +29,28 @@
         </div>
 
         <div class="mb-3">
-            <label for="unidad_medida" class="form-label">Unidad de Medida:</label>
-            <input type="text" id="unidad_medida" name="unidad_medida" class="form-control" value="{{ uso_item.unidad_medida }}">
+                    <label for="unidad_medida" class="form-label">Unidad de medida:</label>
+                    <select class="form-control" id="unidad_medida" name="unidad_medida" required>
+                        {% with uso_item.unidad_medida|lower as unidad_guardada %}
+                        <option value="Unidad" {% if "unidad" in unidad_guardada %}selected{% endif %}>Unidad</option>
+                        <option value="kg" {% if "kg" in unidad_guardada %}selected{% endif %}>Kilogramo</option>
+                        <option value="g" {% if "g" in unidad_guardada %}selected{% endif %}>Gramo</option>
+                        <option value="mg" {% if "mg" in unidad_guardada %}selected{% endif %}>Miligramo</option>
+                        <option value="L" {% if "l" in unidad_guardada %}selected{% endif %}>Litro</option>
+                        <option value="mL" {% if "ml" in unidad_guardada %}selected{% endif %}>Mililitro</option>
+                        {% endwith %}
+                    </select>
         </div>
 
         <button type="submit" class="btn btn-primary">Actualizar</button>
     </form>
-    <a href="{% url 'reservar_laboratorio' %}" class="btn btn-secondary mt-3">Volver a solicitudes de laboratorio</a>
+    {% if request.user.is_staff or request.user.is_superuser %}
+        <a href="{% url 'administracion_laboratorios' %}" class="btn btn-secondary mt-3">Ir a administración de laboratorios</a>
+    {% else %}
+        <!-- Botón para regresar -->
+        <button onclick="window.history.back()" class="btn btn-primary mt-3">Volver atrás</button>
+    {% endif %}
+    </div>
 </div>
 
 <script>

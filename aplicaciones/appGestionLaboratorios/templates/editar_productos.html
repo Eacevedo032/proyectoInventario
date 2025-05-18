@@ -1,8 +1,14 @@
 <!-- Plantilla para usuario sin privilegios -->
 {% extends "./base.html" %}
 
-{% load static %}
+
 {% block title %}Reservación de Laboratorio{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+{% endblock %}
+
 {% block body %}
 
 {% if messages %}
@@ -42,25 +48,23 @@
 
                 <div class="form-group">
                     <label for="unidad_medida">Unidad de medida:</label>
-                            <select name="unidad_medida" id="unidad_medida" class="form-control"  value="{{ solicitud.unidad_medida }}" required>
-                                <option value="Unidad">Unidad</option>
-                                <option value="kg">kg (Kilogramo)</option>
-                                <option value="g">g (Gramo)</option>
-                                <option value="mg">mg (Miligramo)</option>
-                                <option value="lb">lb (Libra)</option>
-                                <option value="L">L (Litro)</option>
-                                <option value="mL">mL (Mililitro)</option>
-                                <option value="cm³">cm³ (Centímetro cúbico)</option>
-                                <option value="m³">m³ (Metro cúbico)</option>
-                                <option value="gal">gal (Galón)</option>
-                                <option value="m">m (Metro)</option>
-                                <option value="mm">mm (Milímetro)</option>
-                                <option value="cm">cm (Centímetro)</option>
-                                <option value="in">in (Pulgada)</option>
-                            </select>
+                    <select class="form-control" id="unidad_medida" name="unidad_medida" required>
+                        {% with solicitud.unidad_medida|lower as unidad_guardada %}
+                        <option value="Unidad" {% if "unidad" in unidad_guardada %}selected{% endif %}>Unidad</option>
+                        <option value="kg" {% if "kg" in unidad_guardada %}selected{% endif %}>Kilogramo</option>
+                        <option value="g" {% if "g" in unidad_guardada %}selected{% endif %}>Gramo</option>
+                        <option value="mg" {% if "mg" in unidad_guardada %}selected{% endif %}>Miligramo</option>
+                        <option value="L" {% if "l" in unidad_guardada %}selected{% endif %}>Litro</option>
+                        <option value="mL" {% if "ml" in unidad_guardada %}selected{% endif %}>Mililitro</option>
+                        {% endwith %}
+                    </select>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-block mt-3">Actualizar</button>
+                <!-- Botón para regresar -->
+                <button onclick="window.history.back()" class="btn btn-secondary mt-3">Volver atrás</button>
+
+
             </form>
         </div>
     </div>

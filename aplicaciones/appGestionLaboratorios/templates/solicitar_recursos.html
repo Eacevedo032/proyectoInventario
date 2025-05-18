@@ -3,6 +3,12 @@
 
 {% load static %}
 {% block title %}Reservación de Laboratorio{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+{% endblock %}
+
 {% block body %}
 
 {% if messages %}

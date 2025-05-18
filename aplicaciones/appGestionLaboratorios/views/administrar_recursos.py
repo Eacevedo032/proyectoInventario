@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from decimal import Decimal
+from django.contrib.auth.decorators import login_required
 import json
 from datetime import datetime, timedelta
 from aplicaciones.appGestionLaboratorios.models import SolicitudProductosInventario, HistorialInventario
@@ -21,6 +22,7 @@ def admin_required(view_func):
 
 @admin_required #Verifica si el usuario es administrador
 @csrf_exempt
+@login_required
 def administracionRecursos(request):
     estado = request.GET.get('estado')
     producto = request.GET.get('producto')
@@ -56,6 +58,7 @@ def administracionRecursos(request):
 
 @admin_required #Verifica si el usuario es administrador
 @csrf_exempt
+@login_required
 def aprobar_solicitud_producto(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudProductosInventario, id=solicitud_id)
 
@@ -136,6 +139,7 @@ from aplicaciones.appGestionLaboratorios.models import SolicitudProductosInventa
 
 @admin_required #Verifica si el usuario es administrador
 @csrf_exempt
+@login_required
 def rechazar_solicitud_producto(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudProductosInventario, id=solicitud_id)
 
@@ -149,6 +153,7 @@ def rechazar_solicitud_producto(request, solicitud_id):
     return redirect('administracion_recursos')
 
 @admin_required #Verifica si el usuario es administrador
+@login_required
 def solicitud_pendiente_producto(request, solicitud_id):
     solicitud = get_object_or_404(SolicitudProductosInventario, id=solicitud_id)
 

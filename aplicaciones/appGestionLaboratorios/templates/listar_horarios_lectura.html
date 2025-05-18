@@ -1,186 +1,131 @@
 {% extends "./base.html" %}
 
-{% block title %}Horarios Ocupados y Bloqueados{% endblock %}
+{% block title %}Horarios de Laboratorios{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+<style>
+    .disponible { background-color: #d4edda; }
+    .ocupado { background-color: #f8d7da; }
+    .bloqueado { background-color: #fff3cd; }
+    .filtros { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    .form-select, .form-control { margin-bottom: 10px; }
+</style>
+{% endblock %}
 
 {% block body %}
 <div class="container my-5">
     <h1 class="text-center mb-5">Horarios de los Laboratorios</h1>
-    <p class="text-center">Consulta aquí los horarios ocupados y bloqueados por laboratorio.</p>
+    
+    <!-- Sección de Filtros -->
+    <div class="filtros mb-4">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="laboratorio" class="form-label">Laboratorio</label>
+                <select id="laboratorio" name="laboratorio" class="form-select">
+                    <option value="">Todos los laboratorios</option>
+                    {% for lab in laboratorios %}
+                        <option value="{{ lab }}" {% if filtros.laboratorio == lab %}selected{% endif %}>{{ lab }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="fecha" class="form-label">Fecha</label>
+                <select id="fecha" name="fecha" class="form-select">
+                    <option value="">Todas las fechas</option>
+                    {% for fecha in fechas_disponibles %}
+                        <option value="{{ fecha|date:'Y-m-d' }}" {% if filtros.fecha == fecha|date:'Y-m-d' %}selected{% endif %}>{{ fecha|date:"d/m/Y" }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="estado" class="form-label">Estado</label>
+                <select id="estado" name="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    {% for estado in estados %}
+                        <option value="{{ estado }}" {% if filtros.estado == estado %}selected{% endif %}>{{ estado }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <a href="?" class="btn btn-outline-secondary ms-2">Limpiar filtros</a>
+            </div>
+        </form>
+    </div>
 
     <div class="row">
-        <!-- Laboratorio Planta Alta -->
-        <div class="col-md-4">
-            <div class="card mb-3">
-                <div class="card-header bg-primary text-white text-center">
-                    <h4>Laboratorio Planta Alta</h4>
+        {% for laboratorio, horarios in resultados.items %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header text-white text-center 
+                    {% if laboratorio == 'Laboratorio Planta Alta' %}bg-primary
+                    {% elif laboratorio == 'Laboratorio Planta Baja' %}bg-success
+                    {% else %}bg-warning{% endif %}">
+                    <h4>{{ laboratorio }}</h4>
                 </div>
                 <div class="card-body">
-                    <h5 class="text-primary">Horarios Ocupados</h5>
-                    {% if laboratorio1_ocupados %}
-                    <table class="table table-bordered table-responsive">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Inicio</th>
-                                <th>Fin</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for horario in laboratorio1_ocupados %}
-                            <tr>
-                                <td>{{ horario.fecha_reserva }}</td>
-                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
-                                <td class="hora-12h">{{ horario.hora_fin }}</td>
-                            </tr>
+                    {% if horarios %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Hora Inicio</th>
+                                    <th>Hora Fin</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for h in horarios %}
+                                <tr class="{% if h.estado == 'Disponible' %}disponible
+                                          {% elif h.estado == 'Ocupado' %}ocupado
+                                          {% else %}bloqueado{% endif %}">
+                                    <td>{{ h.fecha|date:"d/m/Y" }}</td>
+                                    <td>{{ h.inicio|time:"H:i" }}</td>
+                                    <td>{{ h.fin|time:"H:i" }}</td>
+                                    <td>{{ h.estado }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Paginación -->
+                    <nav aria-label="Paginación para {{ laboratorio }}">
+                        <ul class="pagination justify-content-center">
+                            {% if horarios.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if filtros.laboratorio %}laboratorio={{ filtros.laboratorio }}&{% endif %}{% if filtros.fecha %}fecha={{ filtros.fecha }}&{% endif %}{% if filtros.estado %}estado={{ filtros.estado }}&{% endif %}page_{{ laboratorio }}={{ horarios.previous_page_number }}">&laquo;</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in horarios.paginator.page_range %}
+                            <li class="page-item {% if num == horarios.number %}active{% endif %}">
+                                <a class="page-link" href="?{% if filtros.laboratorio %}laboratorio={{ filtros.laboratorio }}&{% endif %}{% if filtros.fecha %}fecha={{ filtros.fecha }}&{% endif %}{% if filtros.estado %}estado={{ filtros.estado }}&{% endif %}page_{{ laboratorio }}={{ num }}">{{ num }}</a>
+                            </li>
                             {% endfor %}
-                        </tbody>
-                    </table>
+                            
+                            {% if horarios.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if filtros.laboratorio %}laboratorio={{ filtros.laboratorio }}&{% endif %}{% if filtros.fecha %}fecha={{ filtros.fecha }}&{% endif %}{% if filtros.estado %}estado={{ filtros.estado }}&{% endif %}page_{{ laboratorio }}={{ horarios.next_page_number }}">&raquo;</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
                     {% else %}
-                    <p class="text-center">No hay horarios ocupados.</p>
-                    {% endif %}
-
-                    <h5 class="text-danger mt-4">Horarios Bloqueados</h5>
-                    {% if laboratorio1_bloqueados %}
-                    <table class="table table-bordered table-responsive">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Inicio</th>
-                                <th>Fin</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for horario in laboratorio1_bloqueados %}
-                            <tr>
-                                <td>{{ horario.fecha_reserva }}</td>
-                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
-                                <td class="hora-12h">{{ horario.hora_fin }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <p class="text-center">No hay horarios bloqueados.</p>
+                    <div class="alert alert-info">
+                        No hay horarios disponibles con los filtros seleccionados.
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
+        {% endfor %}
+    </div>
 
-        <!-- Laboratorio Planta Baja -->
-        <div class="col-md-4">
-            <div class="card mb-3">
-                <div class="card-header bg-success text-white text-center">
-                    <h4>Laboratorio Planta Baja</h4>
-                </div>
-                <div class="card-body">
-                    <h5 class="text-primary">Horarios Ocupados</h5>
-                    {% if laboratorio2_ocupados %}
-                    <table class="table table-bordered table-responsive">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Inicio</th>
-                                <th>Fin</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for horario in laboratorio2_ocupados %}
-                            <tr>
-                                <td>{{ horario.fecha_reserva }}</td>
-                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
-                                <td class="hora-12h">{{ horario.hora_fin }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <p class="text-center">No hay horarios ocupados.</p>
-                    {% endif %}
-
-                    <h5 class="text-danger mt-4">Horarios Bloqueados</h5>
-                    {% if laboratorio2_bloqueados %}
-                    <table class="table table-bordered table-responsive">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Inicio</th>
-                                <th>Fin</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for horario in laboratorio2_bloqueados %}
-                            <tr>
-                                <td>{{ horario.fecha_reserva }}</td>
-                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
-                                <td class="hora-12h">{{ horario.hora_fin }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <p class="text-center">No hay horarios bloqueados.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Laboratorio Microbiana -->
-        <div class="col-md-4">
-            <div class="card mb-3">
-                <div class="card-header bg-warning text-dark text-center">
-                    <h4>Laboratorio Microbiana</h4>
-                </div>
-                <div class="card-body">
-                    <h5 class="text-primary">Horarios Ocupados</h5>
-                    {% if laboratorio3_ocupados %}
-                    <table class="table table-bordered table-responsive">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Inicio</th>
-                                <th>Fin</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for horario in laboratorio3_ocupados %}
-                            <tr>
-                                <td>{{ horario.fecha_reserva }}</td>
-                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
-                                <td class="hora-12h">{{ horario.hora_fin }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <p class="text-center">No hay horarios ocupados.</p>
-                    {% endif %}
-
-                    <h5 class="text-danger mt-4">Horarios Bloqueados</h5>
-                    {% if laboratorio3_bloqueados %}
-                    <table class="table table-bordered table-responsive">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Inicio</th>
-                                <th>Fin</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for horario in laboratorio3_bloqueados %}
-                            <tr>
-                                <td>{{ horario.fecha_reserva }}</td>
-                                <td class="hora-12h">{{ horario.hora_inicio }}</td>
-                                <td class="hora-12h">{{ horario.hora_fin }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <p class="text-center">No hay horarios bloqueados.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+    <div class="text-center mt-4">
         <a href="{% url 'reservar_laboratorio' %}" class="btn btn-secondary">Volver</a>
     </div>
 </div>

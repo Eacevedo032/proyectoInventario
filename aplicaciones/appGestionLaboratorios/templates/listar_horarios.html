@@ -2,21 +2,25 @@
 
 {% block title %}Horarios para Clases y Maestros{% endblock %}
 
-{% block body %}
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+{% endblock %}
 
+{% block body %}
 <div class="container my-5">
     <h1 class="text-center mb-5">Horarios de Laboratorios</h1>
     
-    <div class="row">
+    <div class="row mb-4">  
         <div class="col-12">
             <div class="card mt-4">
                 <div class="card-header bg-danger text-white">
                     <h4>Horarios Bloqueados (Sin Supervisión)</h4>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-3">  
                     {% if bloqueos %}
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="table table-bordered table-hover mb-0"> 
                             <thead>
                                 <tr>
                                     <th>Laboratorio</th>
@@ -34,13 +38,13 @@
                                     <td class="hora-12h">{{ bloqueo.hora_inicio }}</td>
                                     <td class="hora-12h">{{ bloqueo.hora_fin }}</td>
                                     <td>
-                                        <div class="d-flex justify-content-between">
+                                        <div class="d-flex justify-content-between gap-1">
                                             <!-- Botón para editar el bloqueo -->
-                                            <a href="{% url 'editar_horario' bloqueo.id %}" class="btn btn-info btn-sm mx-1">Editar</a>
+                                            <a href="{% url 'editar_horario' bloqueo.id %}" class="btn btn-info btn-sm">Editar</a>
                                             <!-- Formulario para eliminar el bloqueo -->
                                             <form action="{% url 'eliminar_horario' bloqueo.id %}" method="post" style="display: inline;">
                                                 {% csrf_token %}
-                                                <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('¿Estás seguro de eliminar este bloqueo?');">Eliminar</button>
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este bloqueo?');">Eliminar</button>
                                             </form>
                                         </div>
                                     </td>
@@ -50,24 +54,24 @@
                         </table>
                     </div>
                     {% else %}
-                    <p>No hay bloqueos registrados.</p>
+                    <p class="mb-0">No hay bloqueos registrados.</p>  
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
+    <div class="row gy-4">  
         <!-- Laboratorio 1 -->
-        <div class="col-md-4 col-sm-6 mb-4">
-            <div class="card">
+        <div class="col-md-4 col-sm-6">
+            <div class="card h-100">  
                 <div class="card-header bg-primary text-white">
                     <h4>Laboratorio Planta Alta</h4>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-3">  
                     {% if laboratorio1 %}
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="table table-bordered table-hover mb-0"> 
                             <thead>
                                 <tr>
                                     <th>Fecha</th>
@@ -97,22 +101,22 @@
                         </table>
                     </div>
                     {% else %}
-                    <p>No hay horarios registrados.</p>
+                    <p class="mb-0">No hay horarios registrados.</p>  
                     {% endif %}
                 </div>
             </div>
         </div>
 
         <!-- Laboratorio 2 -->
-        <div class="col-md-4 col-sm-6 mb-4">
-            <div class="card">
+        <div class="col-md-4 col-sm-6">
+            <div class="card h-100">
                 <div class="card-header bg-success text-white">
                     <h4>Laboratorio Planta Baja</h4>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-3">
                     {% if laboratorio2 %}
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="table table-bordered table-hover mb-0">
                             <thead>
                                 <tr>
                                     <th>Fecha</th>
@@ -142,22 +146,22 @@
                         </table>
                     </div>
                     {% else %}
-                    <p>No hay horarios registrados.</p>
+                    <p class="mb-0">No hay horarios registrados.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
 
         <!-- Laboratorio 3 -->
-        <div class="col-md-4 col-sm-6 mb-4">
-            <div class="card">
-                <div class="card-header bg-warning text-dark">
+        <div class="col-md-4 col-sm-6">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-white">
                     <h4>Laboratorio Microbiana</h4>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-3">
                     {% if laboratorio3 %}
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="table table-bordered table-hover mb-0">
                             <thead>
                                 <tr>
                                     <th>Fecha</th>
@@ -187,7 +191,7 @@
                         </table>
                     </div>
                     {% else %}
-                    <p>No hay horarios registrados.</p>
+                    <p class="mb-0">No hay horarios registrados.</p>
                     {% endif %}
                 </div>
             </div>
@@ -195,7 +199,7 @@
     </div>
 
     <div class="text-center mt-4">
-        <a href="{% url 'agregar_horario' %}" class="btn btn-success">Añadir Horario</a>
+        <a href="{% url 'agregar_horario' %}" class="btn btn-primary">Añadir Horario</a>
         <a href="{% url 'administracion_laboratorios' %}" class="btn btn-secondary">Volver</a>
     </div>
 </div>
