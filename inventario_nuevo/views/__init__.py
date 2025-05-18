@@ -25,4 +25,3 @@ from .tablaHistorialInventario import *
 
 
 
-

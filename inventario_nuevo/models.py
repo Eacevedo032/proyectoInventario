@@ -228,3 +228,18 @@ class TransferenciaProducto(models.Model):
     def __str__(self):
         return f"{self.usuario.username} transfirió {self.cantidad} de {self.producto.nombre} a {self.estado_destino} ({self.fecha_transferencia})"
     
+#------------------------------------------------------------
+#Tabla donde se le da de baja a un producto
+from django.db import models
+from django.contrib.auth.models import User
+
+class BajaProducto(models.Model):
+    producto = models.OneToOneField('Producto', on_delete=models.CASCADE, related_name='baja')
+    motivo = models.TextField()
+    observaciones = models.TextField(blank=True, null=True)
+    fecha_baja = models.DateField(auto_now_add=True)
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='bajas_realizadas')
+    foto = models.ImageField(upload_to='bajas_fotos/', blank=True, null=True)
+
+    def __str__(self):
+        return f"Baja de {self.producto.nombre} por {self.usuario.username if self.usuario else 'Desconocido'}"

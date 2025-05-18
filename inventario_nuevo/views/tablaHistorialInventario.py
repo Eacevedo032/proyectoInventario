@@ -9,7 +9,6 @@ def admin_required(view_func):
 
 @login_required
 @admin_required #Verifica si el usuario es administrador
-@login_required
 def tabla_historial_inventario(request):
     historial = HistorialInventario.objects.select_related(
         'producto', 'categoria', 'subcategoria', 'unidad_medida',

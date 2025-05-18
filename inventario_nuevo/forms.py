@@ -25,8 +25,14 @@ class ProductoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.set_required_fields()
         self.set_optional_fields()
+
+        # Mostrar solo estados disponibles y mantenimiento
+        estados_visibles = ['disponible', 'mantenimiento']
+        self.fields['estado'].queryset = EstadoRecurso.objects.filter(estado__in=estados_visibles)
+
         self.apply_bootstrap_classes()
         self.setup_category_filtering()
         self.order_choices_for_ux()
@@ -34,7 +40,6 @@ class ProductoForm(forms.ModelForm):
         self.fields['categoria'].widget.attrs.update({'id': 'id_categoria'})
         self.fields['subcategoria'].widget.attrs.update({'id': 'id_subcategoria'})
         self.fields['cantidad_disponible'].label = "Cantidad"
-
 
     def set_required_fields(self):
         required_fields = [
@@ -59,7 +64,17 @@ class ProductoForm(forms.ModelForm):
                 field.widget.attrs['class'] = 'form-select' if isinstance(field.widget, forms.Select) else 'form-control'
 
     def setup_category_filtering(self):
-        self.fields['subcategoria'].queryset = Subcategoria.objects.none()
+        if 'categoria' in self.data:
+            try:
+                categoria_id = int(self.data.get('categoria'))
+                self.fields['subcategoria'].queryset = Subcategoria.objects.filter(categoria_id=categoria_id).order_by('nombre')
+            except (ValueError, TypeError):
+                self.fields['subcategoria'].queryset = Subcategoria.objects.none()
+        elif self.instance.pk and self.instance.categoria:
+            self.fields['subcategoria'].queryset = Subcategoria.objects.filter(categoria=self.instance.categoria).order_by('nombre')
+        else:
+            self.fields['subcategoria'].queryset = Subcategoria.objects.none()
+
 
     def order_choices_for_ux(self):
         if hasattr(self.fields['categoria'], 'queryset'):
@@ -67,7 +82,7 @@ class ProductoForm(forms.ModelForm):
         if hasattr(self.fields['unidad_medida'], 'queryset'):
             self.fields['unidad_medida'].queryset = self.fields['unidad_medida'].queryset.order_by('nombre')
 
-    # ⬇️ Aquí añadimos la validación de campos únicos
+    #  Aquí añadimos la validación de campos únicos
     def clean(self):
         cleaned_data = super().clean()
         codigo = cleaned_data.get('codigo')
@@ -350,3 +365,92 @@ class UnidadMedidaForm(forms.ModelForm):
             'abreviatura': forms.TextInput(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
+
+#Formulario de Editar Product
+class ProductoEditForm(forms.ModelForm):
+    cantidad_disponible = forms.IntegerField(
+        label="Cantidad Disponible",
+        disabled=True,  # Esto hace que el campo no sea editable
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'readonly': 'readonly',  # Doble protección
+            'style': 'background-color: #f8f9fa;'  # Fondo gris claro para indicar que no es editable
+        })
+    )
+    class Meta:
+        model = Producto
+        exclude = ['fecha_agregado', 'agregado_por']
+        widgets = {
+            'descripcion': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'observacion': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'codigo': forms.TextInput(attrs={'class': 'form-control'}),
+            'num_cat': forms.TextInput(attrs={'class': 'form-control'}),
+            'num_serie': forms.TextInput(attrs={'class': 'form-control'}),
+            'vencimiento': forms.DateInput(
+                attrs={'type': 'date', 'class': 'form-control'},
+                format='%Y-%m-%d'
+            ),   #Este vencimiento me convierte el widget en formato para captura del dato
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Mostrar solo estados disponibles y mantenimiento
+        estados_visibles = ['disponible', 'mantenimiento']
+        self.fields['estado'].queryset = EstadoRecurso.objects.filter(estado__in=estados_visibles)
+
+        self.set_optional_fields()
+        self.apply_bootstrap_classes()
+        self.setup_category_filtering()
+        self.order_choices_for_ux()
+        self.fields['vencimiento'].input_formats = ['%Y-%m-%d']   #Al cargar el formulario de edición, la fecha se mostrará correctamente en el campo.
+
+        self.fields['categoria'].widget.attrs.update({'id': 'id_categoria'})
+        self.fields['subcategoria'].widget.attrs.update({'id': 'id_subcategoria'})
+
+    def set_optional_fields(self):
+        # Estos campos realmente pueden ser opcionales, los demás como nombre, categoria, sub, estado no.
+        optional_fields = [
+            'lote', 'marca', 'modelo', 'color', 'presentacion',
+            'capacidad', 'accesorios', 'medida',
+            'codigo', 'num_cat', 'num_serie', 'vencimiento',
+            'descripcion', 'observacion'
+    ]
+
+        for field in optional_fields:
+            if field in self.fields:
+                self.fields[field].required = False
+
+    def apply_bootstrap_classes(self):
+        for field in self.fields.values():
+            if 'class' not in field.widget.attrs:
+                field.widget.attrs['class'] = 'form-select' if isinstance(field.widget, forms.Select) else 'form-control'
+
+    def setup_category_filtering(self):
+        self.fields['subcategoria'].queryset = Subcategoria.objects.none()
+
+    def order_choices_for_ux(self):
+        if hasattr(self.fields['categoria'], 'queryset'):
+            self.fields['categoria'].queryset = self.fields['categoria'].queryset.order_by('nombre')
+        if hasattr(self.fields['unidad_medida'], 'queryset'):
+            self.fields['unidad_medida'].queryset = self.fields['unidad_medida'].queryset.order_by('nombre')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        codigo = cleaned_data.get('codigo')
+        num_cat = cleaned_data.get('num_cat')
+        num_serie = cleaned_data.get('num_serie')
+
+        qs = Producto.objects.all()
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        if codigo and qs.filter(codigo=codigo).exists():
+            self.add_error('codigo', 'Este código ya está en uso.')
+
+        if num_cat and qs.filter(num_cat=num_cat).exists():
+            self.add_error('num_cat', 'Este número de catálogo ya existe.')
+
+        if num_serie and qs.filter(num_serie=num_serie).exists():
+            self.add_error('num_serie', 'Este número de serie ya está registrado.')

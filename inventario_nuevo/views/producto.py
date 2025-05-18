@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
 from django.contrib import messages
 from inventario_nuevo.forms import ProductoForm
 from inventario_nuevo.models import UnidadMedida
 from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_usando_modelo
 from decimal import Decimal, InvalidOperation
 from inventario_nuevo.forms import CategoriaForm, SubcategoriaForm
-from inventario_nuevo.models import Categoria, Subcategoria, Producto, Ubicacion, Lote, Medida
+from inventario_nuevo.models import Categoria, Subcategoria, Producto, Ubicacion, Lote, Medida,  BajaProducto
 from inventario_nuevo.models import Marca, Modelo, Color, Presentacion, Capacidad, Accesorios, EstadoRecurso, UnidadMedida
 from inventario_nuevo.forms import PresentacionForm, CapacidadForm, AccesoriosForm
 from inventario_nuevo.forms import MarcaForm, ModeloForm, ColorForm, UbicacionForm, LoteForm, MedidaForm
@@ -15,6 +16,15 @@ from django.utils.timezone import localtime
 from inventario_nuevo.models import HistorialInventario
 from django.core.paginator import Paginator
 from django.db.models import Q
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from django.http import HttpResponse
+from inventario_nuevo.forms import ProductoEditForm
+from django.template.loader import get_template
+from django.http import HttpResponse
+from xhtml2pdf import pisa
+from inventario_nuevo.utils import obtener_productos_filtrados
+from datetime import datetime
 
 # Decorador para verificar si el usuario es administrador
 from django.contrib.auth.decorators import user_passes_test
@@ -263,7 +273,7 @@ def agregar_producto(request):
             producto.fecha_agregado = localtime(timezone.now()).date()
             producto.save()
 
-            # Crear historial
+            # CREAR EL HISTORIAL (PENDIENTEEEEEEE O SE ELIMINARÁ)
             HistorialInventario.objects.create(
                 producto=producto,
                 nombre_producto=producto.nombre,
@@ -283,7 +293,7 @@ def agregar_producto(request):
         else:
             print(form.errors)  # para depurar errores silenciosos
             messages.error(request, "Formulario inválido. Verifica los campos.")
-
+    
     return render(request, 'inventario_nuevo/agregar_producto.html', {
         'form': form,
         'categoria_form': categoria_form,
@@ -300,15 +310,17 @@ def agregar_producto(request):
         'hoy': localtime(timezone.now()).date()
     })
 
-
-from django.shortcuts import get_object_or_404
-
 @admin_required
 def listar_productos(request):
     productos = Producto.objects.all().select_related(
-        'categoria', 'subcategoria', 'marca', 'modelo', 'color', 'estado', 'ubicacion', 'lote'
-    )
+        'categoria', 'subcategoria', 'marca', 'modelo', 'color', 'estado', 'ubicacion', 'lote', 'baja'
+    ).order_by('-fecha_agregado','-id')  # Primero por fecha agregado DESCENDENTE, luego por id DESCENDENTE
     
+    # Si no se está filtrando por estado "baja", los excluimos de la vista por defecto del Inventario
+    estado = request.GET.get('estado')
+    if not estado or estado != 'baja':
+        productos = productos.exclude(estado__estado='baja')
+
     nombre = request.GET.get('nombre')
     codigo = request.GET.get('codigo')
     categoria = request.GET.get('categoria')
@@ -413,7 +425,7 @@ def listar_productos(request):
         productos = productos.filter(vencimiento__lte=vencimiento_hasta)
         filtros_aplicados['Vencimiento hasta'] = vencimiento_hasta
 
-    paginator = Paginator(productos, 15)
+    paginator = Paginator(productos, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -428,7 +440,7 @@ def listar_productos(request):
         'marcas': Marca.objects.all(),
         'modelos': Modelo.objects.all(),
         'colores': Color.objects.all(),
-        'estados': EstadoRecurso.objects.all(),
+        'estados': EstadoRecurso.objects.exclude(estado='prestado'), #Se Excluye el estado prestado de los filtros
         'ubicaciones': Ubicacion.objects.all(),
         'lotes': Lote.objects.all(),
         'total_resultados': productos.count(),
@@ -436,4 +448,100 @@ def listar_productos(request):
         'params': params,  # Para usar en la paginación sin duplicar page
     }
 
+    context['modo_baja'] = estado == 'baja'
+
     return render(request, 'inventario_nuevo/listar_productos.html', context)
+
+#Vista para Editar_Producto, usando el ProductoEditForm
+@admin_required
+def editar_producto(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id)
+
+    if request.method == 'POST':
+        form = ProductoEditForm(request.POST, instance=producto)
+
+        # Precargar subcategorías según categoría seleccionada
+        categoria_id = request.POST.get('categoria')
+        if categoria_id:
+            form.fields['subcategoria'].queryset = Subcategoria.objects.filter(categoria_id=categoria_id)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"El producto '{producto.nombre}' ha sido actualizado correctamente.")
+            return redirect('listar_productos')
+        else:
+            messages.error(request, "Por favor corrige los errores del formulario.")
+    else:
+        form = ProductoEditForm(instance=producto)
+
+        # Precargar subcategorías si ya hay una categoría
+        if producto.categoria:
+            form.fields['subcategoria'].queryset = Subcategoria.objects.filter(categoria=producto.categoria)
+
+    return render(request, 'inventario_nuevo/editar_producto.html', {
+        'form': form,
+        'producto': producto,
+        'cantidad': producto.cantidad_disponible,  # La mostramos sin editar la cantidad
+    })
+
+@login_required
+@admin_required
+def dar_baja_producto(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id)
+
+    # Verificar si ya fue dado de baja
+    if BajaProducto.objects.filter(producto=producto).exists():
+        messages.warning(request, "Este producto ya ha sido dado de baja.")
+        return redirect('listar_productos')
+
+    if request.method == 'POST':
+        motivo = request.POST.get('motivo', '').strip()
+        observaciones = request.POST.get('observaciones', '').strip()
+        foto = request.FILES.get('foto')
+
+        if not motivo:
+            messages.error(request, "Debe ingresar un motivo para la baja.")
+        else:
+            # Cambiar estado del producto a "baja"
+            estado_baja = EstadoRecurso.objects.get(estado='baja')
+            producto.estado = estado_baja
+            producto.save()
+
+            # Registrar la baja
+            BajaProducto.objects.create(
+                producto=producto,
+                motivo=motivo,
+                observaciones=observaciones,
+                usuario=request.user,
+                foto=foto
+            )
+
+            messages.success(request, f"El producto {producto.nombre} ha sido dado de baja correctamente.")
+            return redirect('listar_productos')
+
+    return render(request, 'inventario_nuevo/dar_baja_producto.html', {'producto': producto})
+
+@login_required
+@admin_required
+def reporte_pdf_inventario(request):
+    productos, filtros_aplicados = obtener_productos_filtrados(request)
+
+    template_path = 'reportes/reporte_pdf_inventario.html'  # Desde la carpeta templates
+    context = {
+        'productos': productos,
+        'filtros_aplicados': filtros_aplicados,
+        'fecha_generacion': datetime.now(),
+        'usuario': request.user,
+        'total': productos.count()
+    }
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="reporte_inventario.pdf"'
+
+    template = get_template(template_path)
+    html = template.render(context)
+
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('Error al generar el PDF', status=500)
+    return response

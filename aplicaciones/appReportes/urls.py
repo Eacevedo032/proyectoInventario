@@ -9,3 +9,4 @@ urlpatterns = [
     path('crear_reporte/', views.crear_reporte, name='crear_reporte'),
     path('detalle_reporte/<int:reporte_id>/', views.detalle_reporte, name='detalle_reporte'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

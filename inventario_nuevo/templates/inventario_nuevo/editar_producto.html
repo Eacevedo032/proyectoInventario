@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block body %}
+<div class="container mt-4">
+    <!-- Mensajes -->
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+
+    <h1 class="mb-4 text-center fw-bold"
+        style="color: black; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+        Ver/Editar Producto
+    </h1>
+
+    <form method="post" id="formEditarProducto">
+        {% csrf_token %}
+
+        <!-- Sección: Información Básica -->
+        <div class="card mb-4">
+            <div class="card-header text-white" style="background-color: #102165;">
+                <strong>Información Básica *</strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>{{ form.nombre.label_tag }}</strong>
+                            {{ form.nombre|add_class:"form-control" }}
+                            {{ form.nombre.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3 row g-2 align-items-center">
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Usuario</strong></label>
+                                <input type="text" class="form-control bg-light"
+                                    value="{{ producto.agregado_por.username }}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Fecha de agregado</strong></label>
+                                <input type="text" class="form-control bg-light"
+                                    value="{{ producto.fecha_agregado|date:'SHORT_DATE_FORMAT' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Cantidad Disponible</strong></label>
+                            {{ form.cantidad_disponible }}
+                            {{ form.cantidad_disponible.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <strong>{{ form.unidad_medida.label_tag }}</strong>
+                            {{ form.unidad_medida|add_class:"form-select" }}
+                            {{ form.unidad_medida.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <strong>{{ form.estado.label_tag }}</strong>
+                            {{ form.estado|add_class:"form-select" }}
+                            {{ form.estado.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <strong>{{ form.ubicacion.label_tag }}</strong>
+                            <div class="input-group">
+                                {{ form.ubicacion|add_class:"form-select" }}
+                            </div>
+                            {{ form.ubicacion.errors }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Categorización -->
+        <div class="card mb-4">
+            <div class="card-header text-white" style="background-color: #102165;">
+                <strong>Categorización *</strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Categoría -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>{{ form.categoria.label_tag }}</strong>
+                            <div class="input-group">
+                                {{ form.categoria|add_class:"form-select" }}
+                            </div>
+                            {{ form.categoria.errors }}
+                        </div>
+                    </div>
+
+                    <!-- Subcategoría -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>{{ form.subcategoria.label_tag }}</strong>
+                            <div class="input-group">
+                                <select name="subcategoria" id="id_subcategoria" class="form-select"
+                                    data-selected="{{ form.instance.subcategoria.id|default:'' }}">
+                                    <option value="">---------</option>
+                                    <!-- Las opciones se cargarán vía JavaScript -->
+                                </select>
+                            </div>
+                            {{ form.subcategoria.errors }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- JS QUE ME CARGA LAS SUBCATEGORÍAS DE LAS CATEGORÍAS -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const categoriaSelect = document.getElementById('id_categoria');
+                const subcategoriaSelect = document.getElementById('id_subcategoria');
+                const subcategoriaSeleccionada = subcategoriaSelect.getAttribute('data-selected');
+
+                function cargarSubcategorias(categoriaId, subSeleccionada = null) {
+                    if (!categoriaId) {
+                        subcategoriaSelect.innerHTML = '<option value="">---------</option>';
+                        return;
+                    }
+
+                    fetch("{% url 'obtener_subcategorias' %}?categoria_id=" + categoriaId)
+                        .then(response => response.json())
+                        .then(data => {
+                            subcategoriaSelect.innerHTML = '<option value="">---------</option>';
+                            data.forEach(subcat => {
+                                const option = document.createElement('option');
+                                option.value = subcat.id;
+                                option.textContent = subcat.nombre;
+                                if (subSeleccionada && subSeleccionada == subcat.id.toString()) {
+                                    option.selected = true;
+                                }
+                                subcategoriaSelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error cargando subcategorías:', error);
+                            subcategoriaSelect.innerHTML = '<option value="">Error</option>';
+                        });
+                }
+
+                categoriaSelect.addEventListener('change', function () {
+                    cargarSubcategorias(this.value);
+                });
+
+                // Cargar subcategorías si ya hay categoría seleccionada
+                const categoriaInicial = categoriaSelect.value;
+                if (categoriaInicial) {
+                    cargarSubcategorias(categoriaInicial, subcategoriaSeleccionada);
+                }
+            });
+        </script>
+
+        <!-- Sección: Información adicional -->
+        <div class="card mb-4">
+            <div class="card-header text-white" style="background-color: #102165;">
+                <strong>Información Adicional</strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>{{ form.codigo.label_tag }}</strong>
+                            {{ form.codigo|add_class:"form-control" }}
+                            <small class="text-muted"><strong>(Debe ser único si se especifica)</strong></small>
+                            {{ form.codigo.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>{{ form.num_cat.label_tag }}</strong>
+                            {{ form.num_cat|add_class:"form-control" }}
+                            <small class="text-muted"><strong>(Debe ser único si se especifica)</strong></small>
+                            {{ form.num_cat.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>{{ form.num_serie.label_tag }}</strong>
+                            {{ form.num_serie|add_class:"form-control" }}
+                            <small class="text-muted"><strong>(Debe ser único si se especifica)</strong></small>
+                            {{ form.num_serie.errors }}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>{{ form.descripcion.label_tag }}</strong>
+                            {{ form.descripcion|add_class:"form-control" }}
+                            {{ form.descripcion.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>{{ form.observacion.label_tag }}</strong>
+                            {{ form.observacion|add_class:"form-control" }}
+                            {{ form.observacion.errors }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Características -->
+        <div class="card mb-4">
+            <div class="card-header text-white" style="background-color: #102165;">
+                <strong>Características</strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>{{ form.marca.label_tag }}</strong>
+                            {{ form.marca|add_class:"form-select" }}
+                            {{ form.marca.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>{{ form.modelo.label_tag }}</strong>
+                            {{ form.modelo|add_class:"form-select" }}
+                            {{ form.modelo.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>{{ form.color.label_tag }}</strong>
+                            {{ form.color|add_class:"form-select" }}
+                            {{ form.color.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>{{ form.presentacion.label_tag }}</strong>
+                            {{ form.presentacion|add_class:"form-select" }}
+                            {{ form.presentacion.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>{{ form.capacidad.label_tag }}</strong>
+                            {{ form.capacidad|add_class:"form-select" }}
+                            {{ form.capacidad.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>{{ form.medida.label_tag }}</strong>
+                            {{ form.medida|add_class:"form-select" }}
+                            {{ form.medida.errors }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Otros detalles -->
+        <div class="card mb-4">
+            <div class="card-header text-white" style="background-color: #102165;">
+                <strong>Otros detalles</strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-4">
+                            <strong>{{ form.lote.label_tag }}</strong>
+                            {{ form.lote|add_class:"form-select" }}
+                            {{ form.lote.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-4">
+                            <label class="form-label"><strong>Fecha de Vencimiento</strong></label>
+                            {{ form.vencimiento }}
+                            {{ form.vencimiento.errors }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-4">
+                            <strong>{{ form.accesorios.label_tag }}</strong>
+                            {{ form.accesorios|add_class:"form-select" }}
+                            {{ form.accesorios.errors }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+            <button type="submit" class="btn btn-lg text-white fw-bold shadow-sm"
+                style="background-color: #008000; border-radius: 8px; padding: 8px 20px;">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+
+            <a href="{% url 'listar_productos' %}" class="btn btn-lg text-white fw-bold shadow-sm"
+                style="background-color: #6c757d; border-radius: 8px; padding: 8px 20px;">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
