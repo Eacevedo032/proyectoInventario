@@ -313,25 +313,26 @@ def agregar_producto(request):
 @admin_required
 def listar_productos(request):
     productos = Producto.objects.all().select_related(
-        'categoria', 'subcategoria', 'marca', 'modelo', 'color', 'estado', 'ubicacion', 'lote', 'baja'
-    ).order_by('-fecha_agregado','-id')  # Primero por fecha agregado DESCENDENTE, luego por id DESCENDENTE
-    
-    # Si no se está filtrando por estado "baja", los excluimos de la vista por defecto del Inventario
+        'categoria', 'subcategoria', 'marca', 'modelo', 'color', 'estado', 
+        'ubicacion', 'lote', 'baja', 'presentacion'
+    ).order_by('-fecha_agregado', '-id') #Esto muestra en orden del último agregado se muestra primero
+
     estado = request.GET.get('estado')
     if not estado or estado != 'baja':
         productos = productos.exclude(estado__estado='baja')
 
     nombre = request.GET.get('nombre')
     codigo = request.GET.get('codigo')
+    num_cat = request.GET.get('num_cat')  
+    num_serie = request.GET.get('num_serie')
     categoria = request.GET.get('categoria')
     subcategoria = request.GET.get('subcategoria')
     marca = request.GET.get('marca')
     modelo = request.GET.get('modelo')
     color = request.GET.get('color')
-    estado = request.GET.get('estado')
+    presentacion = request.GET.get('presentacion')  
     ubicacion = request.GET.get('ubicacion')
     lote = request.GET.get('lote')
-    num_serie = request.GET.get('num_serie')
     fecha_agregado_desde = request.GET.get('fecha_agregado_desde')
     fecha_agregado_hasta = request.GET.get('fecha_agregado_hasta')
     vencimiento_desde = request.GET.get('vencimiento_desde')
@@ -345,6 +346,12 @@ def listar_productos(request):
     if codigo:
         productos = productos.filter(codigo__icontains=codigo)
         filtros_aplicados['Código'] = codigo
+    if num_cat:
+        productos = productos.filter(num_cat__icontains=num_cat)
+        filtros_aplicados['N° de Catálogo'] = num_cat
+    if num_serie:
+        productos = productos.filter(num_serie__icontains=num_serie)
+        filtros_aplicados['N° de Serie'] = num_serie
     if categoria:
         try:
             cat = Categoria.objects.get(id=categoria)
@@ -380,6 +387,13 @@ def listar_productos(request):
             filtros_aplicados['Color'] = col.nombre
         except Color.DoesNotExist:
             pass
+    if presentacion:
+        try:
+            pres = Presentacion.objects.get(id=presentacion)
+            productos = productos.filter(presentacion_id=presentacion)
+            filtros_aplicados['Presentación'] = pres.nombre
+        except Presentacion.DoesNotExist:
+            pass
     if estado:
         estado_obj = EstadoRecurso.objects.filter(estado=estado).first()
         if estado_obj:
@@ -399,11 +413,7 @@ def listar_productos(request):
             filtros_aplicados['Lote'] = lot.nombre
         except Lote.DoesNotExist:
             pass
-    if num_serie:
-        productos = productos.filter(numero_serie__icontains=num_serie)
-        filtros_aplicados['N° de serie'] = num_serie
-    
-    # Rango fechas agregado
+
     if fecha_agregado_desde and fecha_agregado_hasta:
         productos = productos.filter(fecha_agregado__range=[fecha_agregado_desde, fecha_agregado_hasta])
         filtros_aplicados['Fecha de agregado'] = f"{fecha_agregado_desde} a {fecha_agregado_hasta}"
@@ -414,7 +424,6 @@ def listar_productos(request):
         productos = productos.filter(fecha_agregado__lte=fecha_agregado_hasta)
         filtros_aplicados['Fecha de agregado hasta'] = fecha_agregado_hasta
 
-    # Rango fechas vencimiento
     if vencimiento_desde and vencimiento_hasta:
         productos = productos.filter(vencimiento__range=[vencimiento_desde, vencimiento_hasta])
         filtros_aplicados['Fecha de vencimiento'] = f"{vencimiento_desde} a {vencimiento_hasta}"
@@ -440,15 +449,24 @@ def listar_productos(request):
         'marcas': Marca.objects.all(),
         'modelos': Modelo.objects.all(),
         'colores': Color.objects.all(),
-        'estados': EstadoRecurso.objects.exclude(estado='prestado'), #Se Excluye el estado prestado de los filtros
+        'presentaciones': Presentacion.objects.all(),  
+        'estados': EstadoRecurso.objects.exclude(estado='prestado'),
         'ubicaciones': Ubicacion.objects.all(),
         'lotes': Lote.objects.all(),
         'total_resultados': productos.count(),
         'filtros_aplicados': filtros_aplicados,
-        'params': params,  # Para usar en la paginación sin duplicar page
+        'params': params,
+        'modo_baja': estado == 'baja',
     }
 
-    context['modo_baja'] = estado == 'baja'
+    #Estas banderas sirven para que la estructura mostrada en el HTML sea diferente por cada filtro aplicado
+    context['filtro_por_presentacion'] = 'presentacion' in request.GET and request.GET['presentacion']
+    context['filtro_por_color'] = 'color' in request.GET and request.GET['color']
+    context['filtro_por_modelo'] = 'modelo' in request.GET and request.GET['modelo']
+    context['filtro_por_marca'] = bool(request.GET.get('marca'))
+    context['filtro_por_codigo'] = bool(request.GET.get('codigo'))
+    context['filtro_por_num_cat'] = bool(request.GET.get('num_cat'))
+    context['filtro_por_num_serie'] = bool(request.GET.get('num_serie'))
 
     return render(request, 'inventario_nuevo/listar_productos.html', context)
 
