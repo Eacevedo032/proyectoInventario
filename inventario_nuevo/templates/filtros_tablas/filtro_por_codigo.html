@@ -1,0 +1,74 @@
+{% block content_wrapper %}
+
+<!-- Mensajes -->
+{% if messages %}
+<div class="alert alert-dismissible alert-success mt-2">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- TABLA PARA FILTRO POR CÓDIGO -->
+<div class="table-responsive">
+    <table class="table table-hover align-middle rounded-table" style="width: 100%;">
+        <thead class="table-primary">
+            <tr>
+                <th>#</th>
+                <th style="min-width: 200px;">Producto</th>                 
+                <th>Categoría</th>
+                <th>Subcategoría</th>
+                <th>Marca</th>
+                <th>Presentación</th>
+                <th>Modelo</th>
+                <th>N° Serie</th>
+                <th># Cat</th>
+                <th style="color: red;"><strong>Código</strong></th>
+                <th>Cantidad</th>
+                <th>Estado</th>
+                <th>Ubicación</th>
+                <th>Lote</th>
+                <th style="min-width: 200px;">Observaciones</th>                
+                <th>Opciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+                <tr>
+                    <td>{{ forloop.counter0|add:productos.start_index }}</td>
+                    <td style="width: 20%; text-align: justify; white-space: normal; word-break: break-word;">{{ producto.nombre }}</td>
+                    <td>{{ producto.categoria.nombre }}</td>
+                    <td>{{ producto.subcategoria.nombre }}</td>
+                    <td>{{ producto.marca.nombre }}</td>
+                    <td>{{ producto.presentacion.nombre }}</td>
+                    <td>{{ producto.modelo.nombre }}</td>
+                    <td>{{ producto.num_serie|default_if_none:"" }}</td>
+                    <td>{{ producto.num_cat|default_if_none:"" }}</td>
+                    <td><strong>{{ producto.codigo|default_if_none:"" }}</strong></td>
+                    <td>{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
+                    <td>{{ producto.estado.get_estado_display }}</td>
+                    <td>{{ producto.ubicacion.nombre }}</td>
+                    <td>{{ producto.lote.nombre }}</td>
+                    <td style="text-align: justify; white-space: normal; word-break: break-word;">{{ producto.observacion }}</td>
+                     <td>
+                    <strong><div class="d-flex flex-column gap-1">
+                    <a href="{% url 'editar_producto' producto.id %}"
+                         style="background-color: #102165; color: white; padding: 4px 6px; font-size: 12px; border-radius: 3px; text-decoration: none; text-align: center;">
+                        Ver más
+                    </a>
+                    <a href="{% url 'dar_baja_producto' producto.id %}"
+                        style="background-color: #e30613; color: white; padding: 2px 4px; font-size: 11px; border-radius: 3px;
+                        text-decoration: none; text-align: center; display: inline-block; max-width: 80px;">
+                        Dar de baja
+                    </a>
+                    </div></strong>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="16" class="text-center">No hay productos.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

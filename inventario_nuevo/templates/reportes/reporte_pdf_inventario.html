@@ -1,61 +1,247 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
+    <title>Reporte de Inventario</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 11px; }
-        h1 { color: #0000FF; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #999; padding: 4px; text-align: left; }
-        .encabezado { text-align: center; }
-        .filtros { font-size: 10px; margin-top: 10px; }
+        @page {
+            size: A4 landscape;
+            margin: 140px 40px 40px 40px;
+            /* ← margen superior grande reservado al header */
+
+            @top-left {
+                content: element(logo);
+            }
+
+            @top-right {
+                content: element(info);
+            }
+
+            @top-center {
+                content: element(titulo);
+            }
+        }
+
+        #logo {
+            position: running(logo);
+        }
+
+        #info {
+            position: running(info);
+        }
+
+        #titulo {
+            position: running(titulo);
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            margin: 0;
+            padding: 0 40px 40px 40px;
+            /* ← sin padding superior */
+            /* top, right, bottom, left */
+        }
+
+        #logo {
+            position: running(logo);
+            text-align: left;
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+
+        #info {
+            position: running(info);
+            text-align: right;
+            padding-right: 20px;
+            margin-top: 5px;
+            font-size: 10px;
+        }
+
+        #titulo {
+            position: running(titulo);
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 20px;
+            border-bottom: 2px solid #e30613;
+        }
+
+        .encabezado {
+            display: none;
+            /* escondemos porque usamos header de página */
+        }
+
+        .filtros {
+            margin: 15px 0;
+            border: 1px solid #000;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .filtros table {
+            width: auto;
+            table-layout: auto;
+            border-collapse: collapse;
+        }
+
+        .filtros th {
+            text-align: left;
+            vertical-align: top;
+            font-weight: bold;
+            padding: 4px 4px 4px 0;
+            width: 150px;
+            white-space: nowrap;
+        }
+
+        .filtros td {
+            text-align: left;
+            vertical-align: top;
+            padding: 4px 0 4px 2px;
+            word-break: break-word;
+        }
+
+        .tabla-productos {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            table-layout: fixed;
+            margin-top: 20px;
+            /* Separa la tabla del encabezado */
+        }
+
+        .tabla-productos td {
+            border: 1px solid #000;
+            padding: 4px;
+            text-align: left;
+            word-break: break-word;
+            font-size: 12px;
+        }
+
+        .tabla-productos th {
+            background-color: #0000ff;
+            color: white;
+            text-align: center;
+
+        }
+
+        .total {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 10px;
+            color: #555;
+        }
+
+        .firma {
+            margin-top: 80px;
+            text-align: center;
+            font-size: 11px;
+            page-break-inside: avoid;
+        }
     </style>
 </head>
+
 <body>
-    <div class="encabezado">
-        <h1>Reporte General del Inventario</h1>
-        {% if filtros_aplicados %}
-            <div class="filtros">
-                <strong>Filtros aplicados:</strong>
-                <ul>
-                    {% for key, value in filtros_aplicados.items %}
-                        <li><strong>{{ key }}:</strong> {{ value }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
+
+    <!-- Elementos para encabezado en todas las páginas -->
+    <!-- Paso Logo_url que en la vista carga mi imagen del logo de UNP -->
+    <div id="logo">
+        <img src="{{ logo_url }}" alt="Logo" style="height: 50px;">  
     </div>
 
-    <table>
+    <div id="info">
+        <p><strong>Generado por:</strong> {{ usuario.username }}</p>
+        <p><strong>Fecha:</strong> {{ fecha_generacion|date:"d/m/Y h:i A" }}</p>
+    </div>
+
+    <div id="titulo">
+        <div>UNIVERSIDAD NACIONAL POLITÉCNICA (UNP)</div>
+        <br>
+        <div>INGENIERÍA EN BIOTECNOLOGÍA INDUSTRIAL</div>
+        <br>
+        <div>REPORTE DE INVENTARIO GENERAL DE LABORATORIOS</div>
+    </div>
+    <br>
+    <!-- Filtros -->
+    {% if filtros_aplicados %}
+    <div class="filtros">
+        <p style="font-weight: bold;">Filtros aplicados:</p>
+        <table>
+            <tbody>
+                {% for nombre, valor in filtros_aplicados.items %}
+                <tr>
+                    <th>{{ nombre }}:</th>
+                    <td>{{ valor }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="filtros">
+        <p><strong>Este reporte muestra todos los productos activos del inventario.</strong></p>
+    </div>
+    {% endif %}
+
+    <!-- Tabla de productos -->
+    <table class="tabla-productos">
         <thead>
             <tr>
-                <th>#</th>
-                <th>Nombre</th>
-                <th>Código</th>
-                <th>Estado</th>
+                <th style="width: 30px;">#</th>
+                <th style="width: 200px;">Producto</th>
+                {% if filtro_por_codigo %}<th>Código</th>{% endif %}
+                {% if filtro_por_num_serie %}<th>N° Serie</th>{% endif %}
+                {% if filtro_por_marca %}<th>Marca</th>{% endif %}
+                {% if filtro_por_modelo %}<th>Modelo</th>{% endif %}
+                {% if filtro_por_color %}<th>Color</th>{% endif %}
+                {% if filtro_por_presentacion %}<th>Presentación</th>{% endif %}
+                <th>Categoría</th>
+                <th>Subcategoría</th>
                 <th>Ubicación</th>
+                <th>Estado</th>
                 <th>Fecha agregado</th>
-                <th>Vencimiento</th>
-                <!-- Agrega más columnas si deseas -->
             </tr>
         </thead>
         <tbody>
             {% for producto in productos %}
             <tr>
                 <td>{{ forloop.counter }}</td>
-                <td>{{ producto.nombre }}</td>
-                <td>{{ producto.codigo }}</td>
-                <td>{{ producto.estado }}</td>
+                <td style="text-align: justify; word-wrap: break-word; white-space: normal;">{{ producto.nombre }}</td>
+                {% if filtro_por_codigo %}<td>{{ producto.codigo }}</td>{% endif %}
+                {% if filtro_por_num_serie %}<td>{{ producto.numero_serie }}</td>{% endif %}
+                {% if filtro_por_marca %}<td>{{ producto.marca }}</td>{% endif %}
+                {% if filtro_por_modelo %}<td>{{ producto.modelo }}</td>{% endif %}
+                {% if filtro_por_color %}<td>{{ producto.color }}</td>{% endif %}
+                {% if filtro_por_presentacion %}<td>{{ producto.presentacion }}</td>{% endif %}
+                <td>{{ producto.categoria }}</td>
+                <td>{{ producto.subcategoria }}</td>
                 <td>{{ producto.ubicacion }}</td>
-                <td>{{ producto.fecha_agregado|date:"Y-m-d" }}</td>
-                <td>{{ producto.vencimiento|default:"—" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="7">No se encontraron productos con los filtros seleccionados.</td>
+                <td>{{ producto.estado }}</td>
+                <td>{{ producto.fecha_agregado|date:"d/m/Y" }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <p class="total">Total de productos listados: {{ total }}</p>
+
+    <div class="firma">
+        <p>______________________________</p>
+        <p><strong>Firma del Responsable</strong></p>
+    </div>
+
+    <div class="footer fw-bold">
+        <strong>Universidad Nacional Politécnica - Sistema de Gestión de Inventario</strong>
+    </div>
+
 </body>
+
 </html>

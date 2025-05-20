@@ -25,6 +25,8 @@ from django.http import HttpResponse
 from xhtml2pdf import pisa
 from inventario_nuevo.utils import obtener_productos_filtrados
 from datetime import datetime
+from weasyprint import HTML
+
 
 # Decorador para verificar si el usuario es administrador
 from django.contrib.auth.decorators import user_passes_test
@@ -468,6 +470,19 @@ def listar_productos(request):
     context['filtro_por_num_cat'] = bool(request.GET.get('num_cat'))
     context['filtro_por_num_serie'] = bool(request.GET.get('num_serie'))
 
+    # Lista de posibles filtros desde el GET
+    campos_filtro = [
+    'categoria', 'subcategoria', 'marca', 'modelo', 'color',
+    'estado', 'presentacion', 'ubicacion', 'lote',
+    'nombre', 'codigo', 'num_cat', 'num_serie',
+]
+
+    # Contar cuántos filtros están siendo aplicados
+    filtros_activos = sum(1 for campo in campos_filtro if request.GET.get(campo))
+
+    context['filtros_combinados'] = filtros_activos > 1  # bandera para plantilla
+
+
     return render(request, 'inventario_nuevo/listar_productos.html', context)
 
 #Vista para Editar_Producto, usando el ProductoEditForm
@@ -539,27 +554,87 @@ def dar_baja_producto(request, producto_id):
 
     return render(request, 'inventario_nuevo/dar_baja_producto.html', {'producto': producto})
 
+# REPORTES
 @login_required
+@admin_required
+def vista_reporte_inventario(request):
+    # Lista de posibles campos de filtro
+    campos_filtro = [
+        'categoria', 'subcategoria', 'marca', 'modelo', 'color',
+        'estado', 'presentacion', 'ubicacion', 'lote',
+        'nombre', 'codigo', 'num_cat', 'num_serie',
+    ]
+
+    # Banderas por cada filtro específico
+    context = {
+        'categorias': Categoria.objects.all(),
+        'subcategorias': Subcategoria.objects.all(),
+        'marcas': Marca.objects.all(),
+        'modelos': Modelo.objects.all(),
+        'colores': Color.objects.all(),
+        'presentaciones': Presentacion.objects.all(),
+        'estados': EstadoRecurso.objects.exclude(estado='prestado'),
+        'ubicaciones': Ubicacion.objects.all(),
+        'lotes': Lote.objects.all(),
+
+        'filtro_por_presentacion': 'presentacion' in request.GET and request.GET['presentacion'],
+        'filtro_por_color': 'color' in request.GET and request.GET['color'],
+        'filtro_por_modelo': 'modelo' in request.GET and request.GET['modelo'],
+        'filtro_por_marca': bool(request.GET.get('marca')),
+        'filtro_por_codigo': bool(request.GET.get('codigo')),
+        'filtro_por_num_cat': bool(request.GET.get('num_cat')),
+        'filtro_por_num_serie': bool(request.GET.get('num_serie')),
+    }
+
+    # Contar cuántos filtros están siendo aplicados
+    filtros_activos = sum(1 for campo in campos_filtro if request.GET.get(campo))
+    context['filtros_combinados'] = filtros_activos > 1
+
+    return render(request, 'reportes/vista_reporte_inventario.html', context)
+
+from django.templatetags.static import static
+
 @admin_required
 def reporte_pdf_inventario(request):
     productos, filtros_aplicados = obtener_productos_filtrados(request)
 
-    template_path = 'reportes/reporte_pdf_inventario.html'  # Desde la carpeta templates
+    campos_filtro = [
+        'categoria', 'subcategoria', 'marca', 'modelo', 'color',
+        'estado', 'presentacion', 'ubicacion', 'lote',
+        'nombre', 'codigo', 'num_cat', 'num_serie',
+    ]
+    filtros_activos = sum(1 for campo in campos_filtro if request.GET.get(campo))
+    
+    logo_url = request.build_absolute_uri(static('img/logoUNP1.png'))
+
     context = {
         'productos': productos,
         'filtros_aplicados': filtros_aplicados,
-        'fecha_generacion': datetime.now(),
+        'fecha_generacion': timezone.now(),
         'usuario': request.user,
-        'total': productos.count()
+        'total': productos.count(),
+        'logo_url': logo_url,
+
+        # Banderas para mostrar u ocultar columnas en el PDF
+        'filtro_por_presentacion': 'presentacion' in request.GET and request.GET['presentacion'],
+        'filtro_por_color': 'color' in request.GET and request.GET['color'],
+        'filtro_por_modelo': 'modelo' in request.GET and request.GET['modelo'],
+        'filtro_por_marca': bool(request.GET.get('marca')),
+        'filtro_por_codigo': bool(request.GET.get('codigo')),
+        'filtro_por_num_cat': bool(request.GET.get('num_cat')),
+        'filtro_por_num_serie': bool(request.GET.get('num_serie')),
+
+        'filtros_combinados': filtros_activos > 1
+
     }
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="reporte_inventario.pdf"'
+    template = get_template('reportes/reporte_pdf_inventario.html')
+    html_string = template.render(context)
 
-    template = get_template(template_path)
-    html = template.render(context)
-
-    pisa_status = pisa.CreatePDF(html, dest=response)
-    if pisa_status.err:
-        return HttpResponse('Error al generar el PDF', status=500)
+    pdf_file = HTML(string=html_string).write_pdf()
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    fecha_actual = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    nombre_archivo = f'reporte_inventario_{fecha_actual}.pdf'
+    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'  
+      
     return response

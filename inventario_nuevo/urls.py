@@ -32,6 +32,8 @@ urlpatterns = [
     path('editar_producto/<int:producto_id>/', views.editar_producto, name='editar_producto'),
     #Para dar de baja a un producto
     path('dar_baja_producto/<int:producto_id>/', views.dar_baja_producto, name='dar_baja_producto'),
+    #Vista para los reportes del inventario
+    path('reportes_inventario/', views.vista_reporte_inventario, name='vista_reporte_inventario'),
     #Exporte del inventario geeral en PDF
     path('reporte_pdf_inventario/', views.reporte_pdf_inventario, name='reporte_pdf_inventario'),
 ]

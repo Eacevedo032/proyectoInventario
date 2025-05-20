@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<!-- Mensajes -->
+{% if messages %}
+<div class="alert alert-success mt-2">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+</div>
+{% endif %}
+
+<form method="get" action="{% url 'reporte_pdf_inventario' %}" class="border rounded p-4 shadow" style="background-color: #fdfdfd;">
+    
+    <!-- TÍTULO -->
+    <!-- Caja del título -->
+<div class="rounded shadow-sm mb-4 p-3" style="background-color: #010D42;">
+    <h3 class="text-white text-center fw-bold m-0" style="text-transform: uppercase; letter-spacing: 1px; border-bottom: 4px solid #b81414; padding-bottom: 5px;">
+        Filtros para el reporte del inventario
+    </h3>
+</div>
+
+    <div class="row g-3">
+
+        <!-- Grupo 1 -->
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Nombre o palabra clave</label>
+            <input type="text" name="nombre" class="form-control" value="{{ request.GET.nombre }}">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Categoría</label>
+            <select name="categoria" class="form-select">
+                <option value="">-- Todas --</option>
+                {% for c in categorias %}
+                    <option value="{{ c.id }}" {% if request.GET.categoria == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Subcategoría</label>
+            <select name="subcategoria" class="form-select">
+                <option value="">-- Todas --</option>
+                {% for s in subcategorias %}
+                    <option value="{{ s.id }}" {% if request.GET.subcategoria == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Estado</label>
+            <select name="estado" class="form-select">
+                <option value="">-- Todos --</option>
+                {% for e in estados %}
+                    <option value="{{ e.estado }}" {% if request.GET.estado == e.estado %}selected{% endif %}>{{ e.get_estado_display }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Grupo 2 -->
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Ubicación</label>
+            <select name="ubicacion" class="form-select">
+                <option value="">-- Todas --</option>
+                {% for u in ubicaciones %}
+                    <option value="{{ u.id }}" {% if request.GET.ubicacion == u.id|stringformat:"s" %}selected{% endif %}>{{ u.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Código</label>
+            <input type="text" name="codigo" class="form-control" value="{{ request.GET.codigo }}">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold">N° de Serie</label>
+            <input type="text" name="num_serie" class="form-control" value="{{ request.GET.num_serie }}">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold"># Cat</label>
+            <input type="text" name="num_cat" class="form-control" value="{{ request.GET.num_cat }}">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Lote</label>
+            <select name="lote" class="form-select">
+                <option value="">-- Todos --</option>
+                {% for l in lotes %}
+                    <option value="{{ l.id }}" {% if request.GET.lote == l.id|stringformat:"s" %}selected{% endif %}>{{ l.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Fechas -->
+        <div class="col-md-6">
+            <label class="form-label fw-bold text-center d-block">Fecha de agregado</label>
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="date" name="fecha_agregado_desde" class="form-control" value="{{ request.GET.fecha_agregado_desde }}">
+                </div>
+                <div class="col-md-6">
+                    <input type="date" name="fecha_agregado_hasta" class="form-control" value="{{ request.GET.fecha_agregado_hasta }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label fw-bold text-center d-block">Fecha de vencimiento</label>
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="date" name="vencimiento_desde" class="form-control" value="{{ request.GET.vencimiento_desde }}">
+                </div>
+                <div class="col-md-6">
+                    <input type="date" name="vencimiento_hasta" class="form-control" value="{{ request.GET.vencimiento_hasta }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Grupo 3 -->
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Marca</label>
+            <select name="marca" class="form-select">
+                <option value="">--Todas--</option>
+                {% for m in marcas %}
+                    <option value="{{ m.id }}" {% if request.GET.marca == m.id|stringformat:"s" %}selected{% endif %}>{{ m.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Modelo</label>
+            <select name="modelo" class="form-select">
+                <option value="">--Todos--</option>
+                {% for m in modelos %}
+                    <option value="{{ m.id }}" {% if request.GET.modelo == m.id|stringformat:"s" %}selected{% endif %}>{{ m.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Color</label>
+            <select name="color" class="form-select">
+                <option value="">--Todos--</option>
+                {% for c in colores %}
+                    <option value="{{ c.id }}" {% if request.GET.color == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Presentación</label>
+            <select name="presentacion" class="form-select">
+                <option value="">--Todas--</option>
+                {% for p in presentaciones %}
+                    <option value="{{ p.id }}" {% if request.GET.presentacion == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="text-center mt-4">
+        <button type="reset" class="btn btn-secondary px-4">
+            <strong>Limpiar Filtros</strong>
+        </button>
+        <button type="submit" class="btn px-4 me-2" style="background-color: #b81414; color: white; font-weight: bold;">
+            📑 Exportar PDF
+        </button>
+    </div>
+</form>
+
+{% endblock %}
