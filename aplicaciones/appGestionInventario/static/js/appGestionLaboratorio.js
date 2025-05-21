@@ -94,7 +94,7 @@ function setupItemManagement() {
             // ✅ Configurar botón de eliminar
             const removeBtn = newItem.querySelector('.remove-item');
             if (removeBtn) {
-                removeBtn.addEventListener('click', function () {
+                removeBtn.addEventListener('click', function() {
                     if (document.querySelectorAll('.item-entry').length > 1) {
                         this.closest('.item-entry').remove();
                     }
