@@ -24,9 +24,17 @@ from django.template.loader import get_template
 from django.http import HttpResponse
 from xhtml2pdf import pisa
 from inventario_nuevo.utils import obtener_productos_filtrados
-from datetime import datetime
+from datetime import datetime, date
 from weasyprint import HTML
-
+from django.templatetags.static import static
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+import datetime as dt
+from openpyxl import Workbook
+from django.template.loader import get_template
+from django.http import HttpResponse
+from weasyprint import HTML
+import tempfile
 
 # Decorador para verificar si el usuario es administrador
 from django.contrib.auth.decorators import user_passes_test
@@ -592,8 +600,7 @@ def vista_reporte_inventario(request):
 
     return render(request, 'reportes/vista_reporte_inventario.html', context)
 
-from django.templatetags.static import static
-
+#El reporte se genera gracias a Weasyprint para reportes PDF
 @admin_required
 def reporte_pdf_inventario(request):
     productos, filtros_aplicados = obtener_productos_filtrados(request)
@@ -606,6 +613,7 @@ def reporte_pdf_inventario(request):
     filtros_activos = sum(1 for campo in campos_filtro if request.GET.get(campo))
     
     logo_url = request.build_absolute_uri(static('img/logoUNP1.png'))
+    modo_baja = request.GET.get('estado') == 'baja'
 
     context = {
         'productos': productos,
@@ -614,6 +622,7 @@ def reporte_pdf_inventario(request):
         'usuario': request.user,
         'total': productos.count(),
         'logo_url': logo_url,
+        'modo_baja': modo_baja, 
 
         # Banderas para mostrar u ocultar columnas en el PDF
         'filtro_por_presentacion': 'presentacion' in request.GET and request.GET['presentacion'],
@@ -623,6 +632,10 @@ def reporte_pdf_inventario(request):
         'filtro_por_codigo': bool(request.GET.get('codigo')),
         'filtro_por_num_cat': bool(request.GET.get('num_cat')),
         'filtro_por_num_serie': bool(request.GET.get('num_serie')),
+        #Por lote y fechas (agregado y vencimiento)
+        'filtro_por_lote': 'lote' in request.GET and request.GET['lote'],
+        'filtro_por_fecha_agregado': request.GET.get('fecha_agregado_desde') or request.GET.get('fecha_agregado_hasta'),
+        'filtro_por_vencimiento': request.GET.get('vencimiento_desde') or request.GET.get('vencimiento_hasta'),
 
         'filtros_combinados': filtros_activos > 1
 
@@ -637,4 +650,191 @@ def reporte_pdf_inventario(request):
     nombre_archivo = f'reporte_inventario_{fecha_actual}.pdf'
     response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'  
       
+    return response
+
+#Para el reporte PDF, que se genera gracias a la librería openpyxl
+
+from openpyxl.utils import get_column_letter
+
+@admin_required
+def reporte_excel_inventario(request):
+    productos = Producto.objects.select_related(
+        'unidad_medida', 'categoria', 'subcategoria', 'marca', 'modelo',
+        'color', 'presentacion', 'ubicacion', 'lote', 'estado', 'agregado_por'
+    )
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Inventario"
+
+    # --- ESTILOS ---
+    encabezado_font = Font(bold=True, color="FFFFFF")
+    encabezado_fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+    alineacion_centro = Alignment(horizontal='center', vertical='center')
+    alineacion_izquierda = Alignment(horizontal='left', vertical='top', wrapText=True)
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+
+    # --- HOJA 1: INVENTARIO ACTIVO ---
+    columnas = [
+        ('Productos', 'nombre'),
+        ('Cantidad', 'cantidad_disponible'),
+        ('Unidad', 'unidad_medida.nombre'),
+        ('Código', 'codigo'),
+        ('N° Catálogo', 'num_cat'),
+        ('N° Serie', 'num_serie'),
+        ('Categoría', 'categoria.nombre'),
+        ('Subcategoría', 'subcategoria.nombre'),
+        ('Marca', 'marca.nombre'),
+        ('Modelo', 'modelo.nombre'),
+        ('Color', 'color.nombre'),
+        ('Presentación', 'presentacion.nombre'),
+        ('Ubicación', 'ubicacion.nombre'),
+        ('Lote', 'lote.nombre'),
+        ('Estado', 'estado.estado'),
+        ('Fecha agregado', 'fecha_agregado'),
+        ('Vencimiento', 'vencimiento'),
+        ('Descripción', 'descripcion'),
+        ('Accesorios', 'accesorios'),
+        ('Capacidad', 'capacidad'),
+        ('Medida', 'medida'),
+        ('Observaciones', 'observacion'),
+        ('Usuario que agrega', 'agregado_por.username'),
+    ]
+
+    # Título principal
+    ws.insert_rows(1)
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(columnas))
+    titulo_cell = ws.cell(row=1, column=1, value="REPORTE DE INVENTARIO GENERAL")
+    titulo_cell.font = Font(bold=True, size=14)
+    titulo_cell.alignment = Alignment(horizontal='center')
+
+    # Encabezados
+    for col_idx, (titulo, _) in enumerate(columnas, start=1):
+        cell = ws.cell(row=2, column=col_idx, value=titulo)
+        cell.font = encabezado_font
+        cell.fill = encabezado_fill
+        cell.alignment = alineacion_centro
+        cell.border = thin_border
+
+    # Filas de datos
+    for fila, producto in enumerate(productos, start=3):
+        for col_idx, (titulo, atributo) in enumerate(columnas, start=1):
+            partes = atributo.split('.')
+            valor = producto
+            try:
+                for parte in partes:
+                    if valor is None:
+                        break
+                    valor = getattr(valor, parte, None)
+            except AttributeError:
+                valor = ''
+            if isinstance(valor, (datetime, date)):
+                valor = valor.strftime('%d/%m/%Y')
+            elif valor is None:
+                valor = ''
+            elif not isinstance(valor, (str, int, float, bool)):
+                valor = str(valor)
+
+            cell = ws.cell(row=fila, column=col_idx, value=valor)
+
+            if titulo in ['Productos', 'Presentación', 'Observaciones', 'Descripción']:
+                cell.alignment = alineacion_izquierda
+            else:
+                cell.alignment = alineacion_centro
+
+            cell.border = thin_border
+
+    # Ajuste de anchos
+    for i, column_cells in enumerate(ws.columns, start=1):
+        col_letter = get_column_letter(i)
+        encabezado = ws.cell(row=2, column=i).value
+        if encabezado in ['Productos', 'Presentación', 'Observaciones', 'Descripción']:
+            ws.column_dimensions[col_letter].width = 30
+        else:
+            max_length = max((len(str(cell.value)) if cell.value else 0) for cell in column_cells)
+            ws.column_dimensions[col_letter].width = max(15, max_length + 2)
+
+    # --- HOJA 2: DADOS DE BAJA ---
+    ws_baja = wb.create_sheet(title="Dados de baja")
+
+    columnas_baja = [
+        ('Productos', 'producto.nombre'),
+        ('Categoría', 'producto.categoria.nombre'),
+        ('Subcategoría', 'producto.subcategoria.nombre'),
+        ('Cantidad', 'producto.cantidad_disponible'),
+        ('Unidad', 'producto.unidad_medida.nombre'),
+        ('Fecha baja', 'fecha_baja'),
+        ('Motivo', 'motivo'),
+        ('Observaciones', 'observaciones'),
+        ('Usuario dió baja', 'usuario.username'),
+    ]
+
+    # Título principal
+    ws_baja.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(columnas_baja))
+    titulo_baja = ws_baja.cell(row=1, column=1)
+    titulo_baja.value = "REPORTE DE PRODUCTOS DADOS DE BAJA"
+    titulo_baja.font = Font(size=14,bold=True, color="FFFFFF")
+    titulo_baja.alignment = Alignment(horizontal='center', vertical='center')
+    titulo_baja.fill = encabezado_fill
+
+    # Encabezados fila 2
+    for col_idx, (titulo, _) in enumerate(columnas_baja, start=1):
+        cell = ws_baja.cell(row=2, column=col_idx, value=titulo)
+        cell.font = encabezado_font
+        cell.fill = encabezado_fill
+        cell.alignment = alineacion_centro
+        cell.border = thin_border
+
+    # Datos desde fila 3
+    productos_baja = BajaProducto.objects.select_related(
+        'producto__categoria', 'producto__subcategoria',
+        'producto__unidad_medida', 'usuario'
+    )
+
+    for fila, baja in enumerate(productos_baja, start=3):
+        for col_idx, (_, atributo) in enumerate(columnas_baja, start=1):
+            partes = atributo.split('.')
+            valor = baja
+            try:
+                for parte in partes:
+                    if valor is None:
+                        break
+                    valor = getattr(valor, parte, None)
+            except AttributeError:
+                valor = ''
+            if isinstance(valor, (datetime, date)):
+                valor = valor.strftime('%d/%m/%Y')
+            elif valor is None:
+                valor = ''
+            elif not isinstance(valor, (str, int, float, bool)):
+                valor = str(valor)
+
+            cell = ws_baja.cell(row=fila, column=col_idx, value=valor)
+
+            if columnas_baja[col_idx - 1][0] in ['Productos', 'Motivo', 'Observaciones']:
+                cell.alignment = alineacion_izquierda
+            else:
+                cell.alignment = alineacion_centro
+
+            cell.border = thin_border
+
+    # Ajuste de anchos hoja 2
+    for i, column_cells in enumerate(ws_baja.columns, start=1):
+        col_letter = get_column_letter(i)
+        encabezado = ws_baja.cell(row=2, column=i).value
+        if encabezado in ['Productos', 'Motivo', 'Observaciones']:
+            ws_baja.column_dimensions[col_letter].width = 30
+        else:
+            max_length = max((len(str(cell.value)) if cell.value else 0) for cell in column_cells[2:])
+            ws_baja.column_dimensions[col_letter].width = max(15, max_length + 2)
+
+    # --- RESPUESTA HTTP ---
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    fecha_actual = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    nombre_archivo = f'reporte_inventario_y_bajas_{fecha_actual}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+    wb.save(response)
     return response

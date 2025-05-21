@@ -301,7 +301,7 @@ request.GET, y vos ya pasás al contexto el queryset filtrado como productos, si
             {% for producto in productos %}
             <tr>
                 <td>{{ forloop.counter0|add:productos.start_index }}</td>
-                <td style="text-align: justify; white-space: normal; word-break: break-word;">{{ producto.nombre }}</td>
+                <td style="text-align: left; white-space: normal; word-break: break-word;">{{ producto.nombre }}</td>
                 <td>{{ producto.categoria.nombre }}</td>
                 <td>{{ producto.subcategoria.nombre }}</td>
                 <td>{{ producto.marca.nombre }}</td>
@@ -342,12 +342,12 @@ request.GET, y vos ya pasás al contexto el queryset filtrado como productos, si
         <thead class="table-primary">
             <tr>
                 <th>#</th>
-                <th>Producto</th>
+                <th style="min-width: 100px;">Producto</th>
                 <th>Categoría</th>
                 <th>Subcategoría</th>
                 <th>Cantidad de baja</th>
-                <th>Motivo de baja</th>
-                <th>Observaciones de la baja</th>
+                <th style="min-width: 165px;">Motivo de baja</th>
+                <th style="min-width: 170px;">Observaciones de la baja</th>
                 <th>Fecha de baja</th>
                 <th>Dado de baja por</th>
             </tr>
@@ -356,12 +356,14 @@ request.GET, y vos ya pasás al contexto el queryset filtrado como productos, si
             {% for producto in productos %}
                 <tr>
                     <td>{{ forloop.counter0|add:productos.start_index }}</td>
-                    <td>{{ producto.nombre }}</td>
+                    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">
+                    {{ producto.nombre }}
+                    </td>                    
                     <td>{{ producto.categoria.nombre }}</td>
                     <td>{{ producto.subcategoria.nombre }}</td>
                     <td>{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
-                    <td>{{ producto.baja.motivo }}</td>
-                    <td>{{ producto.baja.observaciones|default:"-" }}</td>
+                    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">{{ producto.baja.motivo }}</td>
+                    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">{{ producto.baja.observaciones|default:"-" }}</td>
                     <td>{{ producto.baja.fecha_baja|date:"d/m/Y" }}</td>
                     <td>{{ producto.baja.usuario.username}}</td>
                 </tr>
@@ -369,7 +371,6 @@ request.GET, y vos ya pasás al contexto el queryset filtrado como productos, si
         </tbody>
     </table>
     </div>
-
 {% elif filtro_por_presentacion %}
     
     {% include 'filtros_tablas/filtro_por_presentacion.html' %}
@@ -423,7 +424,7 @@ request.GET, y vos ya pasás al contexto el queryset filtrado como productos, si
             {% for producto in productos %}
             <tr>
                 <td>{{ forloop.counter0|add:productos.start_index }}</td>
-                <td style="width: 100%; text-align: justify; white-space: normal; word-break: break-word;">
+                <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">
                 {{ producto.nombre }}
                 </td>
                 <td>{{ producto.categoria.nombre }}</td>

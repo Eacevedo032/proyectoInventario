@@ -16,7 +16,7 @@
     <!-- Caja del título -->
 <div class="rounded shadow-sm mb-4 p-3" style="background-color: #010D42;">
     <h3 class="text-white text-center fw-bold m-0" style="text-transform: uppercase; letter-spacing: 1px; border-bottom: 4px solid #b81414; padding-bottom: 5px;">
-        Filtros para el reporte del inventario
+        Filtros para el reporte del inventario general
     </h3>
 </div>
 
@@ -162,14 +162,27 @@
     </div>
 
     <!-- Botones -->
-    <div class="text-center mt-4">
-        <button type="reset" class="btn btn-secondary px-4">
+<div class="d-flex justify-content-between align-items-center mt-4">
+    <!-- Botones de la izquierda -->
+    <div>
+        <button type="reset" class="btn btn-secondary px-4 me-2">
             <strong>Limpiar Filtros</strong>
         </button>
         <button type="submit" class="btn px-4 me-2" style="background-color: #b81414; color: white; font-weight: bold;">
-            📑 Exportar PDF
+            📑Generar PDF(con o sin filtros)
         </button>
     </div>
+
+    <!-- Botón de Excel a la derecha -->
+    <div>
+        <a href="{% url 'reporte_excel_inventario' %}?{{ request.GET.urlencode }}" 
+           class="btn px-4" 
+           style="background-color: #008f39; color: white; font-weight: bold;">
+            📊Exportar Excel Completo
+        </a>
+    </div>
+</div>
+
 </form>
 
 {% endblock %}

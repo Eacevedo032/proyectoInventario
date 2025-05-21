@@ -39,7 +39,7 @@
 
         body {
             font-family: Arial, sans-serif;
-            font-size: 14px;
+            font-size: 12px;
             margin: 0;
             padding: 0 40px 40px 40px;
             /* ← sin padding superior */
@@ -143,7 +143,7 @@
         .firma {
             margin-top: 80px;
             text-align: center;
-            font-size: 11px;
+            font-size: 12px;
             page-break-inside: avoid;
         }
     </style>
@@ -172,64 +172,143 @@
     <br>
     <!-- Filtros -->
     {% if filtros_aplicados %}
-    <div class="filtros">
-        <p style="font-weight: bold;">Filtros aplicados:</p>
-        <table>
-            <tbody>
-                {% for nombre, valor in filtros_aplicados.items %}
-                <tr>
-                    <th>{{ nombre }}:</th>
-                    <td>{{ valor }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="filtros">
-        <p><strong>Este reporte muestra todos los productos activos del inventario.</strong></p>
-    </div>
-    {% endif %}
-
-    <!-- Tabla de productos -->
-    <table class="tabla-productos">
-        <thead>
-            <tr>
-                <th style="width: 30px;">#</th>
-                <th style="width: 200px;">Producto</th>
-                {% if filtro_por_codigo %}<th>Código</th>{% endif %}
-                {% if filtro_por_num_serie %}<th>N° Serie</th>{% endif %}
-                {% if filtro_por_marca %}<th>Marca</th>{% endif %}
-                {% if filtro_por_modelo %}<th>Modelo</th>{% endif %}
-                {% if filtro_por_color %}<th>Color</th>{% endif %}
-                {% if filtro_por_presentacion %}<th>Presentación</th>{% endif %}
-                <th>Categoría</th>
-                <th>Subcategoría</th>
-                <th>Ubicación</th>
-                <th>Estado</th>
-                <th>Fecha agregado</th>
-            </tr>
-        </thead>
+<div class="filtros">
+    <p style="font-weight: bold;">Filtros aplicados:</p>
+    <table>
         <tbody>
-            {% for producto in productos %}
+            {% for nombre, valor in filtros_aplicados.items %}
             <tr>
-                <td>{{ forloop.counter }}</td>
-                <td style="text-align: justify; word-wrap: break-word; white-space: normal;">{{ producto.nombre }}</td>
-                {% if filtro_por_codigo %}<td>{{ producto.codigo }}</td>{% endif %}
-                {% if filtro_por_num_serie %}<td>{{ producto.numero_serie }}</td>{% endif %}
-                {% if filtro_por_marca %}<td>{{ producto.marca }}</td>{% endif %}
-                {% if filtro_por_modelo %}<td>{{ producto.modelo }}</td>{% endif %}
-                {% if filtro_por_color %}<td>{{ producto.color }}</td>{% endif %}
-                {% if filtro_por_presentacion %}<td>{{ producto.presentacion }}</td>{% endif %}
-                <td>{{ producto.categoria }}</td>
-                <td>{{ producto.subcategoria }}</td>
-                <td>{{ producto.ubicacion }}</td>
-                <td>{{ producto.estado }}</td>
-                <td>{{ producto.fecha_agregado|date:"d/m/Y" }}</td>
+                <th>{{ nombre }}:</th>
+                <td>{{ valor }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
+{% else %}
+<div class="filtros">
+    <p><strong>Este reporte muestra todos los productos activos del inventario.</strong></p>
+</div>
+{% endif %}
+
+<!-- Tabla de productos DONDE PRIMERO TIENE LA ESTRUCTURA DISTINTA PARA LOS 
+ DADOS DE BAJA, APENAS FILTRE SE MUESTRAN ALS COLUMNAS DE FILTROS Y LUEGO LA TABLA OR DEFECTO SIN 
+ FILTRAR ALGO-->
+<table class="tabla-productos">
+<thead>
+    {% if modo_baja %}
+        <tr>
+            <th style="width: 30px;">#</th>
+            <th style="width: 160px;">Producto</th>
+            <th>Categoría</th>
+            <th>Subcategoría</th>
+            <th>Cantidad de baja</th>
+            <th style="width: 140px;">Motivo de baja</th>
+            <th style="width: 140px;">Observaciones</th>
+            <th>Fecha de baja</th>
+            <th>Dado de baja por</th>
+        </tr>
+    {% elif filtros_aplicados %}
+        <tr>
+            <th style="width: 1px;">#</th>
+            <th style="width: 140px;">Producto</th>
+            <th style="width: 90px;">Categoría</th>
+            <th style="width: 90px;">Subcategoría</th>
+            <th style="width: 60px;">Cantidad</th>
+            {% if filtro_por_marca %}<th style="width: 75px;">Marca</th>{% endif %}
+            {% if filtro_por_modelo %}<th style="width: 80px;">Modelo</th>{% endif %}
+            {% if filtro_por_lote %}<th style="width: 65px;">Lote</th>{% endif %}
+            {% if filtro_por_color %}<th style="width: 70px;">Color</th>{% endif %}
+            {% if filtro_por_presentacion %}<th style="width: 120px;">Presentación</th>{% endif %}
+            {% if filtro_por_codigo %}<th style="width: 90px;">Código</th>{% endif %}
+            {% if filtro_por_num_cat %}<th style="width: 90px;"># Cat</th>{% endif %}
+            {% if filtro_por_num_serie %}<th style="width: 90px;">N° Serie</th>{% endif %}
+            <th style="width: 80px;">Ubicación</th>
+            <th style="width: 75px;">Estado</th>
+            {% if filtro_por_fecha_agregado %}<th style="width: 110px;">Fecha agregado</th>{% endif %}
+            {% if filtro_por_vencimiento %}<th style="width: 90px;">Vence</th>{% endif %}
+        </tr>
+    {% else %}
+        <tr>
+            <th style="width: 20px;">#</th>
+            <th style="width: 150px;">Producto</th>
+            <th style="width: 95px;">Categoría</th>
+            <th style="width: 95px;">Subcategoría</th>
+            <th style="width: 70px;">Cantidad</th>
+            <th style="width: 75px;">Marca</th>
+            <th style="width: 80px;">Ubicación</th>
+            <th style="width: 75px;">Estado</th>
+            <th style="width: 65px;">Lote</th>
+            <th style="width: 65px;">Vence</th>
+            <th style="width: 140px;">Observaciones</th>
+            {% if filtro_por_codigo %}<th style="width: 90px;">Código</th>{% endif %}
+            {% if filtro_por_num_serie %}<th style="width: 100px;">N° Serie</th>{% endif %}
+            {% if filtro_por_marca %}<th style="width: 75px;">Marca</th>{% endif %}
+            {% if filtro_por_modelo %}<th style="width: 80px;">Modelo</th>{% endif %}
+            {% if filtro_por_color %}<th style="width: 70px;">Color</th>{% endif %}
+            {% if filtro_por_presentacion %}<th style="width: 120px;">Presentación</th>{% endif %}
+        </tr>
+    {% endif %}
+</thead>
+<tbody>
+    {% for producto in productos %}
+    {% if modo_baja %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.nombre }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.categoria.nombre }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.subcategoria.nombre }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.motivo }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.observaciones|default:"-" }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.fecha_baja|date:"d/m/Y" }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.usuario.username }}</td>
+        </tr>
+    {% elif filtros_aplicados %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.nombre }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.categoria }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.subcategoria }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
+            {% if filtro_por_marca %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.marca }}</td>{% endif %}
+            {% if filtro_por_modelo %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.modelo }}</td>{% endif %}
+            {% if filtro_por_lote %}<td>{{ producto.lote|default:"-" }}</td>{% endif %}
+            {% if filtro_por_color %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.color }}</td>{% endif %}
+            {% if filtro_por_presentacion %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.presentacion }}</td>{% endif %}
+            {% if filtro_por_codigo %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.codigo }}</td>{% endif %}
+            {% if filtro_por_num_cat %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.num_cat }}</td>{% endif %}
+            {% if filtro_por_num_serie %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.num_serie }}</td>{% endif %}
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.ubicacion }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.estado }}</td>
+            {% if filtro_por_fecha_agregado %}<td>{{ producto.fecha_agregado|date:"d/m/Y" }}</td>{% endif %}
+            {% if filtro_por_vencimiento %}<td>{{ producto.vencimiento|date:"d/m/Y" }}</td>{% endif %}
+        </tr>
+    {% else %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.nombre }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.categoria }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.subcategoria }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.marca|default:"" }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.ubicacion }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.estado }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.lote|default:"" }}</td>
+            <td>{{ producto.vencimiento|date:"d/m/Y" }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.observacion }}</td>
+            {% if filtro_por_codigo %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.codigo }}</td>{% endif %}
+            {% if filtro_por_num_serie %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.num_serie }}</td>{% endif %}
+            {% if filtro_por_marca %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.marca }}</td>{% endif %}
+            {% if filtro_por_modelo %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.modelo }}</td>{% endif %}
+            {% if filtro_por_color %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.color }}</td>{% endif %}
+            {% if filtro_por_presentacion %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.presentacion }}</td>{% endif %}
+        </tr>
+    {% endif %}
+    {% endfor %}
+</tbody>
+</table>
+
 
     <p class="total">Total de productos listados: {{ total }}</p>
 

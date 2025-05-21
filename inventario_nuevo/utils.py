@@ -40,7 +40,7 @@ def obtener_productos_filtrados(request):
         productos = productos.filter(num_cat__icontains=num_cat)
         filtros_aplicados['N° de Catálogo'] = num_cat
     if num_serie:
-        productos = productos.filter(numero_serie__icontains=num_serie)
+        productos = productos.filter(num_serie__icontains=num_serie)
         filtros_aplicados['N° de Serie'] = num_serie
     if categoria:
         try:

@@ -34,6 +34,10 @@ urlpatterns = [
     path('dar_baja_producto/<int:producto_id>/', views.dar_baja_producto, name='dar_baja_producto'),
     #Vista para los reportes del inventario
     path('reportes_inventario/', views.vista_reporte_inventario, name='vista_reporte_inventario'),
-    #Exporte del inventario geeral en PDF
+    #Exporte del inventario general en PDF
     path('reporte_pdf_inventario/', views.reporte_pdf_inventario, name='reporte_pdf_inventario'),
+    #Exporte del inventario general en Excel
+    path('reporte_excel_inventario/', views.reporte_excel_inventario, name='reporte_excel_inventario'),
+    #Para el acta de bajas
+   
 ]
