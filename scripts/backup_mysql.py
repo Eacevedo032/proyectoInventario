@@ -27,3 +27,10 @@ if resultado.returncode == 0:
     print(f"Backup exitoso: {ruta_completa}")
 else:
     print("Error al realizar el backup.")
+
+#Restaurar datos manualmente desde el CMD como "ejecutar como administrador
+#  mysql -u root -p inventario_db < "C:\backups_inventario_db\backup_inventario_db_2025-05-21_12-04-47.sql o nombre del backup"
+# 
+# Script para buackup manual de la BD
+# python scripts/backup_mysql.py
+# "
