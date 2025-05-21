@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Detalle de Reporte{% endblock %}
-
-{% block body %}
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
 <style>
     @media print {
         .no-print { display: none !important; }
@@ -14,73 +14,216 @@
     .contenedor-fotos {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .reporte-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    .detalle-item {
+        margin-bottom: 15px;
+    }
+    .detalle-label {
+        font-weight: 600;
+        display: inline-block;
+        width: 220px;
+        color: #010D42;
+    }
+    .reporte-container {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 2.5rem;
+        margin: 2rem auto;
+        max-width: 900px;
+    }
+    .section-title {
+        color: #010D42;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 25px 0 15px 0;
+    }
+    .firma-section {
+        margin-top: 50px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .firma-line {
+        border-top: 1px solid #010D42;
+        width: 80%;
+        margin: 40px auto 0 auto;
+        padding-top: 10px;
+        text-align: center;
     }
 </style>
+{% endblock %}
 
-<div class="container no-print" style="font-family: 'Times New Roman', Times, serif; margin: 20px auto; max-width: 900px;">
-    <div class="mb-4 text-left no-print">
-        <button type="button" class="btn btn-primary" onclick="exportToPDF()">Exportar a PDF</button>
-        <button type="button" class="btn btn-success" onclick="exportToExcel()">Exportar a Excel</button>
-        <button type="button" class="btn btn-secondary" onclick="window.print()">Imprimir</button>
+{% block title %}Detalle de Reporte{% endblock %}
+
+{% block body %}
+<div class="container no-print">
+    <div class="mb-4 text-center">
+        <button type="button" class="btn btn-primary" onclick="exportToPDF()">
+            <i class="fas fa-file-pdf"></i> Exportar a PDF
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="window.print()">
+            <i class="fas fa-print"></i> Imprimir
+        </button>
+        <a href="{% url 'listar_reportes' %}" class="btn btn-info">
+            <i class="fas fa-arrow-left"></i> Regresar
+        </a>
     </div>
 </div>
 
-<div class="container imprimible" style="font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; max-width: 900px; box-sizing: border-box;">
-    <h1 class="mb-4 text-left" style="font-size: 16pt; font-weight: bold;">Detalle de Reporte</h1>
-    <div class="card" style="border: none; text-align: left; width: 100%;">
-        <div class="card-body">
-            <h5 class="card-title" style="font-size: 14pt; font-weight: bold;">Laboratorio: {{ laboratorio_nombre }}</h5>
-            <p class="card-text" style="font-size: 14pt;">Clase: {{ reporte.clase }}</p>
-            <p class="card-text" style="font-size: 14pt;">Asignatura: {{ reporte.asignatura }}</p>
-            <p class="card-text" style="font-size: 14pt;">Horario de Salida Real: {{ reporte.horario_salida_real }}</p>
-            <p class="card-text" style="font-size: 14pt;">Estudiantes Masculinos: {{ reporte.estudiantes_masculinos }}</p>
-            <p class="card-text" style="font-size: 14pt;">Estudiantes Femeninos: {{ reporte.estudiantes_femeninos }}</p>
-            <p class="card-text objetivo" style="font-size: 14pt;">Objetivo de la Práctica: {{ reporte.objetivo_practica }}</p>
-            <h6 class="card-subtitle mb-2 text-muted" style="font-size: 14pt;">Fecha de Generación: {{ reporte.fecha_generacion }}</h6>
+<div class="container imprimible">
+    <div class="reporte-container">
+        <div class="text-center mb-4">
+            <img src="{% static 'img/logoUNP1.png' %}" alt="Logo UNP" style="max-height: 50px; margin-bottom: 15px;">
+        </div>
 
+        <div class="text-center">
+            <h1 class="horario-title" style="margin: 0 auto;">Detalle de Reporte</h1>
+            <div class="text-muted" style="text-align: right;">
+                Generado el: {{ reporte.fecha_generacion }}
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <!-- Información básica -->
+            <div class="detalle-item">
+                <span class="detalle-label">Laboratorio:</span>
+                <span>{{ laboratorio_nombre }}</span>
+            </div>
+            
+            <div class="detalle-item">
+                <span class="detalle-label">Fecha de Solicitud:</span>
+                <span>{{ fecha_solicitud }}</span>
+            </div>
+            
+            <div class="detalle-item">
+                <span class="detalle-label">Fecha de Uso:</span>
+                <span>{{ fecha_reserva }}</span>
+            </div>
+            
+            <div class="detalle-item">
+                <span class="detalle-label">Clase:</span>
+                <span>{{ clase }}</span>
+            </div>
+            
+            <div class="detalle-item">
+                <span class="detalle-label">Asignatura:</span>
+                <span>{{ asignatura }}</span>
+            </div>
+            
+            <div class="detalle-item">
+                <span class="detalle-label">Horario de Salida Real:</span>
+                <span>{{ reporte.horario_salida_real }}</span>
+            </div>
+            
+            <div class="detalle-item">
+                <span class="detalle-label">Estudiantes Masculinos:</span>
+                <span>{{ reporte.estudiantes_masculinos }}</span>
+            </div>
+            
+            <div class="detalle-item">
+                <span class="detalle-label">Estudiantes Femeninos:</span>
+                <span>{{ reporte.estudiantes_femeninos }}</span>
+            </div>
+            
+            <div class="detalle-item">
+                <span class="detalle-label">Total Estudiantes:</span>
+                <span>{{ reporte.estudiantes_masculinos|add:reporte.estudiantes_femeninos }}</span>
+            </div>
+            
+            <h3 class="section-title">Objetivo de la Práctica</h3>
+            <div class="detalle-item objetivo">
+                <p style="text-align: justify; line-height: 1.6;">{{ reporte.objetivo_practica }}</p>
+            </div>
+            
+            {% if productos %}
+            <h3 class="section-title">Productos Utilizados</h3>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr class="bg-primary">
+                            <th>Producto</th>
+                            <th>Cantidad Utilizada</th>
+                            <th>Unidad</th>
+                            <th>Disponible al momento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos %}
+                        <tr>
+                            <td>{{ producto.producto.nombre }}</td>
+                            <td class="text-center">{{ producto.cantidad_utilizada }}</td>
+                            <td class="text-center">{{ producto.unidad_medida }}</td>
+                            <td class="text-center">{{ producto.cantidad_disponible_momento }} {{ producto.unidad_medida_momento }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+            
             {% if fotos %}
-            <p class="card-text" style="font-size: 14pt;">Fotos Adjuntas:</p>
+            <h3 class="section-title">Evidencia Fotográfica</h3>
             <div class="contenedor-fotos">
                 {% for foto in fotos %}
                 <div class="pagina">
                     <img src="{{ foto.imagen.url }}" class="img-fluid rounded" alt="Foto Adjunta"
-                        style="max-width: 100%; height: auto; margin-bottom: 20px;">
+                        style="max-width: 100%; height: auto; border: 1px solid #ddd; padding: 5px;">
+                    <p class="text-center mt-2">Foto {{ forloop.counter }}</p>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <p class="card-text" style="font-size: 14pt;">No hay fotos adjuntas.</p>
+            <div class="alert alert-info mt-4">
+                No hay fotos adjuntas para este reporte.
+            </div>
             {% endif %}
+            
+            <!-- Espacio para firmas -->
+            <div class="firma-section">
+                <div style="width: 45%;">
+                    <div class="firma-line">Firma del Responsable</div>
+                </div>
+                <div style="width: 45%;">
+                    <div class="firma-line">Firma del Encargado</div>
+                </div>
+            </div>
         </div>
     </div>
-</div> 
-
-<div class="container no-print text-center" style="margin: 20px auto; max-width: 900px;">
-    <a href="{% url 'listar_reportes' %}" class="btn btn-secondary mt-3">Regresar</a>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 
 <script>
     function exportToPDF() {
         const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF();
+        const pdf = new jsPDF('p', 'pt', 'a4');
 
         pdf.setFont("Helvetica");
         pdf.setFontSize(16);
-        pdf.text("Detalle de Reporte", 20, 20);
-        pdf.setFontSize(12);
-
-        let contenido = document.querySelector(".imprimible");
-        html2canvas(contenido).then(canvas => {
-            let imgData = canvas.toDataURL("image/png");
-            pdf.addImage(imgData, "PNG", 10, 30, 190, 0);
-            pdf.save("reporte.pdf");
+        
+        const element = document.querySelector(".imprimible");
+        
+        html2canvas(element, {
+            scale: 2,
+            logging: true,
+            useCORS: true
+        }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = pdf.internal.pageSize.getWidth() - 40;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            pdf.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
+            pdf.save("reporte_laboratorio_{{ laboratorio_nombre|slugify }}_{{ fecha_reserva|date:'Y-m-d' }}.pdf");
         });
     }
 </script>
 {% endblock %}
-
-

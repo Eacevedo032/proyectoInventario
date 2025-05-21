@@ -38,6 +38,16 @@
                         <input type="date" id="fecha_reserva" name="fecha_reserva" class="form-control" required>
                     </div>
                     <div class="form-group col-md-4 mb-3">
+                                <label for="clase">Clase/Grado:</label>
+                                <input type="text" name="clase" id="clase" class="form-control" required>
+                                
+                                <label for="asignatura">Asignatura:</label>
+                                <input type="text" name="asignatura" id="asignatura" class="form-control" required>
+
+                        </div>
+
+                    
+                    <div class="form-group col-md-4 mb-3">
                         <label for="hora_inicio">Hora de Inicio:</label>
                         <div class="input-group">
                             <input type="number" id="hora_inicio" name="hora_inicio" class="form-control" min="1" max="12" placeholder="Hora" required>
@@ -66,9 +76,6 @@
             </div>
             <div class="card-footer text-center">
                 <button type="submit" class="btn btn-primary">Solicitar Reservación</button>
-                {% if mostrar_boton_recursos %}
-                <a href="{% url 'solicitar_recursos' %}" class="btn btn-primary">Ir a Solicitar Productos</a>
-                {% endif %}
             </div>
         </div>
     </form>
@@ -119,25 +126,26 @@
                 <label for="fecha">Fecha:</label>
                 <input type="date" id="fecha" name="fecha" class="form-control" value="{{ request.GET.fecha }}">
             </div>
+            
             <div class="col-12 col-md-4">
                 <button type="submit" class="btn btn-primary w-100">Buscar</button>
                 <a href="{% url 'reservar_laboratorio' %}" class="btn btn-secondary w-100 mt-2">Limpiar filtros</a>
             </div>
         </div>
     </form>
-
+    
     <!-- Botón para mostrar/ocultar historial -->
     <div class="text-center mb-4">
-        <a href="?page={{ request.GET.page }}&mostrar_historial={% if request.GET.mostrar_historial == 'true' %}false{% else %}true{% endif %}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}"
-           class="btn btn-info">
+        <a href="?page={{ request.GET.page }}&mostrar_historial={% if request.GET.mostrar_historial == 'true' %}false{% else %}true{% endif %}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}&modo={{ request.GET.modo|default:'laboratorios' }}"
+            class="btn btn-info">
             {% if request.GET.mostrar_historial == 'true' %}
-                Ocultar Historial Antiguo
+            Ocultar Historial Antiguo
             {% else %}
-                Mostrar Historial Completo
+            Mostrar Historial Completo
             {% endif %}
         </a>
     </div>
-
+    
     <h2>Mis Solicitudes de Reservación</h2>
     <div class="table-responsive">
         <table class="table table-striped">
@@ -145,6 +153,8 @@
                 <tr>
                     <th>Laboratorio</th>
                     <th>Fecha</th>
+                    <th>clase</th>
+                    <th>asignatura</th>
                     <th>Hora de Inicio</th>
                     <th>Hora de Fin</th>
                     <th>Estado</th>
@@ -156,6 +166,8 @@
                 <tr>
                     <td>{{ solicitud.laboratorio }}</td>
                     <td>{{ solicitud.fecha_reserva }}</td>
+                    <td>{{ solicitud.clase }}</td>
+                    <td>{{ solicitud.asignatura }}</td>
                     <td>{{ solicitud.hora_inicio|date:"g:i A"  }}</td>
                     <td>{{ solicitud.hora_fin|date:"g:i A"  }}</td>
                     <td>
@@ -169,10 +181,17 @@
                         </span>
                     </td>
                     <td>
-                        {% if mostrar_boton_recursos %}
-                                <a href="{% url 'ver_items_solicitud' solicitud.id %}" class="btn btn-info btn-sm me-2">Ver Ítems</a>
+                        {% if solicitud.estado == 'aprobada' %}
+                        <a href="{% url 'finalizar_uso' solicitud.id %}" class="btn btn-warning">
+                            Finalizar uso y completar reporte
+                        </a>
                         {% endif %}
-                        
+                        {% if mostrar_boton_recursos %}
+                            {% if solicitud.estado == 'pendiente' %}
+                                <a href="{% url 'solicitar_recursos' %}?solicitud_id={{ solicitud.id }}" class="btn btn-primary btn-sm me-2">Solicitar Recursos</a>
+                            {% endif %}
+                           <a href="{% url 'ver_items_solicitud' solicitud.id %}" class="btn btn-info btn-sm me-2">Ver Ítems</a>
+                        {% endif %}
                         {% if solicitud.estado == 'pendiente' %}
                             <a href="{% url 'editar_laboratorio' solicitud.id %}" class="btn btn-warning btn-sm">Editar</a>
                             <a href="{% url 'eliminar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>

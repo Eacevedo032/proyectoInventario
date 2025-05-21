@@ -44,41 +44,20 @@
                 <!-- Contenedor de Ítems -->
                 <div id="items-container">
                     <div class="item-entry border p-3 mb-3">
-                        <!-- Fila de selects: Categoría, Subcategoría e Ítem -->
-                        <div class="form-group row">
-                            <div class="col-md-4 mb-3">
-                                <label>Categoría:</label>
-                                <select class="form-control categoria" name="categoria[]" onchange="actualizarSubcategorias(this)" required>
-                                    <option value="">Seleccione categoría</option>
-                                    {% for categoria in categorias %}
-                                        <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            
-                            <div class="col-md-4 mb-3">
-                                <label>Subcategoría:</label>
-                                <select class="form-control subcategoria" name="subcategoria[]" onchange="actualizarItems(this)" required disabled>
-                                    <option value="">Seleccione subcategoría</option>
-                                </select>
-                            </div>
-                            
-                            <div class="col-md-4 mb-3">
-                                <label>Ítem:</label>
-                                <select class="form-control item" name="item[]" required disabled>
-                                    <option value="">Seleccione ítem</option>
-                                </select>
-                            </div>
+                        <div class="form-group position-relative">
+                            <label>Buscar Producto:</label>
+                            <input type="text" class="form-control buscar-producto" placeholder="Escribe al menos 2 caracteres..."
+                                autocomplete="off">
+                            <div class="resultados-busqueda" style="display: none;"></div>
+                            <input type="hidden" name="producto[]" class="producto-id">
                         </div>
-            
-                        <!-- Fila de cantidad y unidad -->
-                        <div class="form-group row">
-                            <div class="col-md-6 mb-3">
-                                <label>Cantidad a utilizar:</label>
-                                <input type="number" name="cantidad[]" min="1" step="0.01" class="form-control" required>
+                
+                        <div class="form-group row align-items-center justify-content-center">
+                            <div class="col-6 col-md-3 mb-3">
+                                <label for="cantidad_utilizada" class="text-center w-100">Cantidad a Utilizar:</label>
+                                <input type="number" name="cantidad_utilizada[]" step="0.01" class="form-control" required>
                             </div>
-                            
-                            <div class="col-md-6 mb-3">
+                            <div class="col-6 col-md-3 mb-3">
                                 <label for="unidad_medida" class="text-center w-100">Unidad de Medida:</label>
                                 <select name="unidad_medida[]" class="form-control" required>
                                     <option value="Unidad">Unidad</option>

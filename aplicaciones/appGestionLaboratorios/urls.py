@@ -1,7 +1,7 @@
 from django.urls import path, include
 from aplicaciones.appGestionLaboratorios.views import views
 from aplicaciones.appGestionLaboratorios.views.reservar_laboratorio import enviar_solicitud
-
+from aplicaciones.appReportes.views.reportes_de_laboratorio import finalizar_uso
 urlpatterns = [
     # URLs para formulario y tabla de laboratorio
     path('reservar_laboratorio/', views.reservar_laboratorio, name='reservar_laboratorio'),
@@ -11,6 +11,7 @@ urlpatterns = [
 
     # URLs para formulario y tabla de recursos utilizados en el laboratorio
     path('solicitar_recursos/', views.solicitar_recursos, name='solicitar_recursos'),
+    path('obtener_items/', views.obtener_items, name='obtener_items'),
     path('editar_recurso/<int:uso_id>/', views.editar_recurso, name='editar_recurso'),
     path('eliminar_recurso/<int:uso_id>/', views.eliminar_recurso, name='eliminar_recurso'),
 
@@ -21,7 +22,6 @@ urlpatterns = [
     path('eliminar-productos/<int:producto_id>/', views.eliminar_productos, name='eliminar_productos'),
     
     #Urls para llamar a las categorias a las que pertenece cada recurso de los productos
-    path('obtener_subcategorias/<int:categoria_id>/', views.obtener_subcategorias, name='obtener_subcategorias'),
     path('obtener_items/', views.obtener_items, name='obtener_items'),
     
     # URLs para usuarios admin laboratorios

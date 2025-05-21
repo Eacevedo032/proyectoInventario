@@ -19,15 +19,15 @@ def solicitar_productos(request):
                 motivo = request.POST.get('motivo')
                 
                 # Verificar que tenemos datos de items (manteniendo los nombres originales de campos)
-                items = request.POST.getlist('item[]')
-                cantidades = request.POST.getlist('cantidad[]')
+                producto_ids = request.POST.getlist('producto[]')
+                cantidades = request.POST.getlist('cantidad_utilizada[]')
                 unidades = request.POST.getlist('unidad_medida[]')
                 
-                if not fecha_reserva or not motivo or not items:
+                if not fecha_reserva or not motivo or not producto_ids:
                     raise ValueError("Faltan datos obligatorios.")
                 
-                for i in range(len(items)):
-                    producto = get_object_or_404(Producto, id=items[i])
+                for i in range(len(producto_ids)):
+                    producto = get_object_or_404(Producto, id=producto_ids[i])
                     
                     try:
                         cantidad_utilizada_decimal = Decimal(cantidades[i])

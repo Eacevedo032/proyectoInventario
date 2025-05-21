@@ -5,6 +5,19 @@
     padding: 20px;
 }
 
+#resultados_busqueda {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#resultados_busqueda a {
+    cursor: pointer;
+}
+
+#resultados_busqueda a:hover {
+    background-color: #f8f9fa;
+}
+
 h1, .solicitud-title, .laboratorio-title, .horario-title {
     color: #010D42;
     font-size: 3rem;

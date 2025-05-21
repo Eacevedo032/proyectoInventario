@@ -23,22 +23,26 @@ class SolicitudLaboratorio(models.Model):
     EN_REVISION = 'en_revision'
     APROBADA = 'aprobada'
     RECHAZADA = 'rechazada'
+    COMPLETADO = 'Completado'
     
     ESTADOS = [
         (PENDIENTE, 'Pendiente'),
         (EN_REVISION, 'En revisión'),
         (APROBADA, 'Aprobada'),
         (RECHAZADA, 'Rechazada'),
+        (COMPLETADO, 'Completado')
     ]
     
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     fecha_solicitud = models.DateField(auto_now_add=True)
     laboratorio = models.CharField(max_length=255)
-    estado = models.CharField(max_length=50, choices=ESTADOS, default=PENDIENTE)
+    clase = models.CharField(max_length=100, verbose_name="Clase/Grado")
+    asignatura = models.CharField(max_length=100, verbose_name="Asignatura")
     fecha_reserva = models.DateField()
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
-
+    estado = models.CharField(max_length=50, choices=ESTADOS, default=PENDIENTE)
+    
     tiene_recursos = models.BooleanField(default=False, verbose_name="¿Tiene recursos asignados?")
 
     class Meta:

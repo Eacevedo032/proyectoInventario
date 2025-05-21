@@ -11,6 +11,7 @@
 <div class="container my-5">
     <h1 class="text-center mb-5">Horarios de Laboratorios</h1>
     
+    <!-- Sección de Bloqueos -->
     <div class="row mb-4">  
         <div class="col-12">
             <div class="card mt-4">
@@ -39,9 +40,7 @@
                                     <td class="hora-12h">{{ bloqueo.hora_fin }}</td>
                                     <td>
                                         <div class="d-flex justify-content-between gap-1">
-                                            <!-- Botón para editar el bloqueo -->
                                             <a href="{% url 'editar_horario' bloqueo.id %}" class="btn btn-info btn-sm">Editar</a>
-                                            <!-- Formulario para eliminar el bloqueo -->
                                             <form action="{% url 'eliminar_horario' bloqueo.id %}" method="post" style="display: inline;">
                                                 {% csrf_token %}
                                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este bloqueo?');">Eliminar</button>
@@ -52,6 +51,29 @@
                                 {% endfor %}
                             </tbody>
                         </table>
+                        <div class="mt-2">
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+            {% if bloqueos.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ bloqueos.previous_page_number }}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            <li class="page-item active"><span class="page-link">{{ bloqueos.number }}</span></li>
+
+            {% if bloqueos.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ bloqueos.next_page_number }}">Siguiente</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
                     </div>
                     {% else %}
                     <p class="mb-0">No hay bloqueos registrados.</p>  
@@ -61,7 +83,9 @@
         </div>
     </div>
 
+    <!-- Sección de Horarios por Laboratorio -->
     <div class="row gy-4">  
+
         <!-- Laboratorio 1 -->
         <div class="col-md-4 col-sm-6">
             <div class="card h-100">  
@@ -99,6 +123,30 @@
                                 {% endfor %}
                             </tbody>
                         </table>
+                        <div class="mt-2">
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+            {% if bloqueos.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ bloqueos.previous_page_number }}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            <li class="page-item active"><span class="page-link">{{ bloqueos.number }}</span></li>
+
+            {% if bloqueos.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ bloqueos.next_page_number }}">Siguiente</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
                     </div>
                     {% else %}
                     <p class="mb-0">No hay horarios registrados.</p>  
@@ -144,6 +192,30 @@
                                 {% endfor %}
                             </tbody>
                         </table>
+                        <div class="mt-2">
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+            {% if bloqueos.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ bloqueos.previous_page_number }}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            <li class="page-item active"><span class="page-link">{{ bloqueos.number }}</span></li>
+
+            {% if bloqueos.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ bloqueos.next_page_number }}">Siguiente</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
                     </div>
                     {% else %}
                     <p class="mb-0">No hay horarios registrados.</p>
@@ -189,6 +261,30 @@
                                 {% endfor %}
                             </tbody>
                         </table>
+                        <div class="mt-2">
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+            {% if bloqueos.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ bloqueos.previous_page_number }}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            <li class="page-item active"><span class="page-link">{{ bloqueos.number }}</span></li>
+
+            {% if bloqueos.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ bloqueos.next_page_number }}">Siguiente</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
                     </div>
                     {% else %}
                     <p class="mb-0">No hay horarios registrados.</p>
@@ -198,6 +294,7 @@
         </div>
     </div>
 
+    <!-- Botones de acción -->
     <div class="text-center mt-4">
         <a href="{% url 'agregar_horario' %}" class="btn btn-primary">Añadir Horario</a>
         <a href="{% url 'administracion_laboratorios' %}" class="btn btn-secondary">Volver</a>

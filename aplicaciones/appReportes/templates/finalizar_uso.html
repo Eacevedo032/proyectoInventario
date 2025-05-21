@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Finalizar Uso de Laboratorio{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/estilosSolicitudes.css' %}">
+{% endblock %}
+
+{% block body %}
+
+{% if messages %}
+<div class="alert alert-dismissible alert-success">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="container">
+    <h1 class="mb-4">Finalizar Uso de Laboratorio</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Campos no editables -->
+        <div class="mb-3">
+            <label>Laboratorio:</label>
+            <input type="text" class="form-control" value="{{ solicitud.laboratorio }}" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label>Fecha de Reserva:</label>
+            <input type="text" class="form-control" value="{{ solicitud.fecha_reserva }}" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label>Horario de Salida Programado:</label>
+            <input type="text" class="form-control" value="{{ solicitud.hora_fin }}" readonly>
+        </div>
+
+        <!-- Campo editable para horario real -->
+        <div class="mb-3">
+            <label for="horario_salida_real">Horario Real de Salida:</label>
+            <input type="time" name="horario_salida_real" id="horario_salida_real" 
+                   class="form-control" value="{{ hora_fin }}" required>
+        </div>
+
+         <!-- Desglose por género con cálculo automático -->
+                <div class="mb-3">
+                    <h5>Desglose por Género:</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="estudiantes_masculinos">Masculinos:</label>
+                            <input type="number" name="estudiantes_masculinos" id="estudiantes_masculinos" 
+                                   class="form-control" min="0" value="0" onchange="calcularTotal()">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="estudiantes_femeninos">Femeninos:</label>
+                            <input type="number" name="estudiantes_femeninos" id="estudiantes_femeninos" 
+                                   class="form-control" min="0" value="0" onchange="calcularTotal()">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="numero_estudiantes">Total Estudiantes:</label>
+                            <input type="number" name="numero_estudiantes" id="numero_estudiantes" 
+                                   class="form-control" readonly>
+                        </div>
+                    </div>
+                </div>
+
+        <div class="mb-3">
+            <label for="objetivo_practica">Objetivo de la Práctica:</label>
+            <textarea name="objetivo_practica" id="objetivo_practica" 
+                      class="form-control" rows="4" required></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="fotos">Fotos (Múltiples):</label>
+            <input type="file" name="fotos" id="fotos" class="form-control" accept="image/*" multiple>
+            <small class="text-muted">Puede seleccionar varias imágenes manteniendo presionado Ctrl/Cmd</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a href="{% url 'reservar_laboratorio' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<script>
+    // Función para calcular el total automáticamente
+    function calcularTotal() {
+        const masculinos = parseInt(document.getElementById('estudiantes_masculinos').value) || 0;
+        const femeninos = parseInt(document.getElementById('estudiantes_femeninos').value) || 0;
+        const total = masculinos + femeninos;
+        document.getElementById('numero_estudiantes').value = total;
+    }
+
+    // Calcular total al cargar la página
+    document.addEventListener('DOMContentLoaded', calcularTotal);
+</script>
+{% endblock %}

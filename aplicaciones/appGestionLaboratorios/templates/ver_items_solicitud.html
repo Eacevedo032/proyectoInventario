@@ -35,7 +35,7 @@
             {% for item in items_solicitados %}
             <tr>
                 <td>{{ item.producto.nombre }}</td>
-                <td>{{ item.producto.categoria.nombre_categoria }}</td>
+                <td>{{ item.producto.categoria.nombre }}</td>
                 <td>{{ item.producto.subcategoria.nombre }}</td>
                 <td>
                     <form method="POST" action="{% url 'editar_recurso' item.id %}" class="d-flex align-items-center">

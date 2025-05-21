@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from aplicaciones.appGestionLaboratorios.models import HorarioLaboratorio
 from django.contrib import messages  # Importa para mostrar mensajes en la interfaz
 from datetime import date, datetime
@@ -137,7 +138,7 @@ def agregar_horario(request):
     return render(request, 'agregar_horario.html')
 
 #listar horario
-@admin_required #Verifica si el usuario es administrador
+@admin_required
 @login_required
 def listar_horarios(request):
     horarios = HorarioLaboratorio.objects.filter(
@@ -147,13 +148,25 @@ def listar_horarios(request):
     laboratorio1 = horarios.filter(laboratorio="Laboratorio Planta Alta")
     laboratorio2 = horarios.filter(laboratorio="Laboratorio Planta Baja")
     laboratorio3 = horarios.filter(laboratorio="Laboratorio Microbiana")
-    bloqueos = horarios.filter(sin_supervision=True)  # Bloqueos sin supervisión
+    bloqueos = horarios.filter(sin_supervision=True)
+
+    # Paginación por laboratorio y bloqueos
+    paginador1 = Paginator(laboratorio1, 10)
+    paginador2 = Paginator(laboratorio2, 10)
+    paginador3 = Paginator(laboratorio3, 10)
+    paginador_bloqueos = Paginator(bloqueos, 10)
+
+    # Obtener página actual desde el parámetro GET
+    page1 = request.GET.get('page1')
+    page2 = request.GET.get('page2')
+    page3 = request.GET.get('page3')
+    page_bloqueos = request.GET.get('page_bloqueos')
 
     return render(request, 'listar_horarios.html', {
-        'laboratorio1': laboratorio1,
-        'laboratorio2': laboratorio2,
-        'laboratorio3': laboratorio3,
-        'bloqueos': bloqueos,  # Enviar bloqueos al template
+        'laboratorio1': paginador1.get_page(page1),
+        'laboratorio2': paginador2.get_page(page2),
+        'laboratorio3': paginador3.get_page(page3),
+        'bloqueos': paginador_bloqueos.get_page(page_bloqueos),
     })
 
 #Eliminar horario
