@@ -23,10 +23,16 @@ def reservar_laboratorio(request):
         asignatura = request.POST.get('asignatura')
         hora_inicio = request.POST['hora_inicio']
         hora_fin = request.POST['hora_fin']
+        objetivo_practica = request.POST.get('objetivo_practica')
 
         # Validación de hora
         if hora_inicio >= hora_fin:
             messages.error(request, "La hora de inicio debe ser anterior a la hora de fin.")
+            return redirect(f"{reverse('reservar_laboratorio')}?modo={modo}")
+        
+        # Validaciones básicas
+        if not all([laboratorio, fecha_reserva, clase, asignatura, hora_inicio, hora_fin, objetivo_practica]):
+            messages.error(request, "Campos obligatorios faltantes")
             return redirect(f"{reverse('reservar_laboratorio')}?modo={modo}")
 
         # Verificar solapamiento con otras solicitudes
@@ -50,6 +56,7 @@ def reservar_laboratorio(request):
             asignatura=asignatura,
             hora_inicio=hora_inicio,
             hora_fin=hora_fin,
+            objetivo_practica=objetivo_practica,
             estado=SolicitudLaboratorio.PENDIENTE,
         )
 

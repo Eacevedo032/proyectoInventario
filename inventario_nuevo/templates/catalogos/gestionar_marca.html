@@ -16,158 +16,199 @@
 <div class="container mt-4">
     <h2 class="text-center mb-4">Gestión de Marcas</h2>
 
-    <!-- Formulario Agregar Marca -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="card-title">Agregar Nueva Marca</h5>
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="guardar_marca" value="1">
+    <!-- Pestañas para alternar entre Agregar y Filtrar -->
+    <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="agregar-tab" data-bs-toggle="tab" data-bs-target="#agregar" type="button" role="tab">Agregar</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="filtrar-tab" data-bs-toggle="tab" data-bs-target="#filtrar" type="button" role="tab">Filtrar</button>
+        </li>
+    </ul>
 
-                <div class="mb-3">
-                    <label for="{{ marca_form.nombre.id_for_label }}" class="form-label">Nombre <span class="text-danger">(requerido)</span></label>
-                    {{ marca_form.nombre|add_class:"form-control" }}
-                    {% if marca_form.nombre.errors %}
-                        <div class="text-danger small">{{ marca_form.nombre.errors.0 }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="mb-3">
-                    <label for="{{ marca_form.descripcion.id_for_label }}" class="form-label">Descripción <span class="text-muted">(opcional)</span></label>
-                    <!-- Estilo para que el campo de descripción no sea tan enorme -->
-                    <style>
-                        textarea.form-control {
-                            height: 60px !important;
-                            resize: vertical;
-                        }
-                    </style>
-                    {{ marca_form.descripcion|add_class:"form-control form-control-sm" }}
-                </div>
-
-                <div class="text-center">
-                    <button type="submit" class="btn btn-success">Agregar Marca</button>
-                </div>
-
-            </form>
-        </div>
-    </div>
-
-    <!-- Filtro -->
-    <h4 class=" text-center text-primary">Filtrar por Marcas</h4>
-    <div class="card p-3 mb-4 shadow-sm border-primary">
-        <form method="get" class="form-inline justify-content-between flex-wrap">
-            <div class="form-group mb-2 mr-2">
-                <label for="marcas">Seleccionar Marcas:</label>
-                <select name="marcas" id="marcas" class="form-control ml-2" multiple>
-                    {% for marca in todas_marcas %}
-                        <option value="{{ marca.id }}" {% if marca.id in marcas_seleccionadas %}selected{% endif %}>{{ marca.nombre }}</option>
-                    {% endfor %}
-                </select>
-                <small class="form-text text-muted">Usa Ctrl o Cmd para seleccionar múltiples.</small>
-            </div>
-            <div class="form-check mb-2 mr-2">
-                <input type="checkbox" class="form-check-input" id="ver_todas" name="ver_todas" value="1" {% if ver_todas %}checked{% endif %}>
-                <label class="form-check-label" for="ver_todas">Ver todas las marcas</label>
-            </div>
-            <div class="mb-2 text-center">
-                <button type="submit" class="btn btn-primary">Aplicar Filtro</button>
-                <a href="{% url 'gestionar_marca' %}" class="btn btn-secondary">Dejar de filtrar</a>
-            </div>
-        </form>
-    </div>
-
-    <!-- Lista de marcas filtradas -->
-    {% for marca in marcas %}
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <div>
-                    <h4 class="mb-0 text-primary">{{ marca.nombre }}</h4>
-                    <small><strong>Descripción:</strong> {{ marca.descripcion|default:"(sin descripción)" }}</small>
-                </div>
-                <div>
-                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarMarcaModal{{ marca.id }}">Editar</button>
-                    <form method="post" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="eliminar_marca" value="1">
-                        <input type="hidden" name="marca_id" value="{{ marca.id }}">
-                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                    </form>
-                </div>
-            </div>
-            <div class="card-body">
-                <h6 class="text-secondary">Productos Asociados:</h6>
-                {% with productos_marca=productos %}
-                    {% if productos_marca %}
-                        <table class="table table-bordered table-sm">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Producto</th>
-                                    <th>Categoría</th>
-                                    <th>Subcategoría</th>
-                                    <th>Cantidad</th>
-                                    <th>Unidad</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for producto in productos %}
-                                    {% if producto.marca.id == marca.id %}
-                                        <tr>
-                                            <td>{{ producto.nombre }}</td>
-                                            <td>{{ producto.categoria.nombre }}</td>
-                                            <td>{{ producto.subcategoria.nombre }}</td>
-                                            <td>{{ producto.cantidad_disponible }}</td>
-                                            <td>{{ producto.unidad_medida.abreviatura }}</td>
-                                        </tr>
-                                    {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <p>No hay productos relacionados con esta marca.</p>
-                    {% endif %}
-                {% endwith %}
-            </div>
-        </div>
-
-        <!-- Modal Editar Marca -->
-        <div class="modal fade" id="editarMarcaModal{{ marca.id }}" tabindex="-1" aria-labelledby="editarMarcaModalLabel{{ marca.id }}" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
+    <!-- Contenido de las pestañas -->
+    <div class="tab-content" id="myTabContent">
+        <!-- Pestaña Agregar -->
+        <div class="tab-pane fade show active" id="agregar" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Agregar Nueva Marca</h5>
                     <form method="post">
                         {% csrf_token %}
-                        <input type="hidden" name="editar_marca" value="1">
-                        <input type="hidden" name="marca_id" value="{{ marca.id }}">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="editarMarcaModalLabel{{ marca.id }}">Editar Marca: {{ marca.nombre }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        <input type="hidden" name="guardar_marca" value="1">
+
+                        <div class="mb-3">
+                            <label for="{{ marca_form.nombre.id_for_label }}" class="form-label">Nombre <span class="text-danger">(requerido)</span></label>
+                            {{ marca_form.nombre|add_class:"form-control" }}
+                            {% if marca_form.nombre.errors %}
+                                <div class="text-danger small">{{ marca_form.nombre.errors.0 }}</div>
+                            {% endif %}
                         </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label">Nombre</label>
-                                <input type="text" name="nombre" class="form-control" value="{{ marca.nombre }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Descripción</label>
-                                <textarea name="descripcion" class="form-control" rows="2">{{ marca.descripcion }}</textarea>
-                            </div>
+
+                        <div class="mb-3">
+                            <label for="{{ marca_form.descripcion.id_for_label }}" class="form-label">Descripción <span class="text-muted">(opcional)</span></label>
+                            <style>
+                                textarea.form-control {
+                                    height: 60px !important;
+                                    resize: vertical;
+                                }
+                            </style>
+                            {{ marca_form.descripcion|add_class:"form-control form-control-sm" }}
                         </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success">Agregar Marca</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-    {% endfor %}
 
-    <!-- Mensaje si no hay filtros aplicados -->
-    {% if not marcas %}
-        <div class="text-center mt-4">
-            <p class="text-muted">Filtrar Marcas para mostrar información.</p>
+        <!-- Pestaña Filtrar -->
+        <div class="tab-pane fade" id="filtrar" role="tabpanel">
+            <div class="card p-3 mb-4 shadow-sm border-primary">
+                <h4 class="text-center text-primary mb-3">Filtrar por Marcas</h4>
+                <form method="get" class="form-inline justify-content-between flex-wrap">
+                    <input type="hidden" name="active_tab" value="filtrar">
+                    
+                    <div class="form-group mb-2 mr-2">
+                        <label for="marcas">Seleccionar Marcas:</label>
+                        <select name="marcas" id="marcas" class="form-control ml-2" multiple>
+                            {% for marca in todas_marcas %}
+                                <option value="{{ marca.id }}" {% if marca.id in marcas_seleccionadas %}selected{% endif %}>{{ marca.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Usa Ctrl o Cmd para seleccionar múltiples.</small>
+                    </div>
+                    <div class="form-check mb-2 mr-2">
+                        <input type="checkbox" class="form-check-input" id="ver_todas" name="ver_todas" value="1" {% if ver_todas %}checked{% endif %}>
+                        <label class="form-check-label" for="ver_todas">Ver todas las marcas</label>
+                    </div>
+                    <div class="mb-2 text-center">
+                        <button type="submit" class="btn btn-primary">Aplicar Filtro</button>
+                        <a href="{% url 'gestionar_marca' %}" class="btn btn-secondary">Dejar de filtrar</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de marcas filtradas -->
+            {% for marca in marcas %}
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0 text-primary">{{ marca.nombre }}</h4>
+                            <small><strong>Descripción:</strong> {{ marca.descripcion|default:"(sin descripción)" }}</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarMarcaModal{{ marca.id }}">Editar</button>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="eliminar_marca" value="1">
+                                <input type="hidden" name="marca_id" value="{{ marca.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="text-secondary">Productos Asociados:</h6>
+                        {% with productos_marca=productos %}
+                            {% if productos_marca %}
+                                <table class="table table-bordered table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Categoría</th>
+                                            <th>Subcategoría</th>
+                                            <th>Cantidad</th>
+                                            <th>Unidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for producto in productos %}
+                                            {% if producto.marca.id == marca.id %}
+                                                <tr>
+                                                    <td>{{ producto.nombre }}</td>
+                                                    <td>{{ producto.categoria.nombre }}</td>
+                                                    <td>{{ producto.subcategoria.nombre }}</td>
+                                                    <td>{{ producto.cantidad_disponible }}</td>
+                                                    <td>{{ producto.unidad_medida.abreviatura }}</td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <p>No hay productos relacionados con esta marca.</p>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+
+                <!-- Modal Editar Marca -->
+                <div class="modal fade" id="editarMarcaModal{{ marca.id }}" tabindex="-1" aria-labelledby="editarMarcaModalLabel{{ marca.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="editar_marca" value="1">
+                                <input type="hidden" name="marca_id" value="{{ marca.id }}">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editarMarcaModalLabel{{ marca.id }}">Editar Marca: {{ marca.nombre }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre</label>
+                                        <input type="text" name="nombre" class="form-control" value="{{ marca.nombre }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Descripción</label>
+                                        <textarea name="descripcion" class="form-control" rows="2">{{ marca.descripcion }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Mensaje si no hay filtros aplicados -->
+            {% if not marcas %}
+                <div class="text-center mt-4">
+                    <p class="text-muted">Filtrar Marcas para mostrar información.</p>
+                </div>
+            {% endif %}
         </div>
-    {% endif %}
-
+    </div>
 </div>
+
+<!-- Script para Bootstrap Tabs -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar el estado inicial basado en parámetros GET
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('active_tab') || 'agregar';
+    
+    // Activar la pestaña correspondiente
+    const tab = new bootstrap.Tab(document.querySelector(`#${activeTab}-tab`));
+    tab.show();
+    
+    // Manejar el envío del formulario de filtros
+    document.querySelector('#filtrar form')?.addEventListener('submit', function() {
+        // Agregar parámetro para mantener la pestaña activa
+        if (!this.querySelector('input[name="active_tab"]')) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'active_tab';
+            input.value = 'filtrar';
+            this.appendChild(input);
+        }
+    });
+});
+</script>
 
 {% endblock %}

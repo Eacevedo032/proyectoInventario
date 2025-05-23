@@ -19,223 +19,277 @@
 
     <h1 class="laboratorio-title text-center mb-4">Gestión de Solicitudes de laboratorio</h1>
 
-    <!-- Formulario de reservación de laboratorio -->
-    <form method="post" id="reservaForm">
-        {% csrf_token %}
-        <div class="card mb-4">
-            <div class="card-body text-center">
-                <div class="row justify-content-center">
-                    <div class="form-group col-md-4 mb-3">
-                        <label for="laboratorio">Laboratorio:</label>
-                        <select id="laboratorio" name="laboratorio" class="form-control" required>
-                            <option value="">Selecciona un laboratorio</option>
-                            <option value="Laboratorio Planta Alta">Laboratorio Planta Alta</option>
-                            <option value="Laboratorio Planta Baja">Laboratorio Planta Baja</option>
-                            <option value="Laboratorio Microbiana">Laboratorio Microbiana</option>
-                        </select>
-                         
-                        <label for="fecha_reserva">Fecha de Reserva:</label>
-                        <input type="date" id="fecha_reserva" name="fecha_reserva" class="form-control" required>
-                    </div>
-                    <div class="form-group col-md-4 mb-3">
+    <!-- Pestañas para alternar entre Agregar y Filtrar -->
+    <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="agregar-tab" data-bs-toggle="tab" data-bs-target="#agregar" type="button" role="tab">Nueva Reservación</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="filtrar-tab" data-bs-toggle="tab" data-bs-target="#filtrar" type="button" role="tab">Mis Solicitudes</button>
+        </li>
+    </ul>
+
+    <!-- Contenido de las pestañas -->
+    <div class="tab-content" id="myTabContent">
+        <!-- Pestaña de Agregar Nueva Reservación -->
+        <div class="tab-pane fade show active" id="agregar" role="tabpanel">
+            <form method="post" id="reservaForm">
+                {% csrf_token %}
+                <div class="card mb-4">
+                    <div class="card-body text-center">
+                        <div class="row justify-content-center">
+                            <div class="form-group col-md-4 mb-3">
+                                <label for="laboratorio">Laboratorio:</label>
+                                <select id="laboratorio" name="laboratorio" class="form-control" required>
+                                    <option value="">Selecciona un laboratorio</option>
+                                    <option value="Laboratorio Planta Alta">Laboratorio Planta Alta</option>
+                                    <option value="Laboratorio Planta Baja">Laboratorio Planta Baja</option>
+                                    <option value="Laboratorio Bio-Microbiana">Laboratorio Bio-Microbiana</option>
+                                </select>
+                                
+                                <label for="fecha_reserva">Fecha de Reserva:</label>
+                                <input type="date" id="fecha_reserva" name="fecha_reserva" class="form-control" required>
+                            </div>
+                            <div class="form-group col-md-4 mb-3">
                                 <label for="clase">Clase/Grado:</label>
                                 <input type="text" name="clase" id="clase" class="form-control" required>
                                 
                                 <label for="asignatura">Asignatura:</label>
                                 <input type="text" name="asignatura" id="asignatura" class="form-control" required>
-
+                            </div>
+                            
+                            <div class="form-group col-md-4 mb-3">
+                                <label for="hora_inicio">Hora de Inicio:</label>
+                                <div class="input-group">
+                                    <input type="number" id="hora_inicio" name="hora_inicio" class="form-control" min="1" max="12" placeholder="Hora" required>
+                                    <input type="number" id="minuto_inicio" name="minuto_inicio" class="form-control" min="0" max="59" placeholder="Min" required>
+                                    <select id="hora_inicio_periodo" name="hora_inicio_periodo" class="form-control" required>
+                                        <option value="AM">AM</option>
+                                        <option value="PM">PM</option>
+                                    </select>
+                                </div>
+                                
+                                <label for="hora_fin">Hora de Fin:</label>
+                                <div class="input-group">
+                                    <input type="number" id="hora_fin" name="hora_fin" class="form-control" min="1" max="12" placeholder="Hora" required>
+                                    <input type="number" id="minuto_fin" name="minuto_fin" class="form-control" min="0" max="59" placeholder="Min" required>
+                                    <select id="hora_fin_periodo" name="hora_fin_periodo" class="form-control" required>
+                                        <option value="AM">AM</option>
+                                        <option value="PM">PM</option>
+                                    </select>
+                                </div>
+                                <!-- Campos ocultos para enviar el formato militar a la base de datos -->
+                                <input type="hidden" id="hora_inicio_militar" name="hora_inicio">
+                                <input type="hidden" id="hora_fin_militar" name="hora_fin">
+                            </div>
                         </div>
 
-                    
-                    <div class="form-group col-md-4 mb-3">
-                        <label for="hora_inicio">Hora de Inicio:</label>
-                        <div class="input-group">
-                            <input type="number" id="hora_inicio" name="hora_inicio" class="form-control" min="1" max="12" placeholder="Hora" required>
-                            <input type="number" id="minuto_inicio" name="minuto_inicio" class="form-control" min="0" max="59" placeholder="Min" required>
-                            <select id="hora_inicio_periodo" name="hora_inicio_periodo" class="form-control" required>
-                                <option value="AM">AM</option>
-                                <option value="PM">PM</option>
-                            </select>
+                        <div class="row justify-content-center">
+                            <div class="form-group col-md-8 mb-3">
+                                <label for="objetivo_practica">Objetivo de la Práctica:</label>
+                                <textarea name="objetivo_practica" id="objetivo_practica" class="form-control" rows="4" required></textarea>
+                            </div>
                         </div>
-                        
-                        <label for="hora_fin">Hora de Fin:</label>
-                        <div class="input-group">
-                            <input type="number" id="hora_fin" name="hora_fin" class="form-control" min="1" max="12" placeholder="Hora" required>
-                            <input type="number" id="minuto_fin" name="minuto_fin" class="form-control" min="0" max="59" placeholder="Min" required>
-                            <select id="hora_fin_periodo" name="hora_fin_periodo" class="form-control" required>
-                                <option value="AM">AM</option>
-                                <option value="PM">PM</option>
-                            </select>
+
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary">Solicitar Reservación</button>
                         </div>
-                        
-                        <!-- Campos ocultos para enviar el formato militar a la base de datos -->
-                        <input type="hidden" id="hora_inicio_militar" name="hora_inicio">
-                        <input type="hidden" id="hora_fin_militar" name="hora_fin">
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Pestaña de Filtros -->
+        <div class="tab-pane fade" id="filtrar" role="tabpanel">
+            <!-- Resumen de solicitudes -->
+            <div class="row mb-4">
+                <div class="col-12 col-md-4 mb-3">
+                    <div class="card bg-warning1 text-white">
+                        <div class="card-body">
+                            <h5 class="card-title1">Solicitudes Pendientes</h5>
+                            <p class="card-text">{{ solicitudes_pendientes }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 mb-3">
+                    <div class="card bg-success1 text-white">
+                        <div class="card-body">
+                            <h5 class="card-title1">Solicitudes Aprobadas</h5>
+                            <p class="card-text">{{ solicitudes_aprobadas }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 mb-3">
+                    <div class="card bg-danger1 text-white">
+                        <div class="card-body">
+                            <h5 class="card-title1">Solicitudes Rechazadas</h5>
+                            <p class="card-text">{{ solicitudes_rechazadas }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="card-footer text-center">
-                <button type="submit" class="btn btn-primary">Solicitar Reservación</button>
-            </div>
-        </div>
-    </form>
 
-    <!-- Resumen de solicitudes -->
-    <div class="row mb-4">
-        <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-warning1 text-white">
-                <div class="card-body">
-                    <h5 class="card-title1">Solicitudes Pendientes</h5>
-                    <p class="card-text">{{ solicitudes_pendientes }}</p>
+            <!-- Filtros avanzados -->
+            <form method="get" action="{% url 'reservar_laboratorio' %}" class="mb-4">
+                <input type="hidden" name="active_tab" value="filtrar">
+                
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label for="laboratorio">Laboratorio:</label>
+                        <select id="laboratorio" name="laboratorio" class="form-control">
+                            <option value="">Todos</option>
+                            {% for lab in laboratorios %}
+                            <option value="{{ lab.laboratorio }}" {% if request.GET.laboratorio == lab.laboratorio %}selected{% endif %}>
+                                {{ lab.laboratorio }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label for="fecha">Fecha:</label>
+                        <input type="date" id="fecha" name="fecha" class="form-control" value="{{ request.GET.fecha }}">
+                    </div>
+                    
+                    <div class="col-12 col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                        <a href="{% url 'reservar_laboratorio' %}" class="btn btn-secondary w-100 mt-2">Limpiar filtros</a>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-success1 text-white">
-                <div class="card-body">
-                    <h5 class="card-title1">Solicitudes Aprobadas</h5>
-                    <p class="card-text">{{ solicitudes_aprobadas }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-md-4 mb-3">
-            <div class="card bg-danger1 text-white">
-                <div class="card-body">
-                    <h5 class="card-title1">Solicitudes Rechazadas</h5>
-                    <p class="card-text">{{ solicitudes_rechazadas }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filtros avanzados -->
-    <form method="get" action="{% url 'reservar_laboratorio' %}" class="mb-4">
-        <div class="row g-3">
-            <div class="col-12 col-md-4">
-                <label for="laboratorio">Laboratorio:</label>
-                <select id="laboratorio" name="laboratorio" class="form-control">
-                    <option value="">Todos</option>
-                    {% for lab in laboratorios %}
-                    <option value="{{ lab.laboratorio }}" {% if request.GET.laboratorio == lab.laboratorio %}selected{% endif %}>
-                        {{ lab.laboratorio }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-12 col-md-4">
-                <label for="fecha">Fecha:</label>
-                <input type="date" id="fecha" name="fecha" class="form-control" value="{{ request.GET.fecha }}">
-            </div>
+            </form>
             
-            <div class="col-12 col-md-4">
-                <button type="submit" class="btn btn-primary w-100">Buscar</button>
-                <a href="{% url 'reservar_laboratorio' %}" class="btn btn-secondary w-100 mt-2">Limpiar filtros</a>
+            <!-- Botón para mostrar/ocultar historial -->
+            <div class="text-center mb-4">
+                <a href="?page={{ request.GET.page }}&mostrar_historial={% if request.GET.mostrar_historial == 'true' %}false{% else %}true{% endif %}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}&modo={{ request.GET.modo|default:'laboratorios' }}"
+                    class="btn btn-info">
+                    {% if request.GET.mostrar_historial == 'true' %}
+                    Ocultar Historial Antiguo
+                    {% else %}
+                    Mostrar Historial Completo
+                    {% endif %}
+                </a>
             </div>
-        </div>
-    </form>
-    
-    <!-- Botón para mostrar/ocultar historial -->
-    <div class="text-center mb-4">
-        <a href="?page={{ request.GET.page }}&mostrar_historial={% if request.GET.mostrar_historial == 'true' %}false{% else %}true{% endif %}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}&modo={{ request.GET.modo|default:'laboratorios' }}"
-            class="btn btn-info">
-            {% if request.GET.mostrar_historial == 'true' %}
-            Ocultar Historial Antiguo
-            {% else %}
-            Mostrar Historial Completo
-            {% endif %}
-        </a>
-    </div>
-    
-    <h2>Mis Solicitudes de Reservación</h2>
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Laboratorio</th>
-                    <th>Fecha</th>
-                    <th>clase</th>
-                    <th>asignatura</th>
-                    <th>Hora de Inicio</th>
-                    <th>Hora de Fin</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for solicitud in page_obj %}
-                <tr>
-                    <td>{{ solicitud.laboratorio }}</td>
-                    <td>{{ solicitud.fecha_reserva }}</td>
-                    <td>{{ solicitud.clase }}</td>
-                    <td>{{ solicitud.asignatura }}</td>
-                    <td>{{ solicitud.hora_inicio|date:"g:i A"  }}</td>
-                    <td>{{ solicitud.hora_fin|date:"g:i A"  }}</td>
-                    <td>
-                        <span class="badge 
-                            {% if solicitud.estado == 'aprobada' %}bg-success
-                            {% elif solicitud.estado == 'rechazada' %}bg-danger
-                            {% elif solicitud.estado == 'pendiente' %}bg-warning
-                            {% elif solicitud.estado == 'en_revision' %}bg-info
-                            {% endif %}">
-                            {{ solicitud.estado }}
-                        </span>
-                    </td>
-                    <td>
-                        {% if solicitud.estado == 'aprobada' %}
-                        <a href="{% url 'finalizar_uso' solicitud.id %}" class="btn btn-warning">
-                            Finalizar uso y completar reporte
-                        </a>
-                        {% endif %}
-                        {% if mostrar_boton_recursos %}
-                            {% if solicitud.estado == 'pendiente' %}
-                                <a href="{% url 'solicitar_recursos' %}?solicitud_id={{ solicitud.id }}" class="btn btn-primary btn-sm me-2">Solicitar Recursos</a>
-                            {% endif %}
-                           <a href="{% url 'ver_items_solicitud' solicitud.id %}" class="btn btn-info btn-sm me-2">Ver Ítems</a>
-                        {% endif %}
-                        {% if solicitud.estado == 'pendiente' %}
-                            <a href="{% url 'editar_laboratorio' solicitud.id %}" class="btn btn-warning btn-sm">Editar</a>
-                            <a href="{% url 'eliminar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
-                            <a href="{% url 'enviar_solicitud' solicitud.id %}" class="btn btn-primary btn-sm">Enviar</a>
-                        {% elif solicitud.estado == 'rechazada' %}
-                            <a href="{% url 'eliminar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
-                        {% else %}
-                            <button class="btn btn-secondary btn-sm" disabled>Editar</button>
-                            <button class="btn btn-danger btn-sm" disabled>Eliminar</button>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="text-center">No tienes solicitudes de reservación.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>    
 
-    <!-- Paginación -->
-    <nav aria-label="Paginación">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page=1&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Primera</a>
-            </li>
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Anterior</a>
-            </li>
-            {% endif %}
-            <li class="page-item disabled">
-                <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-            </li>
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Siguiente</a>
-            </li>
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Última</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
+            <!-- Tabla de resultados dentro de la pestaña de filtros -->
+            <h2>Mis Solicitudes de Reservación</h2>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Laboratorio</th>
+                            <th>Fecha</th>
+                            <th>Clase</th>
+                            <th>Asignatura</th>
+                            <th>Hora de Inicio</th>
+                            <th>Hora de Fin</th>
+                            <th>Objetivo</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for solicitud in page_obj %}
+                        <tr>
+                            <td>{{ solicitud.laboratorio }}</td>
+                            <td>{{ solicitud.fecha_reserva }}</td>
+                            <td>{{ solicitud.clase }}</td>
+                            <td>{{ solicitud.asignatura }}</td>
+                            <td>{{ solicitud.hora_inicio|date:"g:i A" }}</td>
+                            <td>{{ solicitud.hora_fin|date:"g:i A" }}</td>
+                            <td>{{ solicitud.objetivo_practica }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if solicitud.estado == 'aprobada' %}bg-success
+                                    {% elif solicitud.estado == 'rechazada' %}bg-danger
+                                    {% elif solicitud.estado == 'pendiente' %}bg-warning
+                                    {% elif solicitud.estado == 'en_revision' %}bg-info
+                                    {% endif %}">
+                                    {{ solicitud.estado }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if solicitud.estado == 'aprobada' %}
+                                <a href="{% url 'finalizar_uso' solicitud.id %}" class="btn btn-warning btn-sm">
+                                    Finalizar uso
+                                </a>
+                                {% endif %}
+                                {% if mostrar_boton_recursos %}
+                                    {% if solicitud.estado == 'pendiente' %}
+                                        <a href="{% url 'solicitar_recursos' %}?solicitud_id={{ solicitud.id }}" class="btn btn-primary btn-sm me-2">Solicitar Recursos</a>
+                                    {% endif %}
+                                   <a href="{% url 'ver_items_solicitud' solicitud.id %}" class="btn btn-info btn-sm me-2">Ver Ítems</a>
+                                {% endif %}
+                                {% if solicitud.estado == 'pendiente' %}
+                                    <a href="{% url 'editar_laboratorio' solicitud.id %}" class="btn btn-warning btn-sm">Editar</a>
+                                    <a href="{% url 'eliminar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
+                                    <a href="{% url 'enviar_solicitud' solicitud.id %}" class="btn btn-primary btn-sm">Enviar</a>
+                                {% elif solicitud.estado == 'rechazada' %}
+                                    <a href="{% url 'eliminar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar esta solicitud?');">Eliminar</a>
+                                {% else %}
+                                    <button class="btn btn-secondary btn-sm" disabled>Editar</button>
+                                    <button class="btn btn-danger btn-sm" disabled>Eliminar</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center">No tienes solicitudes de reservación.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            <nav aria-label="Paginación">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Primera</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Anterior</a>
+                    </li>
+                    {% endif %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Siguiente</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&mostrar_historial={{ request.GET.mostrar_historial }}&laboratorio={{ request.GET.laboratorio }}&fecha={{ request.GET.fecha }}">Última</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
 </div>
+
+<!-- Script para Bootstrap Tabs -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar el estado inicial basado en parámetros GET
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('active_tab') || 
+                     (urlParams.has('laboratorio') || urlParams.has('fecha') ? 'filtrar' : 'agregar');
+    
+    // Activar la pestaña correspondiente
+    const tab = new bootstrap.Tab(document.querySelector(`#${activeTab}-tab`));
+    tab.show();
+    
+    // Manejar el envío del formulario de filtros
+    document.querySelector('form[method="get"]')?.addEventListener('submit', function() {
+        // Agregar parámetro para mantener la pestaña activa
+        if (!this.querySelector('input[name="active_tab"]')) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'active_tab';
+            input.value = 'filtrar';
+            this.appendChild(input);
+        }
+    });
+});
+</script>
 {% endblock %}

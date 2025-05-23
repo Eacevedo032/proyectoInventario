@@ -88,7 +88,7 @@ def agregar_horario(request):
                     })
 
                 # Bloqueo para todos los laboratorios
-                for lab in ["Laboratorio Planta Alta", "Laboratorio Planta Baja", "Laboratorio Microbiana"]:
+                for lab in ["Laboratorio Planta Alta", "Laboratorio Planta Baja", "Laboratorio Bio-Microbiana"]:
                     HorarioLaboratorio.objects.create(
                         laboratorio=lab,
                         fecha_reserva=fecha_reserva,
@@ -147,7 +147,7 @@ def listar_horarios(request):
 
     laboratorio1 = horarios.filter(laboratorio="Laboratorio Planta Alta")
     laboratorio2 = horarios.filter(laboratorio="Laboratorio Planta Baja")
-    laboratorio3 = horarios.filter(laboratorio="Laboratorio Microbiana")
+    laboratorio3 = horarios.filter(laboratorio="Laboratorio Bio-Microbiana")
     bloqueos = horarios.filter(sin_supervision=True)
 
     # Paginación por laboratorio y bloqueos

@@ -31,7 +31,7 @@ def listar_horarios_lectura(request):
     laboratorios = [
         "Laboratorio Planta Alta",
         "Laboratorio Planta Baja",
-        "Laboratorio Microbiana"
+        "Laboratorio Bio-Microbiana"
     ]
     estados_disponibles = ['Disponible', 'Ocupado']
 

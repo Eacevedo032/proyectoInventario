@@ -36,9 +36,9 @@
             <div class="col-md-3">
                 <select name="laboratorio" class="form-control">
                     <option value="">Todos los Laboratorios</option>
-                    <option value="Planta Baja">Laboratorio Planta Baja</option>
-                    <option value="Planta Alta">Laboratorio Planta Alta</option>
-                    <option value="Microbiana">Laboratorio Microbiana</option>
+                    <option value="Laboratorio Planta Baja">Laboratorio Planta Baja</option>
+                    <option value="Laboratorio Planta Alta">Laboratorio Planta Alta</option>
+                    <option value="Laboratorio Bio-Microbiana">Laboratorio Bio-Microbiana</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -108,14 +108,18 @@
                         <td>
                             <div class="btn-group" role="group">
                                 <a href="{% url 'ver_items_solicitud' solicitud.id %}" class="btn btn-info btn-sm me-2">Ver Ítems</a>
-                                <a href="javascript:abrirModal('{{ solicitud.id }}');" 
-                                   class="btn btn-primary btn-sm me-2 
-                                          {% if solicitud.estado != 'en_revision' %} btn-disabled {% endif %}">
-                                    Aprobar
-                                </a>
-                                <a href="{% url 'rechazar_solicitud' solicitud.id %}" 
-                                   class="btn btn-danger btn-sm me-2 
-                                          {% if solicitud.estado != 'en_revision' %} btn-disabled {% endif %}">
+                            
+                                <form action="{% url 'aprobar_solicitud' solicitud.id %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    {% if solicitud.estado == 'en_revision' %}
+                                    <button type="submit" class="btn btn-primary btn-sm me-2">Aprobar</button>
+                                    {% else %}
+                                    <button type="button" class="btn btn-primary btn-sm me-2 disabled" disabled>Aprobar</button>
+                                    {% endif %}
+                                </form>
+                            
+                                <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm me-2 
+                                                                      {% if solicitud.estado != 'en_revision' %} btn-disabled {% endif %}">
                                     Rechazar
                                 </a>
                             </div>                                                                            
@@ -156,65 +160,4 @@
         </ul>
     </nav>    
 </div>
-
-<!-- Modal para Descripción -->
-<div class="modal fade" id="descripcionModal" tabindex="-1" role="dialog" aria-labelledby="descripcionModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="descripcionModalLabel">Agregar Descripción</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="descripcionForm">
-                    <div class="form-group">
-                        <label for="descripcion">Descripción de la aprobación de uso de ítems:</label>
-                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required></textarea>
-                    </div>
-                    <button type="button" class="btn btn-primary" id="guardarDescripcion">Guardar Descripción</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    function abrirModal(solicitud_id) {
-        solicitudId = solicitud_id;
-        $('#descripcionModal').modal('show');
-    }
-
-    document.getElementById('guardarDescripcion').addEventListener('click', function() {
-    let descripcion = document.getElementById('descripcion').value;
-    if (descripcion) {
-        fetch("{% url 'aprobar_solicitud' 0 %}".replace('0', solicitudId), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}',
-            },
-            body: JSON.stringify({ descripcion: descripcion }),
-        })
-        .then(response => response.json())  // Convertir la respuesta a JSON
-        .then(data => {
-            if (data.success) {
-                // Redirigir a la página de administración
-                window.location.href = '{% url "administracion_laboratorios" %}';
-            } else {
-                // Mostrar mensaje de error si la aprobación falló
-                alert(data.message || 'Error al aprobar la solicitud');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error de conexión');
-        });
-    } else {
-        alert('Por favor, ingrese una descripción.');
-    }
-});
-</script>
-
 {% endblock %}

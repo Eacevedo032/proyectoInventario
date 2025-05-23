@@ -41,6 +41,7 @@ class SolicitudLaboratorio(models.Model):
     fecha_reserva = models.DateField()
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
+    objetivo_practica = models.TextField(verbose_name="Objetivo de la Práctica")
     estado = models.CharField(max_length=50, choices=ESTADOS, default=PENDIENTE)
     
     tiene_recursos = models.BooleanField(default=False, verbose_name="¿Tiene recursos asignados?")

@@ -21,11 +21,10 @@ def finalizar_uso(request, solicitud_id):
         estudiantes_masculinos = request.POST.get('estudiantes_masculinos')
         estudiantes_femeninos = request.POST.get('estudiantes_femeninos')
         horario_salida_real = request.POST.get('horario_salida_real')
-        objetivo_practica = request.POST.get('objetivo_practica')
         fotos = request.FILES.getlist('fotos')
 
         # Validaciones básicas
-        if not all([numero_estudiantes, objetivo_practica, horario_salida_real]):
+        if not all([numero_estudiantes, horario_salida_real]):
             messages.error(request, "Campos obligatorios faltantes")
             return redirect('finalizar_uso', solicitud_id=solicitud.id)
 
@@ -37,7 +36,6 @@ def finalizar_uso(request, solicitud_id):
                 estudiantes_masculinos=estudiantes_masculinos,
                 estudiantes_femeninos=estudiantes_femeninos,
                 horario_salida_real=horario_salida_real,
-                objetivo_practica=objetivo_practica
             )
 
             # Guardar fotos
@@ -68,7 +66,7 @@ def detalle_reporte(request, reporte_id):
     productos = UsoItemLaboratorio.objects.filter(solicitud=reporte.solicitud)
     
     # Obtener los datos de la solicitud relacionada
-    solicitud = reporte.solicitud  # Asumiendo que tienes una relación ForeignKey o OneToOneField
+    solicitud = reporte.solicitud 
     
     return render(request, 'detalle_reporte.html', {
         'reporte': reporte,
@@ -78,6 +76,7 @@ def detalle_reporte(request, reporte_id):
         'asignatura': solicitud.asignatura if solicitud else "No especificado",
         'fecha_solicitud': solicitud.fecha_solicitud if solicitud else "No especificado",
         'fecha_reserva': solicitud.fecha_reserva if solicitud else "No especificado",
+        'objetivo_practica': solicitud.objetivo_practica if solicitud else "No especificado",
         'productos': productos,
     })
 

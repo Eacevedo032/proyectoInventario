@@ -14,144 +14,188 @@
 <div class="container mt-4">
     <h2 class="text-center mb-4">Gestión de Accesorios de los Productos</h2>
 
-    <!-- Formulario Agregar Accesorio -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="card-title">Agregar Nuevo Accesorio</h5>
-            <form method="post" action="{% url 'gestionar_accesorios' %}">
-                {% csrf_token %}
-            
-                <div class="mb-3">
-                    <label for="id_nombre" class="form-label">Nombre (requerido):</label>
-                    {{ accesorios_form.nombre }}
-                </div>
-            
-                <div class="mb-3">
-                    <label for="id_descripcion" class="form-label">Descripción (opcional):</label>
-                    {{ accesorios_form.descripcion }}
-                </div>
-                <div class="mb-2 text-center">
-                <button type="submit" name="guardar_accesorios" class="btn btn-primary">Agregar accesorio</button>
-                </div>
-            </form>            
-        </div>
-    </div>
+    <!-- Pestañas para alternar entre Agregar y Filtrar -->
+    <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="agregar-tab" data-bs-toggle="tab" data-bs-target="#agregar" type="button" role="tab">Agregar</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="filtrar-tab" data-bs-toggle="tab" data-bs-target="#filtrar" type="button" role="tab">Filtrar</button>
+        </li>
+    </ul>
 
-    <!-- Filtro -->
-    <h4 class="text-center text-primary">Filtrar por Accesorio</h4>
-    <div class="card p-3 mb-4 shadow-sm border-primary">
-        <form method="get" class="form-inline justify-content-between flex-wrap">
-            <div class="form-group mb-2 mr-2">
-                <label for="accesorios">Seleccionar Accesorios:</label>
-                <select name="accesorios" id="accesorios" class="form-control ml-2" multiple>
-                    {% for accesorio in todos_accesorios %}
-                        <option value="{{ accesorio.id }}" {% if accesorio.id in accesorios_seleccionados %}selected{% endif %}>{{ accesorio.nombre }}</option>
-                    {% endfor %}
-                </select>
-                <small class="form-text text-muted">Usa Ctrl o Cmd para seleccionar múltiples.</small>
-            </div>
-            <div class="form-check mb-2 mr-2">
-                <input type="checkbox" class="form-check-input" id="ver_todos" name="ver_todos" value="1" {% if ver_todos %}checked{% endif %}>
-                <label class="form-check-label" for="ver_todos">Ver todos los accesorios</label>
-            </div>
-            <div class="mb-2 text-center">
-                <button type="submit" class="btn btn-primary">Aplicar Filtro</button>
-                <a href="{% url 'gestionar_accesorios' %}" class="btn btn-secondary">Dejar de filtrar</a>
-            </div>
-        </form>
-    </div>
-
-    <!-- Lista de accesorios filtrados -->
-    {% for accesorio in accesorios %}
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <div>
-                    <h4 class="mb-0 text-primary">{{ accesorio.nombre }}</h4>
-                    <small><strong>Descripción:</strong> {{ accesorio.descripcion|default:"(sin descripción)" }}</small>
-                </div>
-                <div>
-                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarAccesorioModal{{ accesorio.id }}">Editar</button>
-                    <form method="post" style="display:inline;">
+    <!-- Contenido de las pestañas -->
+    <div class="tab-content" id="myTabContent">
+        <!-- Pestaña Agregar -->
+        <div class="tab-pane fade show active" id="agregar" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Agregar Nuevo Accesorio</h5>
+                    <form method="post" action="{% url 'gestionar_accesorios' %}">
                         {% csrf_token %}
-                        <input type="hidden" name="eliminar_accesorios" value="1">
-                        <input type="hidden" name="accesorios_id" value="{{ accesorio.id }}">
-                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                    </form>
+                    
+                        <div class="mb-3">
+                            <label for="id_nombre" class="form-label">Nombre (requerido):</label>
+                            {{ accesorios_form.nombre }}
+                        </div>
+                    
+                        <div class="mb-3">
+                            <label for="id_descripcion" class="form-label">Descripción (opcional):</label>
+                            {{ accesorios_form.descripcion }}
+                        </div>
+                        <div class="mb-2 text-center">
+                        <button type="submit" name="guardar_accesorios" class="btn btn-primary">Agregar accesorio</button>
+                        </div>
+                    </form>            
                 </div>
             </div>
-            <div class="card-body">
-                <h6 class="text-secondary">Productos Asociados:</h6>
-                {% with productos_acc=productos %}
-                    {% if productos_acc %}
-                        <table class="table table-bordered table-sm">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Producto</th>
-                                    <th>Categoría</th>
-                                    <th>Subcategoría</th>
-                                    <th>Cantidad</th>
-                                    <th>Unidad</th>
-                                    <th>Presentación</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for producto in productos %}
-                                    {% if producto.accesorio.id == accesorio.id %}
+        </div>
+
+        <!-- Pestaña Filtrar -->
+        <div class="tab-pane fade" id="filtrar" role="tabpanel">
+            <div class="card p-3 mb-4 shadow-sm border-primary">
+                <h4 class="text-center text-primary mb-3">Filtrar por Accesorio</h4>
+                <form method="get" class="form-inline justify-content-between flex-wrap">
+                    <input type="hidden" name="active_tab" value="filtrar">
+                    
+                    <div class="form-group mb-2 mr-2">
+                        <label for="accesorios">Seleccionar Accesorios:</label>
+                        <select name="accesorios" id="accesorios" class="form-control ml-2" multiple>
+                            {% for accesorio in todos_accesorios %}
+                                <option value="{{ accesorio.id }}" {% if accesorio.id in accesorios_seleccionados %}selected{% endif %}>{{ accesorio.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Usa Ctrl o Cmd para seleccionar múltiples.</small>
+                    </div>
+                    <div class="form-check mb-2 mr-2">
+                        <input type="checkbox" class="form-check-input" id="ver_todos" name="ver_todos" value="1" {% if ver_todos %}checked{% endif %}>
+                        <label class="form-check-label" for="ver_todos">Ver todos los accesorios</label>
+                    </div>
+                    <div class="mb-2 text-center">
+                        <button type="submit" class="btn btn-primary">Aplicar Filtro</button>
+                        <a href="{% url 'gestionar_accesorios' %}" class="btn btn-secondary">Dejar de filtrar</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de accesorios filtrados -->
+            {% for accesorio in accesorios %}
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0 text-primary">{{ accesorio.nombre }}</h4>
+                            <small><strong>Descripción:</strong> {{ accesorio.descripcion|default:"(sin descripción)" }}</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarAccesorioModal{{ accesorio.id }}">Editar</button>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="eliminar_accesorios" value="1">
+                                <input type="hidden" name="accesorios_id" value="{{ accesorio.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="text-secondary">Productos Asociados:</h6>
+                        {% with productos_acc=productos %}
+                            {% if productos_acc %}
+                                <table class="table table-bordered table-sm">
+                                    <thead class="table-light">
                                         <tr>
-                                            <td>{{ producto.nombre }}</td>
-                                            <td>{{ producto.categoria.nombre }}</td>
-                                            <td>{{ producto.subcategoria.nombre }}</td>
-                                            <td>{{ producto.cantidad_disponible }}</td>
-                                            <td>{{ producto.unidad_medida.abreviatura }}</td>
-                                            <td>{{ producto.presentacion.nombre|default:"(sin presentación)" }}</td>
+                                            <th>Producto</th>
+                                            <th>Categoría</th>
+                                            <th>Subcategoría</th>
+                                            <th>Cantidad</th>
+                                            <th>Unidad</th>
+                                            <th>Presentación</th>
                                         </tr>
-                                    {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <p>No hay productos relacionados con este accesorio.</p>
-                    {% endif %}
-                {% endwith %}
-            </div>
-        </div>
-
-        <!-- Modal Editar Accesorio -->
-        <div class="modal fade" id="editarAccesorioModal{{ accesorio.id }}" tabindex="-1" aria-labelledby="editarAccesorioModalLabel{{ accesorio.id }}" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="editar_accesorios" value="1">
-                        <input type="hidden" name="accesorios_id" value="{{ accesorio.id }}">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Editar Accesorio: {{ accesorio.nombre }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label">Nombre</label>
-                                <input type="text" name="nombre" class="form-control" value="{{ accesorio.nombre }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Descripción</label>
-                                <textarea name="descripcion" class="form-control">{{ accesorio.descripcion }}</textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        </div>
-                    </form>
+                                    </thead>
+                                    <tbody>
+                                        {% for producto in productos %}
+                                            {% if producto.accesorio.id == accesorio.id %}
+                                                <tr>
+                                                    <td>{{ producto.nombre }}</td>
+                                                    <td>{{ producto.categoria.nombre }}</td>
+                                                    <td>{{ producto.subcategoria.nombre }}</td>
+                                                    <td>{{ producto.cantidad_disponible }}</td>
+                                                    <td>{{ producto.unidad_medida.abreviatura }}</td>
+                                                    <td>{{ producto.presentacion.nombre|default:"(sin presentación)" }}</td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <p>No hay productos relacionados con este accesorio.</p>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
                 </div>
-            </div>
-        </div>
-    {% endfor %}
 
-    {% if not accesorios %}
-        <div class="text-center mt-4">
-            <p class="text-muted">Filtrar accesorios de Productos para mostrar información.</p>
+                <!-- Modal Editar Accesorio -->
+                <div class="modal fade" id="editarAccesorioModal{{ accesorio.id }}" tabindex="-1" aria-labelledby="editarAccesorioModalLabel{{ accesorio.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="editar_accesorios" value="1">
+                                <input type="hidden" name="accesorios_id" value="{{ accesorio.id }}">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Editar Accesorio: {{ accesorio.nombre }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre</label>
+                                        <input type="text" name="nombre" class="form-control" value="{{ accesorio.nombre }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Descripción</label>
+                                        <textarea name="descripcion" class="form-control">{{ accesorio.descripcion }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% if not accesorios %}
+                <div class="text-center mt-4">
+                    <p class="text-muted">Filtrar accesorios de Productos para mostrar información.</p>
+                </div>
+            {% endif %}
         </div>
-    {% endif %}
+    </div>
 </div>
+
+<!-- Script para Bootstrap Tabs -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar el estado inicial basado en parámetros GET
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('active_tab') || 'agregar';
+    
+    // Activar la pestaña correspondiente
+    const tab = new bootstrap.Tab(document.querySelector(`#${activeTab}-tab`));
+    tab.show();
+    
+    // Manejar el envío del formulario de filtros
+    document.querySelector('#filtrar form')?.addEventListener('submit', function() {
+        // Agregar parámetro para mantener la pestaña activa
+        if (!this.querySelector('input[name="active_tab"]')) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'active_tab';
+            input.value = 'filtrar';
+            this.appendChild(input);
+        }
+    });
+});
+</script>
 {% endblock %}

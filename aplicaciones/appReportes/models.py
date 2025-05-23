@@ -7,7 +7,6 @@ class ReporteUsoLaboratorio(models.Model):
     estudiantes_masculinos = models.PositiveIntegerField(verbose_name="Estudiantes Masculinos", default=0)
     estudiantes_femeninos = models.PositiveIntegerField(verbose_name="Estudiantes Femeninos", default=0)
     horario_salida_real = models.TimeField(verbose_name="Horario Real de Salida")
-    objetivo_practica = models.TextField(verbose_name="Objetivo de la Práctica")
     fecha_generacion = models.DateField(auto_now_add=True, verbose_name="Fecha de Generación")
 
     def __str__(self):
