@@ -29,9 +29,13 @@ class ProductoForm(forms.ModelForm):
         self.set_required_fields()
         self.set_optional_fields()
 
-        # Mostrar solo estados disponibles y mantenimiento
-        estados_visibles = ['disponible', 'mantenimiento']
-        self.fields['estado'].queryset = EstadoRecurso.objects.filter(estado__in=estados_visibles)
+         # Filtrar para solo mostrar "disponible"
+        estado_disponible = EstadoRecurso.objects.filter(estado='disponible').first()
+        self.fields['estado'].queryset = EstadoRecurso.objects.filter(pk=estado_disponible.pk)
+
+        # Mostrar como campo deshabilitado
+        self.fields['estado'].initial = estado_disponible
+        self.fields['estado'].disabled = True  # Se muestra, pero no editable
 
         self.apply_bootstrap_classes()
         self.setup_category_filtering()
@@ -81,6 +85,12 @@ class ProductoForm(forms.ModelForm):
             self.fields['categoria'].queryset = self.fields['categoria'].queryset.order_by('nombre')
         if hasattr(self.fields['unidad_medida'], 'queryset'):
             self.fields['unidad_medida'].queryset = self.fields['unidad_medida'].queryset.order_by('nombre')
+
+    def clean_cantidad_disponible(self):
+        cantidad = self.cleaned_data.get('cantidad_disponible')
+        if cantidad is not None and cantidad <= 0:
+            raise forms.ValidationError("La cantidad debe ser mayor a cero.")
+        return cantidad
 
     #  Aquí añadimos la validación de campos únicos
     def clean(self):
@@ -368,16 +378,18 @@ class UnidadMedidaForm(forms.ModelForm):
 
 #Formulario de Editar Product
 class ProductoEditForm(forms.ModelForm):
-    cantidad_disponible = forms.IntegerField(
+    cantidad_disponible = forms.DecimalField(
         label="Cantidad Disponible",
-        disabled=True,  # Esto hace que el campo no sea editable
-        required=False,
+        min_value=0,  # No negativo
+        decimal_places=2,  # Decimales permitidos
+        max_digits=8,     # Debe coincidir con el modelo
+        required=True,
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
-            'readonly': 'readonly',  # Doble protección
-            'style': 'background-color: #f8f9fa;'  # Fondo gris claro para indicar que no es editable
+            'placeholder': 'Ingrese la cantidad disponible'
         })
     )
+
     class Meta:
         model = Producto
         exclude = ['fecha_agregado', 'agregado_por']
@@ -396,8 +408,8 @@ class ProductoEditForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Mostrar solo estados disponibles y mantenimiento
-        estados_visibles = ['disponible', 'mantenimiento']
+        # Mostrar solo estados válidos para edición
+        estados_visibles = ['disponible','no_disponible']
         self.fields['estado'].queryset = EstadoRecurso.objects.filter(estado__in=estados_visibles)
 
         self.set_optional_fields()
@@ -435,7 +447,7 @@ class ProductoEditForm(forms.ModelForm):
             self.fields['categoria'].queryset = self.fields['categoria'].queryset.order_by('nombre')
         if hasattr(self.fields['unidad_medida'], 'queryset'):
             self.fields['unidad_medida'].queryset = self.fields['unidad_medida'].queryset.order_by('nombre')
-
+    
     def clean(self):
         cleaned_data = super().clean()
         codigo = cleaned_data.get('codigo')
@@ -444,13 +456,44 @@ class ProductoEditForm(forms.ModelForm):
 
         qs = Producto.objects.all()
         if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
+         qs = qs.exclude(pk=self.instance.pk)
 
         if codigo and qs.filter(codigo=codigo).exists():
-            self.add_error('codigo', 'Este código ya está en uso.')
+         self.add_error('codigo', 'Este código ya está en uso.')
 
         if num_cat and qs.filter(num_cat=num_cat).exists():
             self.add_error('num_cat', 'Este número de catálogo ya existe.')
 
         if num_serie and qs.filter(num_serie=num_serie).exists():
             self.add_error('num_serie', 'Este número de serie ya está registrado.')
+
+        # Lógica corregida para establecer el estado según la cantidad
+        cantidad_disponible = cleaned_data.get('cantidad_disponible')
+        estado = None  # Asegurarse de que esté definida
+
+        if cantidad_disponible is not None:
+         if cantidad_disponible > 0:
+            estado = EstadoRecurso.objects.filter(estado='disponible').first()
+        elif cantidad_disponible == 0:
+            estado = EstadoRecurso.objects.filter(estado='no_disponible').first()
+
+        if estado:
+            cleaned_data['estado'] = estado
+
+    def clean_cantidad_disponible(self):
+        cantidad = self.cleaned_data.get('cantidad_disponible')
+        if cantidad is None:
+            raise forms.ValidationError("Este campo es obligatorio.")
+        if cantidad < 0:
+            raise forms.ValidationError("La cantidad no puede ser negativa.")
+        return cantidad
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if instance.cantidad_disponible == 0:
+            instance.estado = EstadoRecurso.objects.get(estado='no_disponible')
+        elif instance.cantidad_disponible > 0:
+            instance.estado = EstadoRecurso.objects.get(estado='disponible')
+        if commit:
+            instance.save()
+        return instance

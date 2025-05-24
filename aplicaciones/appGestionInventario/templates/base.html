@@ -83,9 +83,6 @@
             <li><a class="dropdown-item fw-bold" href="{% url 'agregar_producto' %}">➕ Agregar Producto</a></li>
             <li><a class="dropdown-item fw-bold" href="{% url 'menu_catalogos' %}">📚 Gestionar Catálogos</a></li>
             <li><a class="dropdown-item fw-bold" href="{% url 'listar_productos' %}">📋 Inventario</a></li>
-            <li><a class="dropdown-item fw-bold" href="{% url 'tabla_historial_inventario' %}">📜 Historial Inventario</a></li>
-            <li><a class="dropdown-item fw-bold" href="{% url 'registrar_inventario' %}">📦 Inventario Físico</a></li>
-            <li><a class="dropdown-item fw-bold" href="{% url 'transferencia_producto' %}">🔄 Transferencias</a></li>
             <li><a class="dropdown-item fw-bold" href="#">📥📤 Entradas y Salidas</a></li>
             <li><a class="dropdown-item fw-bold" href="#">📦➡️ Movimientos</a></li>
           </ul>
@@ -185,7 +182,7 @@
         $(document).ready(function () {
             setTimeout(function () {
                 $(".alert").alert('close');
-            }, 3000);
+            }, 5000);
         });
     </script>
 </body>

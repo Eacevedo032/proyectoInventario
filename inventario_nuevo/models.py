@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.core.validators import MinValueValidator
 from django.utils.timezone import now
+from django.utils import timezone
 import os
 
 # --- Catálogos ---
@@ -68,8 +69,7 @@ class Accesorios(models.Model):
 class EstadoRecurso(models.Model):
     ESTADOS = [
         ('disponible', 'Disponible'),
-        ('prestado', 'Prestado (No disponible)'),
-        ('mantenimiento', 'Mantenimiento (No disponible)'),
+        ('no_disponible', 'No disponible'),
         ('baja', 'Dado de baja'),
     ]
     estado = models.CharField(max_length=50, choices=ESTADOS, unique=True)
@@ -109,37 +109,6 @@ class Medida(models.Model):
     def __str__(self):
         return self.nombre
 
-# --- Movimiento de Producto ---
-class MovimientoProducto(models.Model):
-    producto = models.ForeignKey('Producto', on_delete=models.CASCADE)
-    usuario_asociado = models.ForeignKey(User, on_delete=models.PROTECT, related_name='usuario_asociado')
-    gestionado_por = models.ForeignKey(User, on_delete=models.PROTECT, related_name='gestor_movimiento')
-    tipo_movimiento = models.CharField(max_length=100)
-    cantidad_movida = models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(0)])
-    estado_resultante = models.ForeignKey(EstadoRecurso, on_delete=models.PROTECT)
-    ubicacion = models.ForeignKey(Ubicacion, on_delete=models.SET_NULL, null=True, blank=True)
-    fecha_movimiento = models.DateTimeField(auto_now_add=True)
-    descripcion = models.TextField(blank=True, null=True)
-
-    def __str__(self):
-        return f"Movimiento: {self.tipo_movimiento} - {self.producto.nombre} ({self.fecha_movimiento.strftime('%d-%m-%Y %H:%M')})"
-
-# --- Control de Inventario Físico ---
-class InventarioFisico(models.Model):
-    producto = models.ForeignKey('Producto', on_delete=models.CASCADE)
-    cantidad_teorica = models.DecimalField(max_digits=8, decimal_places=2)
-    cantidad_real = models.DecimalField(max_digits=8, decimal_places=2)
-    unidad_medida = models.ForeignKey(UnidadMedida, on_delete=models.PROTECT)
-    fecha_revision = models.DateTimeField(auto_now_add=True)
-    revisado_por = models.ForeignKey(User, on_delete=models.PROTECT)
-    observacion = models.TextField(blank=True, null=True)
-
-    def diferencia(self):
-        return self.cantidad_real - self.cantidad_teorica
-
-    def __str__(self):
-        return f"Inventario físico de {self.producto.nombre} - {self.fecha_revision.strftime('%d-%m-%Y')}"
-
 # --- Producto ---
 class Producto(models.Model):
     nombre = models.CharField(max_length=300)
@@ -169,72 +138,52 @@ class Producto(models.Model):
     def __str__(self):
         return self.nombre
     
-#NUEVA TABLA - LA PUEDEN EDITAR SI LO DESEAN-----------------------------------------------------
-# Historial de Inventario
-class HistorialInventario(models.Model):
-    TIPOS_MOVIMIENTO = [
-        ('ingreso_inicial', 'Ingreso Inicial'),
-        # Se pueden añadir más tipos como: ('traslado', 'Traslado'), ('salida', 'Salida'), etc.
+#class InventarioFisico(models.Model):
+class InventarioFisico(models.Model):
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('rechazado', 'Rechazado'),
+        ('ejecutado', 'Ejecutado'),
+        ('cancelado', 'Cancelado'),
     ]
 
-    producto = models.ForeignKey('Producto', on_delete=models.CASCADE, related_name='historiales_inventario') #Es útil el related_name para identificativos
-    nombre_producto = models.CharField(max_length=300)
-    categoria = models.ForeignKey('Categoria', on_delete=models.PROTECT)
-    subcategoria = models.ForeignKey('Subcategoria', on_delete=models.PROTECT)
+    fecha = models.DateField(default=timezone.now)
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='pendiente')
+    creado_por = models.ForeignKey(User, on_delete=models.PROTECT, related_name='inventarios_creados')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Inventario #{self.id} - {self.fecha} - {self.estado}"
+
+class InventarioFisicoDetalle(models.Model):
+    inventario = models.ForeignKey(InventarioFisico, on_delete=models.CASCADE, related_name='detalles')
+    producto = models.ForeignKey('Producto', on_delete=models.PROTECT)
+    cantidad_inicial = models.DecimalField(max_digits=12, decimal_places=2)
+    cantidad_final = models.DecimalField(max_digits=12, decimal_places=2)
+    diferencia = models.DecimalField(max_digits=12, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.producto.nombre} - Inv #{self.inventario.id}"
+
+class HistorialInventarioFisico(models.Model):
+    inventario = models.ForeignKey(InventarioFisico, on_delete=models.CASCADE)
+    producto = models.ForeignKey('Producto', on_delete=models.PROTECT)
     cantidad_inicial = models.DecimalField(max_digits=8, decimal_places=2)
-    unidad_medida = models.ForeignKey('UnidadMedida', on_delete=models.PROTECT)
-    ubicacion_inicial = models.ForeignKey('Ubicacion', on_delete=models.PROTECT)
-    estado_inicial = models.ForeignKey('EstadoRecurso', on_delete=models.PROTECT)
-    fecha_agregado = models.DateField()
-    agregado_por = models.ForeignKey(User, on_delete=models.PROTECT, related_name='movimientos_agregados')
-    tipo_movimiento = models.CharField(max_length=50, choices=TIPOS_MOVIMIENTO, default='ingreso_inicial')
+    cantidad_final = models.DecimalField(max_digits=8, decimal_places=2)
+    diferencia = models.DecimalField(max_digits=8, decimal_places=2)
+    usuario = models.ForeignKey(User, on_delete=models.PROTECT)
+    fecha_registro = models.DateTimeField(auto_now_add=True)  # fecha de creación automática
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
+    motivo_modificacion = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.nombre_producto} - {self.get_tipo_movimiento_display()} - {self.fecha_agregado}"
-
- #---------------------------------------------------------------------------------------------
-
-# DIFERENCIAS DE INVENTARIO, TRANSFERENCIAS, CIERRE DE INVENTARIO
-class InventarioDiario(models.Model):
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  
-    fecha = models.DateField()
-    cantidad_inicial = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    cantidad_final = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    diferencia = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
-    def calcular_diferencia(self):
-        self.diferencia = self.cantidad_final - self.cantidad_inicial
-        self.save()
-
-    def __str__(self):
-        return f"{self.producto.nombre} - {self.fecha} - {self.usuario.username if self.usuario else 'Sin usuario'}"
-
-class TransferenciaProducto(models.Model):
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, default=1)  # Usuario que hizo la transferencia
-    fecha_transferencia = models.DateField(auto_now_add=True)  # Fecha automática
-    estado_destino = models.CharField(max_length=50, choices=[
-        ("Dado de baja", "Dado de baja"),
-        ("Mantenimiento", "Mantenimiento"),
-        ("No Disponible", "No Disponible"),
-        ("Prestado", "Prestado"),
-        ("Ingreso", "Ingreso"),
-    ])
-    cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Cantidad transferida
-    motivo = models.TextField(blank=True, null=True)  #Explicación de la transferencia
-    observacion = models.TextField(blank=True, null=True)  #Nota adicional sobre el movimiento
-
-    def __str__(self):
-        return f"{self.usuario.username} transfirió {self.cantidad} de {self.producto.nombre} a {self.estado_destino} ({self.fecha_transferencia})"
+        return f"Historial Inv #{self.inventario.id} - {self.producto.nombre} por {self.usuario.username}"
     
-#------------------------------------------------------------
 #Tabla donde se le da de baja a un producto
-from django.db import models
-from django.contrib.auth.models import User
 
 class BajaProducto(models.Model):
-    producto = models.OneToOneField('Producto', on_delete=models.CASCADE, related_name='baja')
+    producto = models.ForeignKey('Producto', on_delete=models.CASCADE, related_name='bajas')
+    cantidad = models.DecimalField(max_digits=8, decimal_places=2)
     motivo = models.TextField()
     observaciones = models.TextField(blank=True, null=True)
     fecha_baja = models.DateField(auto_now_add=True)
@@ -242,4 +191,4 @@ class BajaProducto(models.Model):
     foto = models.ImageField(upload_to='bajas_fotos/', blank=True, null=True)
 
     def __str__(self):
-        return f"Baja de {self.producto.nombre} por {self.usuario.username if self.usuario else 'Desconocido'}"
+        return f"Baja de {self.producto.nombre} - {self.cantidad} u."

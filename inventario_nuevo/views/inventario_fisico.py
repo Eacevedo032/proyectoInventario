@@ -1,184 +1,296 @@
-from django.shortcuts import render, redirect
-from inventario_nuevo.models import TransferenciaProducto, Producto
-from inventario_nuevo.models import InventarioDiario
-from aplicaciones.appGestionLaboratorios.views.convertir_unidades import convertir_usando_modelo
-from decimal import Decimal
-from django.template.loader import get_template
-from weasyprint import HTML, CSS
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.contrib import messages
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
+from decimal import Decimal, InvalidOperation
+from datetime import datetime
+from django.core.paginator import Paginator
+from django.contrib.auth.models import User
+from django.template.loader import get_template
+from xhtml2pdf import pisa
 from django.urls import reverse
-from django.http import HttpResponse
-import pandas as pd
 
-# Decorador para verificar si el usuario es administrador
-from django.contrib.auth.decorators import user_passes_test
+from inventario_nuevo.models import (
+    InventarioFisicoDetalle, InventarioFisico,
+    HistorialInventarioFisico, Producto
+)
 
-def admin_required(view_func):
-    return user_passes_test(lambda u: u.is_staff or u.is_superuser)(view_func)
+# Decorador para restringir acceso solo a "administrador"
+def solo_administrador(view_func):
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated or request.user.username != "administrador":
+            messages.error(request, "No tienes permisos para realizar esta acción.")
+            return redirect('home')  # o donde quieras redirigir
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
-# REGISTRAR INVENTARIO FÍSICO
-@admin_required #Verifica si el usuario es administrador
-def registrar_inventario(request):
-    if request.method == 'POST':
-        fecha = request.POST.get('fecha', None)
-
-        # Si no se envió fecha, usar la fecha actual
-        if not fecha:
-            fecha = timezone.now().strftime("%Y-%m-%d")
-
-        productos = Producto.objects.all()
-
-        for producto in productos:
-            cantidad_final = request.POST.get(f'cantidad_{producto.id}')
-            
-            if cantidad_final:
-                cantidad_final = int(cantidad_final)
-                
-                # Actualizar el producto
-                producto.cantidad_disponible = cantidad_final  
-                producto.save()  
-
-                # Guardar/Actualizar InventarioDiario
-                inventario, created = InventarioDiario.objects.get_or_create(producto=producto, fecha=fecha)
-                inventario.cantidad_final = cantidad_final
-                
-                if created:
-                    inventario.cantidad_inicial = cantidad_final  # Si es nuevo, inicia con la cantidad final
-                
-                # Asignar el usuario autenticado
-                inventario.usuario = request.user  
-
-                inventario.calcular_diferencia()
-                inventario.save()
-
-        messages.success(request, "Inventario actualizado correctamente.")
-        return redirect(reverse('reporte_inventario_diario', kwargs={'fecha': fecha}))
-
-    productos = Producto.objects.all()
-    return render(request, 'inventario_nuevo/registrar_inventario.html', {'productos': productos})
-    
-# REPORTE GENERAL DE INVENTARIO
-@admin_required #Verifica si el usuario es administrador
-def reporte_inventario_diario(request, fecha):
-    movimientos = InventarioDiario.objects.filter(fecha=fecha).order_by('producto')
-
-    print(f"Movimientos encontrados para {fecha}: {movimientos.count()}")
-
-    return render(request, 'inventario_nuevo/reporte_inventario_diario.html', {'movimientos': movimientos, 'fecha': fecha})
-
-@admin_required #Verifica si el usuario es administrador
-def seleccion_reportes(request):
-    return render(request, 'inventario_nuevo/seleccion_reportes.html')
-
-@admin_required #Verifica si el usuario es administrador
-def reporte_inventario(request):
-    movimientos = InventarioDiario.objects.all().order_by('-fecha')
-    return render(request, 'inventario_nuevo/reporte_inventario.html', {'movimientos': movimientos})
-
-#TRANSFERENCIA REGISTRA Y ACTUALIZA
-@admin_required #Verifica si el usuario es administrador
-def transferencia_producto(request):
-    productos = Producto.objects.all()
-    estados = ["Dado de baja", "Mantenimiento", "No Disponible", "Prestado", "Ingreso"]
+from inventario_nuevo.models import BajaProducto
+def registrar_inventario_fisico(request):
+    productos = Producto.objects.exclude(id__in=BajaProducto.objects.values_list('producto_id', flat=True))
+    hay_inventario_pendiente = InventarioFisico.objects.filter(estado='pendiente').exists()
 
     if request.method == 'POST':
-        producto = Producto.objects.get(id=request.POST.get('producto_id'))
-        estado_destino = request.POST.get('estado')
-        cantidad_transferida = Decimal(request.POST.get('cantidad', 0))  #Convierte a Decimal
-        usuario = request.user  #Captura el usuario autenticado
-        motivo = request.POST.get('motivo', '')
+        if hay_inventario_pendiente:
+            messages.warning(request, "⚠️ Hay un inventario pendiente. No puedes crear otro hasta ejecutarlo o cancelarlo.")
+            return redirect('registrar_inventario_fisico')
 
-        #Ajuste automático del inventario
-        inventario, created = InventarioDiario.objects.get_or_create(producto=producto, fecha=timezone.now().date())
-
-        if estado_destino == "Ingreso":
-            inventario.cantidad_final += cantidad_transferida  #Aumenta cantidad
-        else:
-            inventario.cantidad_final -= cantidad_transferida  #Reduce cantidad
-        
-        inventario.calcular_diferencia()  #Calcula la diferencia correctamente
-        inventario.save()
-
-        #egistrar la transferencia en el historial
-        TransferenciaProducto.objects.create(
-            producto=producto,
-            usuario=usuario, 
-            estado_destino=estado_destino,
-            cantidad=cantidad_transferida,
-            motivo=motivo,
-            fecha_transferencia=timezone.now().date()
+        inventario = InventarioFisico.objects.create(
+            fecha=timezone.now().date(),
+            estado='pendiente',
+            creado_por=request.user,
         )
 
-        return redirect(reverse('historial_transferencias'))  #Redirige al historial
+        for producto in productos:
+            cantidad_final_str = request.POST.get(f'cantidad_{producto.id}')
+            if cantidad_final_str is None:
+                continue
 
-    return render(request, 'inventario_nuevo/transferencia_producto.html', {'productos': productos, 'estados': estados})
+            try:
+                cantidad_final = Decimal(cantidad_final_str)
+            except (InvalidOperation, TypeError):
+                cantidad_final = Decimal(producto.cantidad_disponible)
 
-@admin_required #Verifica si el usuario es administrador
-def historial_transferencias(request):
-    transferencias = TransferenciaProducto.objects.all().order_by('-fecha_transferencia')
-    return render(request, 'inventario_nuevo/historial_transferencias.html', {'transferencias': transferencias})
+            if cantidad_final > Decimal('999999999.99') or cantidad_final < Decimal('0'):
+                messages.error(request, f"Cantidad inválida para el producto {producto.nombre}. Máximo permitido: 999999999.99")
+                continue
 
-# REPORTE DE INVENTARIO DIARIO
-@admin_required #Verifica si el usuario es administrador
-def reporte_inventario_diario(request):
-    fecha_str = request.GET.get('fecha')  #Obtener fecha de la solicitud
-    try:
-        fecha = timezone.datetime.strptime(fecha_str, "%Y-%m-%d").date() if fecha_str else timezone.now().date()
-    except ValueError:
-        fecha = timezone.now().date()  #Si la fecha no es válida, usa la actual
+            cantidad_inicial = Decimal(producto.cantidad_disponible)
+            diferencia = cantidad_final - cantidad_inicial
 
-    movimientos = InventarioDiario.objects.filter(fecha=fecha).order_by('producto')
-    transferencias = TransferenciaProducto.objects.filter(fecha_transferencia=fecha).order_by('-fecha_transferencia')
+            if diferencia != 0:
+                InventarioFisicoDetalle.objects.create(
+                    inventario=inventario,
+                    producto=producto,
+                    cantidad_inicial=cantidad_inicial,
+                    cantidad_final=cantidad_final,
+                    diferencia=diferencia
+                )
 
-    print(f"Movimientos encontrados para {fecha}: {movimientos.count()}")  # Debugging en la terminal
-    print(f"Transferencias encontradas para {fecha}: {transferencias.count()}")  # Debugging en la terminal
+        messages.success(request, "Inventario físico registrado y pendiente de aprobación.")
+        return redirect('lista_inventarios_pendientes')
 
-    return render(request, 'inventario_nuevo/reporte_inventario_diario.html', {
-        'movimientos': movimientos, 
-        'transferencias': transferencias, 
-        'fecha': fecha
+    return render(request, 'inventario_nuevo/registrar_inventario.html', {
+        'productos': productos,
+        'inventario_ejecutado': not hay_inventario_pendiente,
+        'fecha_actual': timezone.now()
     })
 
-# PDFfrom django.http import HttpResponse
-@admin_required #Verifica si el usuario es administrador
-def exportar_pdf(request):
-    #Cargar la plantilla HTML del reporte de inventario
-    template = get_template("inventario_nuevo/reporte_inventario.html")  
+def lista_inventarios_pendientes(request):
+    inventarios = InventarioFisico.objects.filter(estado='pendiente')\
+        .select_related('creado_por')\
+        .prefetch_related(
+            'detalles__producto__ubicacion',
+            'detalles__producto__categoria',
+            'detalles__producto__subcategoria'
+        )
+    return render(request, 'inventario_nuevo/lista_inventarios_pendientes.html', {'inventarios': inventarios})
+
+def ver_detalle_inventario(request, inventario_id):
+    inventario = get_object_or_404(InventarioFisico, id=inventario_id, estado='pendiente')
+    detalles = inventario.detalles.all()
+    return render(request, 'inventario_nuevo/detalle_inventario.html', {'inventario': inventario, 'detalles': detalles})
+
+@solo_administrador
+def ejecutar_todo_inventario_fisico(request):
+    if request.method == 'POST':
+        inventarios_pendientes = InventarioFisico.objects.filter(estado='pendiente')
+        for inventario in inventarios_pendientes:
+            detalles = inventario.detalles.all()
+            for detalle in detalles:
+                producto = detalle.producto
+                producto.cantidad_disponible = detalle.cantidad_final
+                producto.save()
+
+                HistorialInventarioFisico.objects.create(
+                    inventario=inventario,
+                    producto=producto,
+                    cantidad_inicial=detalle.cantidad_inicial,
+                    cantidad_final=detalle.cantidad_final,
+                    diferencia=detalle.diferencia,
+                    usuario=request.user,
+                    fecha_registro=inventario.fecha,
+                    fecha_aprobacion=timezone.now(),
+                    motivo_modificacion='Inventario ejecutado en lote'
+                )
+            inventario.estado = 'ejecutado'
+            inventario.save()
+        messages.success(request, "Todos los inventarios pendientes se ejecutaron correctamente.")
+    return redirect('lista_inventarios_pendientes')
+
+@solo_administrador
+def ejecutar_inventario_fisico(request, inventario_id):
+    inventario = get_object_or_404(InventarioFisico, id=inventario_id, estado='pendiente')
+
+    if request.method == 'POST':
+        detalles = inventario.detalles.all()
+        for detalle in detalles:
+            producto = detalle.producto
+            producto.cantidad_disponible = detalle.cantidad_final
+            producto.save()
+
+            HistorialInventarioFisico.objects.create(
+                inventario=inventario,
+                producto=producto,
+                cantidad_inicial=detalle.cantidad_inicial,
+                cantidad_final=detalle.cantidad_final,
+                diferencia=detalle.diferencia,
+                usuario=request.user,
+                fecha_aprobacion=timezone.now(),
+                motivo_modificacion='Inventario ejecutado'
+            )
+
+        inventario.estado = 'ejecutado'
+        inventario.save()
+        messages.success(request, "Inventario ejecutado correctamente.")
+        return redirect('lista_inventarios_pendientes')
+
+    return render(request, 'inventario_nuevo/confirmar_ejecucion.html', {'inventario': inventario})
+
+@solo_administrador
+def editar_inventario_pendiente(request, inventario_id):
+    inventario = get_object_or_404(InventarioFisico, id=inventario_id, estado='pendiente')
+    detalles = InventarioFisicoDetalle.objects.filter(inventario=inventario)
+
+    if request.method == 'POST':
+        cambios_realizados = False
+
+        for detalle in detalles:
+            key = f'cantidad_final_{detalle.id}'
+            if key in request.POST:
+                try:
+                    cantidad_final_nueva = Decimal(request.POST[key])
+                    if cantidad_final_nueva != detalle.cantidad_final:
+                        diferencia = cantidad_final_nueva - detalle.cantidad_inicial
+
+                        HistorialInventarioFisico.objects.create(
+                            inventario=inventario,
+                            producto=detalle.producto,
+                            cantidad_inicial=detalle.cantidad_inicial,
+                            cantidad_final=cantidad_final_nueva,
+                            diferencia=diferencia,
+                            usuario=request.user,
+                            fecha_registro=timezone.now(),
+                            motivo_modificacion="Edición manual del inventario pendiente"
+                        )
+
+                        detalle.cantidad_final = cantidad_final_nueva
+                        detalle.diferencia = diferencia
+                        detalle.save()
+                        cambios_realizados = True
+                except (InvalidOperation, ValueError):
+                    pass
+
+        if cambios_realizados:
+            messages.success(request, "Inventario actualizado y cambios registrados en el historial.")
+        else:
+            messages.info(request, "No se detectaron cambios.")
+
+        return redirect('ver_detalle_inventario', inventario.id)
+
+    return render(request, 'inventario_nuevo/editar_inventario_pendiente.html', {
+        'inventario': inventario,
+        'detalles': detalles,
+        'now': timezone.now(),
+    })
+
+@solo_administrador
+def cancelar_conteo(request):
+    if request.method == 'POST':
+        pendientes = InventarioFisico.objects.filter(estado='pendiente')
+        pendientes.update(estado='rechazado')
+        messages.success(request, "Conteo cancelado y todos los inventarios pendientes rechazados.")
+    return redirect('lista_inventarios_pendientes')
+
+@solo_administrador
+def eliminar_inventario_pendiente(request, detalle_id):
+    detalle = get_object_or_404(InventarioFisicoDetalle, id=detalle_id)
+    try:
+        detalle.delete()
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        messages.success(request, 'Detalle eliminado correctamente.')
+    except Exception as e:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': str(e)})
+        messages.error(request, 'Error al eliminar el detalle.')
+    return redirect('lista_inventarios_pendientes')
+
+def historial_inventario_fisico(request):
+    historial = HistorialInventarioFisico.objects.select_related('producto', 'usuario', 'inventario').all().order_by('-fecha_registro')
+
+    usuario = request.GET.get('usuario')
+    producto = request.GET.get('producto')
+    solo_ejecutados = request.GET.get('solo_ejecutados')
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+
+    if usuario:
+        historial = historial.filter(usuario_id=usuario)
+    if producto:
+        historial = historial.filter(producto_id=producto)
+    if solo_ejecutados in ['on', 'true', '1']:
+        historial = historial.filter(motivo_modificacion__icontains='ejecutado')
+    if fecha_inicio:
+        historial = historial.filter(fecha_registro__gte=fecha_inicio)
+    if fecha_fin:
+        historial = historial.filter(fecha_registro__lte=fecha_fin)
+
+    paginator = Paginator(historial, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    usuarios = User.objects.all()
+    productos = Producto.objects.all()
+
     context = {
-        "movimientos": InventarioDiario.objects.all().order_by("-fecha"),
+        'page_obj': page_obj,
+        'usuarios': usuarios,
+        'productos': productos,
+        'filtros': request.GET,
     }
-    
-    #Renderizar el HTML con los datos actuales
-    html_content = template.render(context)
+    return render(request, 'inventario_nuevo/historial_inventario_fisico.html', context)
 
-    #Configurar la respuesta para descargar el PDF automáticamente
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = 'attachment; filename="Reporte_Inventario.pdf"'
+def exportar_historial_pdf(request):
+    filtros = {
+        "usuario": request.GET.get("usuario", ""),
+        "producto": request.GET.get("producto", ""),
+        "fecha_inicio": request.GET.get("fecha_inicio", ""),
+        "fecha_fin": request.GET.get("fecha_fin", ""),
+    }
 
-    #Aplicar estilos CSS para mejorar la estructura del cuadro y ajustar la página
-    css = CSS(string="""
-        @page { size: A4 landscape; margin: 20mm; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid black; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; font-weight: bold; }
-    """)
+    historial = HistorialInventarioFisico.objects.select_related('producto', 'usuario', 'inventario').all().order_by('-fecha_registro')
 
-    #Generar el PDF con formato optimizado
-    pdf_bytes = HTML(string=html_content).write_pdf(stylesheets=[css])
-    response.write(pdf_bytes)
+    if filtros["usuario"]:
+        historial = historial.filter(usuario_id=filtros["usuario"])
+    if filtros["producto"]:
+        historial = historial.filter(producto_id=filtros["producto"])
+    if filtros["fecha_inicio"]:
+        historial = historial.filter(fecha_modificacion__date__gte=filtros["fecha_inicio"])
+    if filtros["fecha_fin"]:
+        historial = historial.filter(fecha_modificacion__date__lte=filtros["fecha_fin"])
+
+    # Define la ruta absoluta del logo para que xhtml2pdf lo pueda cargar con file://
+    import os
+    from django.conf import settings
+    logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'logoUNP1.png')
+
+    template = get_template('inventario_nuevo/historial_inventario_pdf.html')
+    context = {
+        'historial': historial,
+        'usuario_generador': request.user.username,
+        'fecha_actual': datetime.now(),
+        'logo_path': logo_path,
+    }
+    html = template.render(context)
+
+    response = HttpResponse(content_type='application/pdf')
+    # Mostrar PDF en navegador (no descarga automática)
+    response['Content-Disposition'] = 'inline; filename="historial_inventario.pdf"'
+
+    pisa_status = pisa.CreatePDF(html, dest=response)
+
+    if pisa_status.err:
+        return HttpResponse('Error al generar PDF')
 
     return response
 
-# EXCEL
-@admin_required #Verifica si el usuario es administrador
-def exportar_excel(request):
-    movimientos = InventarioDiario.objects.all().values('fecha', 'producto__nombre', 'usuario__username', 'cantidad_inicial', 'cantidad_final', 'diferencia')  # Corrección aquí
-
-    df = pd.DataFrame(list(movimientos))
-    
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="reporte_inventario.xlsx"'
-    
-    df.to_excel(response, index=False)
-    return response

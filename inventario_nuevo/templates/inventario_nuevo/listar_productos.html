@@ -269,7 +269,51 @@
         {% endif %}
     </div>
 
-{% if filtros_combinados %}
+{% if modo_baja %}
+<!-- TABLA SOLO PARA PRODUCTOS DADOS DE BAJA -->
+<div class="table-responsive">
+    <table class="table table-hover align-middle rounded-table" style="width: 100%;">
+        <thead class="table-primary">
+            <tr>
+                <th>#</th>
+                <th style="min-width: 100px;">Producto</th>
+                <th>Categoría</th>
+                <th>Subcategoría</th>
+                <th>Cantidad de baja</th>
+                <th style="min-width: 165px;">Motivo de baja</th>
+                <th style="min-width: 170px;">Observaciones de la baja</th>
+                <th>Fecha de baja</th>
+                <th>Dado de baja por</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+                <tr>
+    <td>{{ forloop.counter0|add:productos.start_index }}</td>
+    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">
+        {{ producto.producto.nombre }}
+    </td>
+    <td>{{ producto.producto.categoria.nombre }}</td>
+    <td>{{ producto.producto.subcategoria.nombre }}</td>
+    <td>{{ producto.cantidad }} {{ producto.producto.unidad_medida }}</td>
+    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">
+        {{ producto.motivo }}
+    </td>
+    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">
+        {{ producto.observaciones|default:"-" }}
+    </td>
+    <td>{{ producto.fecha_baja|date:"d/m/Y" }}</td>
+    <td>{{ producto.usuario.username }}</td>
+</tr>
+            {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center">No hay productos dados de baja.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% elif filtros_combinados %}
 <!-- TABLA PARA FILTROS COMBINADOS: Porque la lógica del backend ya se encarga de filtrar los productos con base en los parámetros de 
 request.GET, y vos ya pasás al contexto el queryset filtrado como productos, sin importar cuántos filtros estén aplicados. -->
 <div class="table-responsive">
@@ -335,42 +379,6 @@ request.GET, y vos ya pasás al contexto el queryset filtrado como productos, si
         </tbody>
     </table>
 </div>
-{% elif modo_baja %}
-    <!-- TABLA SOLO PARA PRODUCTOS DADOS DE BAJA -->
-<div class="table-responsive">
-    <table class="table table-hover align-middle rounded-table" style="width: 100%;">
-        <thead class="table-primary">
-            <tr>
-                <th>#</th>
-                <th style="min-width: 100px;">Producto</th>
-                <th>Categoría</th>
-                <th>Subcategoría</th>
-                <th>Cantidad de baja</th>
-                <th style="min-width: 165px;">Motivo de baja</th>
-                <th style="min-width: 170px;">Observaciones de la baja</th>
-                <th>Fecha de baja</th>
-                <th>Dado de baja por</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for producto in productos %}
-                <tr>
-                    <td>{{ forloop.counter0|add:productos.start_index }}</td>
-                    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">
-                    {{ producto.nombre }}
-                    </td>                    
-                    <td>{{ producto.categoria.nombre }}</td>
-                    <td>{{ producto.subcategoria.nombre }}</td>
-                    <td>{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
-                    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">{{ producto.baja.motivo }}</td>
-                    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">{{ producto.baja.observaciones|default:"-" }}</td>
-                    <td>{{ producto.baja.fecha_baja|date:"d/m/Y" }}</td>
-                    <td>{{ producto.baja.usuario.username}}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    </div>
 {% elif filtro_por_presentacion %}
     
     {% include 'filtros_tablas/filtro_por_presentacion.html' %}
