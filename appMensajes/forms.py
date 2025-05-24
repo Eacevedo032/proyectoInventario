@@ -38,6 +38,6 @@ class MensajeForm(forms.ModelForm):
     def clean_archivo(self):
         archivo = self.cleaned_data.get('archivo')
         if archivo:
-            if archivo.size > 10 * 1024 * 1024:  # 10 MB
-                raise ValidationError("El archivo no puede superar los 10 MB.")
+            if archivo.size > 20 * 1024 * 1024:  # 10 MB
+                raise ValidationError("El archivo no puede superar los 20 MB.")
         return archivo

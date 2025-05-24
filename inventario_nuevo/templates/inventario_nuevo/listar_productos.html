@@ -446,7 +446,7 @@ request.GET, y vos ya pasás al contexto el queryset filtrado como productos, si
                 <td>{{ producto.marca.nombre }}</td>
                 <td>{{ producto.lote.nombre }}</td>
                 <td style="width: 100%; text-align: justify; white-space: normal; word-break: break-word;">
-                {{ producto.observacion }}
+                {{ producto.observacion|default:"" }}
                 </td>                
                 <td>{{ producto.vencimiento|date:"d/m/Y" }}</td>
                 <td>{{ producto.fecha_agregado|date:"d/m/Y" }}</td>

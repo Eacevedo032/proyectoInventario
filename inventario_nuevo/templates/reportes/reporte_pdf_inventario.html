@@ -260,7 +260,7 @@
             <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.subcategoria.nombre }}</td>
             <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
             <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.motivo }}</td>
-            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.observaciones|default:"-" }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.observaciones|default:"" }}</td>
             <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.fecha_baja|date:"d/m/Y" }}</td>
             <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.usuario.username }}</td>
         </tr>
@@ -296,7 +296,7 @@
             <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.estado }}</td>
             <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.lote|default:"" }}</td>
             <td>{{ producto.vencimiento|date:"d/m/Y" }}</td>
-            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.observacion }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.observacion|default:"" }}</td>
             {% if filtro_por_codigo %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.codigo }}</td>{% endif %}
             {% if filtro_por_num_serie %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.num_serie }}</td>{% endif %}
             {% if filtro_por_marca %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.marca }}</td>{% endif %}
