@@ -1,61 +1,326 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
+    <title>Reporte de Inventario</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 11px; }
-        h1 { color: #0000FF; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #999; padding: 4px; text-align: left; }
-        .encabezado { text-align: center; }
-        .filtros { font-size: 10px; margin-top: 10px; }
+        @page {
+            size: A4 landscape;
+            margin: 140px 40px 40px 40px;
+            /* ← margen superior grande reservado al header */
+
+            @top-left {
+                content: element(logo);
+            }
+
+            @top-right {
+                content: element(info);
+            }
+
+            @top-center {
+                content: element(titulo);
+            }
+        }
+
+        #logo {
+            position: running(logo);
+        }
+
+        #info {
+            position: running(info);
+        }
+
+        #titulo {
+            position: running(titulo);
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 0;
+            padding: 0 40px 40px 40px;
+            /* ← sin padding superior */
+            /* top, right, bottom, left */
+        }
+
+        #logo {
+            position: running(logo);
+            text-align: left;
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+
+        #info {
+            position: running(info);
+            text-align: right;
+            padding-right: 20px;
+            margin-top: 5px;
+            font-size: 10px;
+        }
+
+        #titulo {
+            position: running(titulo);
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 20px;
+            border-bottom: 2px solid #e30613;
+        }
+
+        .encabezado {
+            display: none;
+            /* escondemos porque usamos header de página */
+        }
+
+        .filtros {
+            margin: 15px 0;
+            border: 1px solid #000;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .filtros table {
+            width: auto;
+            table-layout: auto;
+            border-collapse: collapse;
+        }
+
+        .filtros th {
+            text-align: left;
+            vertical-align: top;
+            font-weight: bold;
+            padding: 4px 4px 4px 0;
+            width: 150px;
+            white-space: nowrap;
+        }
+
+        .filtros td {
+            text-align: left;
+            vertical-align: top;
+            padding: 4px 0 4px 2px;
+            word-break: break-word;
+        }
+
+        .tabla-productos {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            table-layout: fixed;
+            margin-top: 20px;
+            /* Separa la tabla del encabezado */
+        }
+
+        .tabla-productos td {
+            border: 1px solid #000;
+            padding: 4px;
+            text-align: left;
+            word-break: break-word;
+            font-size: 12px;
+        }
+
+        .tabla-productos th {
+            background-color: #0000ff;
+            color: white;
+            text-align: center;
+
+        }
+
+        .total {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 10px;
+            color: #555;
+        }
+
+        .firma {
+            margin-top: 80px;
+            text-align: center;
+            font-size: 12px;
+            page-break-inside: avoid;
+        }
     </style>
 </head>
+
 <body>
-    <div class="encabezado">
-        <h1>Reporte General del Inventario</h1>
-        {% if filtros_aplicados %}
-            <div class="filtros">
-                <strong>Filtros aplicados:</strong>
-                <ul>
-                    {% for key, value in filtros_aplicados.items %}
-                        <li><strong>{{ key }}:</strong> {{ value }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
+
+    <!-- Elementos para encabezado en todas las páginas -->
+    <!-- Paso Logo_url que en la vista carga mi imagen del logo de UNP -->
+    <div id="logo">
+        <img src="{{ logo_url }}" alt="Logo" style="height: 50px;">  
     </div>
 
+    <div id="info">
+        <p><strong>Generado por:</strong> {{ usuario.username }}</p>
+        <p><strong>Fecha:</strong> {{ fecha_generacion|date:"d/m/Y h:i A" }}</p>
+    </div>
+
+    <div id="titulo">
+        <div>UNIVERSIDAD NACIONAL POLITÉCNICA (UNP)</div>
+        <br>
+        <div>INGENIERÍA EN BIOTECNOLOGÍA INDUSTRIAL</div>
+        <br>
+        <div>REPORTE DE INVENTARIO GENERAL DE LABORATORIOS</div>
+    </div>
+    <br>
+    <!-- Filtros -->
+    {% if filtros_aplicados %}
+<div class="filtros">
+    <p style="font-weight: bold;">Filtros aplicados:</p>
     <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Nombre</th>
-                <th>Código</th>
-                <th>Estado</th>
-                <th>Ubicación</th>
-                <th>Fecha agregado</th>
-                <th>Vencimiento</th>
-                <!-- Agrega más columnas si deseas -->
-            </tr>
-        </thead>
         <tbody>
-            {% for producto in productos %}
+            {% for nombre, valor in filtros_aplicados.items %}
             <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ producto.nombre }}</td>
-                <td>{{ producto.codigo }}</td>
-                <td>{{ producto.estado }}</td>
-                <td>{{ producto.ubicacion }}</td>
-                <td>{{ producto.fecha_agregado|date:"Y-m-d" }}</td>
-                <td>{{ producto.vencimiento|default:"—" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="7">No se encontraron productos con los filtros seleccionados.</td>
+                <th>{{ nombre }}:</th>
+                <td>{{ valor }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
+{% else %}
+<div class="filtros">
+    <p><strong>Este reporte muestra todos los productos activos del inventario.</strong></p>
+</div>
+{% endif %}
+
+<!-- Tabla de productos DONDE PRIMERO TIENE LA ESTRUCTURA DISTINTA PARA LOS 
+ DADOS DE BAJA, APENAS FILTRE SE MUESTRAN ALS COLUMNAS DE FILTROS Y LUEGO LA TABLA OR DEFECTO SIN 
+ FILTRAR ALGO-->
+<table class="tabla-productos">
+<thead>
+    {% if modo_baja %}
+        <tr>
+            <th style="width: 30px;">#</th>
+            <th style="width: 160px;">Producto</th>
+            <th>Categoría</th>
+            <th>Subcategoría</th>
+            <th>Cantidad de baja</th>
+            <th style="width: 140px;">Motivo de baja</th>
+            <th style="width: 140px;">Observaciones</th>
+            <th>Fecha de baja</th>
+            <th>Dado de baja por</th>
+        </tr>
+    {% elif filtros_aplicados %}
+        <tr>
+            <th style="width: 1px;">#</th>
+            <th style="width: 140px;">Producto</th>
+            <th style="width: 90px;">Categoría</th>
+            <th style="width: 90px;">Subcategoría</th>
+            <th style="width: 60px;">Cantidad</th>
+            {% if filtro_por_marca %}<th style="width: 75px;">Marca</th>{% endif %}
+            {% if filtro_por_modelo %}<th style="width: 80px;">Modelo</th>{% endif %}
+            {% if filtro_por_lote %}<th style="width: 65px;">Lote</th>{% endif %}
+            {% if filtro_por_color %}<th style="width: 70px;">Color</th>{% endif %}
+            {% if filtro_por_presentacion %}<th style="width: 120px;">Presentación</th>{% endif %}
+            {% if filtro_por_codigo %}<th style="width: 90px;">Código</th>{% endif %}
+            {% if filtro_por_num_cat %}<th style="width: 90px;"># Cat</th>{% endif %}
+            {% if filtro_por_num_serie %}<th style="width: 90px;">N° Serie</th>{% endif %}
+            <th style="width: 80px;">Ubicación</th>
+            <th style="width: 75px;">Estado</th>
+            {% if filtro_por_fecha_agregado %}<th style="width: 110px;">Fecha agregado</th>{% endif %}
+            {% if filtro_por_vencimiento %}<th style="width: 90px;">Vence</th>{% endif %}
+        </tr>
+    {% else %}
+        <tr>
+            <th style="width: 20px;">#</th>
+            <th style="width: 150px;">Producto</th>
+            <th style="width: 95px;">Categoría</th>
+            <th style="width: 95px;">Subcategoría</th>
+            <th style="width: 70px;">Cantidad</th>
+            <th style="width: 75px;">Marca</th>
+            <th style="width: 80px;">Ubicación</th>
+            <th style="width: 75px;">Estado</th>
+            <th style="width: 65px;">Lote</th>
+            <th style="width: 65px;">Vence</th>
+            <th style="width: 140px;">Observaciones</th>
+            {% if filtro_por_codigo %}<th style="width: 90px;">Código</th>{% endif %}
+            {% if filtro_por_num_serie %}<th style="width: 100px;">N° Serie</th>{% endif %}
+            {% if filtro_por_marca %}<th style="width: 75px;">Marca</th>{% endif %}
+            {% if filtro_por_modelo %}<th style="width: 80px;">Modelo</th>{% endif %}
+            {% if filtro_por_color %}<th style="width: 70px;">Color</th>{% endif %}
+            {% if filtro_por_presentacion %}<th style="width: 120px;">Presentación</th>{% endif %}
+        </tr>
+    {% endif %}
+</thead>
+<tbody>
+    {% for producto in productos %}
+    {% if modo_baja %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.nombre }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.categoria.nombre }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.subcategoria.nombre }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.motivo }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.observaciones|default:"-" }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.fecha_baja|date:"d/m/Y" }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.baja.usuario.username }}</td>
+        </tr>
+    {% elif filtros_aplicados %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.nombre }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.categoria }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.subcategoria }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
+            {% if filtro_por_marca %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.marca }}</td>{% endif %}
+            {% if filtro_por_modelo %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.modelo }}</td>{% endif %}
+            {% if filtro_por_lote %}<td>{{ producto.lote|default:"-" }}</td>{% endif %}
+            {% if filtro_por_color %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.color }}</td>{% endif %}
+            {% if filtro_por_presentacion %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.presentacion }}</td>{% endif %}
+            {% if filtro_por_codigo %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.codigo }}</td>{% endif %}
+            {% if filtro_por_num_cat %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.num_cat }}</td>{% endif %}
+            {% if filtro_por_num_serie %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.num_serie }}</td>{% endif %}
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.ubicacion }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.estado }}</td>
+            {% if filtro_por_fecha_agregado %}<td>{{ producto.fecha_agregado|date:"d/m/Y" }}</td>{% endif %}
+            {% if filtro_por_vencimiento %}<td>{{ producto.vencimiento|date:"d/m/Y" }}</td>{% endif %}
+        </tr>
+    {% else %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.nombre }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.categoria }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.subcategoria }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.marca|default:"" }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.ubicacion }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.estado }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.lote|default:"" }}</td>
+            <td>{{ producto.vencimiento|date:"d/m/Y" }}</td>
+            <td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.observacion }}</td>
+            {% if filtro_por_codigo %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.codigo }}</td>{% endif %}
+            {% if filtro_por_num_serie %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.num_serie }}</td>{% endif %}
+            {% if filtro_por_marca %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.marca }}</td>{% endif %}
+            {% if filtro_por_modelo %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.modelo }}</td>{% endif %}
+            {% if filtro_por_color %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.color }}</td>{% endif %}
+            {% if filtro_por_presentacion %}<td style="text-align: left; word-wrap: break-word; white-space: normal;">{{ producto.presentacion }}</td>{% endif %}
+        </tr>
+    {% endif %}
+    {% endfor %}
+</tbody>
+</table>
+
+
+    <p class="total">Total de productos listados: {{ total }}</p>
+
+    <div class="firma">
+        <p>______________________________</p>
+        <p><strong>Firma del Responsable</strong></p>
+    </div>
+
+    <div class="footer fw-bold">
+        <strong>Universidad Nacional Politécnica - Sistema de Gestión de Inventario</strong>
+    </div>
+
 </body>
+
 </html>

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block body %}
+{% block content_wrapper %}
 
 <!-- Mensajes -->
 {% if messages %}
@@ -109,15 +109,20 @@
     </select>
 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="codigo" class="form-label"><strong>Código (único)</strong></label>
                     <input type="text" name="codigo" class="form-control" value="{{ request.GET.codigo }}">
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="num_serie" class="form-label"><strong>N° de serie (único)</strong></label>
                     <input type="text" name="num_serie" class="form-control" value="{{ request.GET.num_serie }}">
                 </div>
+
+                <div class="col-md-2">
+    <label for="num_cat" class="form-label"><strong># Cat</strong></label>
+    <input type="text" name="num_cat" class="form-control" value="{{ request.GET.num_cat }}">
+</div>
 
                 <div class="col-md-3">
     <label for="lote" class="form-label"><strong>Lote</strong></label>
@@ -166,7 +171,7 @@
                     </div>
                 </div>
 
-               <div class="col-md-4">
+               <div class="col-md-3">
     <label for="marca" class="form-label"><strong>Marca</strong></label>
     <select name="marca" class="form-select">
         <option value="">--Todas--</option>
@@ -180,7 +185,7 @@
     </select>
 </div>
 
-<div class="col-md-4">
+<div class="col-md-3">
     <label for="modelo" class="form-label"><strong>Modelo</strong></label>
     <select name="modelo" class="form-select">
         <option value="">--Todos--</option>
@@ -194,7 +199,7 @@
     </select>
 </div>
 
-<div class="col-md-4">
+<div class="col-md-3">
     <label for="color" class="form-label"><strong>Color</strong></label>
     <select name="color" class="form-select">
         <option value="">--Todos--</option>
@@ -203,6 +208,20 @@
                 <option value="{{ c.id }}" selected>{{ c.nombre }}</option>
             {% else %}
                 <option value="{{ c.id }}">{{ c.nombre }}</option>
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>
+
+<div class="col-md-3">
+    <label for="presentacion" class="form-label"><strong>Presentación</strong></label>
+    <select name="presentacion" class="form-select">
+        <option value="">--Todas--</option>
+        {% for p in presentaciones %}
+            {% if request.GET.presentacion and request.GET.presentacion == p.id|stringformat:"s" %}
+                <option value="{{ p.id }}" selected>{{ p.nombre }}</option>
+            {% else %}
+                <option value="{{ p.id }}">{{ p.nombre }}</option>
             {% endif %}
         {% endfor %}
     </select>
@@ -250,19 +269,19 @@
         {% endif %}
     </div>
 
-    {% if modo_baja %}
-    <!-- TABLA SOLO PARA PRODUCTOS DADOS DE BAJA -->
-<table class="table table-hover align-middle rounded-table" style="table-layout: auto; width: 100%;">
-    <thead class="table-primary">
+{% if modo_baja %}
+<!-- TABLA SOLO PARA PRODUCTOS DADOS DE BAJA -->
+<div class="table-responsive">
+    <table class="table table-hover align-middle rounded-table" style="width: 100%;">
+        <thead class="table-primary">
             <tr>
                 <th>#</th>
-                <th>Producto</th>
+                <th style="min-width: 100px;">Producto</th>
                 <th>Categoría</th>
                 <th>Subcategoría</th>
-                <th>Cantidad</th>
-                <th>Medida</th>
-                <th>Motivo de baja</th>
-                <th>Observaciones de la baja</th>
+                <th>Cantidad de baja</th>
+                <th style="min-width: 165px;">Motivo de baja</th>
+                <th style="min-width: 170px;">Observaciones de la baja</th>
                 <th>Fecha de baja</th>
                 <th>Dado de baja por</th>
             </tr>
@@ -270,34 +289,140 @@
         <tbody>
             {% for producto in productos %}
                 <tr>
-                    <td>{{ forloop.counter0|add:productos.start_index }}</td>
-                    <td>{{ producto.nombre }}</td>
-                    <td>{{ producto.categoria.nombre }}</td>
-                    <td>{{ producto.subcategoria.nombre }}</td>
-                    <td>{{ producto.cantidad_disponible }}</td>
-                    <td>{{ producto.unidad_medida }}</td>
-                    <td>{{ producto.baja.motivo }}</td>
-                    <td>{{ producto.baja.observaciones|default:"-" }}</td>
-                    <td>{{ producto.baja.fecha_baja|date:"d/m/Y" }}</td>
-                    <td>{{ producto.baja.usuario.username}}</td>
+    <td>{{ forloop.counter0|add:productos.start_index }}</td>
+    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">
+        {{ producto.producto.nombre }}
+    </td>
+    <td>{{ producto.producto.categoria.nombre }}</td>
+    <td>{{ producto.producto.subcategoria.nombre }}</td>
+    <td>{{ producto.cantidad }} {{ producto.producto.unidad_medida }}</td>
+    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">
+        {{ producto.motivo }}
+    </td>
+    <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">
+        {{ producto.observaciones|default:"-" }}
+    </td>
+    <td>{{ producto.fecha_baja|date:"d/m/Y" }}</td>
+    <td>{{ producto.usuario.username }}</td>
+</tr>
+            {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center">No hay productos dados de baja.</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-{% else %}
-    <!-- Tabla de Inventario-->
-    <div class="table-responsive">
-    <table class="table table-hover align-middle rounded-table" style="table-layout: auto; width: 100%;">
+</div>
+{% elif filtros_combinados %}
+<!-- TABLA PARA FILTROS COMBINADOS: Porque la lógica del backend ya se encarga de filtrar los productos con base en los parámetros de 
+request.GET, y vos ya pasás al contexto el queryset filtrado como productos, sin importar cuántos filtros estén aplicados. -->
+<div class="table-responsive">
+    <table class="table table-hover align-middle rounded-table" style="width: 100%;">
         <thead class="table-primary">
             <tr>
                 <th>#</th>
-                <th>Nombre</th>
+                <th style="min-width: 200px;">Producto</th>
+                <th>Categoría</th>
+                <th>Subcategoría</th>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Color</th>
+                <th>Presentación</th>
+                <th>N° Serie</th>
+                <th># Cat</th>
+                <th>Código</th>
+                <th>Cantidad</th>
+                <th>Estado</th>
+                <th>Ubicación</th>
+                <th>Lote</th>
+                <th style="min-width: 200px;">Observaciones</th>
+                <th>Vence</th>
+                <th>Agregado</th>
+                <th>Opciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+            <tr>
+                <td>{{ forloop.counter0|add:productos.start_index }}</td>
+                <td style="text-align: left; white-space: normal; word-break: break-word;">{{ producto.nombre }}</td>
+                <td>{{ producto.categoria.nombre }}</td>
+                <td>{{ producto.subcategoria.nombre }}</td>
+                <td>{{ producto.marca.nombre }}</td>
+                <td>{{ producto.modelo.nombre }}</td>
+                <td>{{ producto.color.nombre }}</td>
+                <td>{{ producto.presentacion.nombre }}</td>
+                <td>{{ producto.num_serie|default_if_none:"" }}</td>
+                <td>{{ producto.num_cat|default_if_none:"" }}</td>
+                <td>{{ producto.codigo|default_if_none:"" }}</td>
+                <td>{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
+                <td>{{ producto.estado.get_estado_display }}</td>
+                <td>{{ producto.ubicacion.nombre }}</td>
+                <td>{{ producto.lote.nombre }}</td>
+                <td style="text-align: justify; white-space: normal; word-break: break-word;">{{ producto.observacion }}</td>
+                <td>{{ producto.vencimiento|date:"d/m/Y" }}</td>
+                <td>{{ producto.fecha_agregado|date:"d/m/Y" }}</td>
+                <td>
+                    <strong>
+                        <div class="d-flex flex-column gap-1">
+                            <a href="{% url 'editar_producto' producto.id %}" style="background-color: #102165; color: white; padding: 4px 6px; font-size: 12px; border-radius: 3px; text-decoration: none; text-align: center;">Ver más</a>
+                            <a href="{% url 'dar_baja_producto' producto.id %}" style="background-color: #e30613; color: white; padding: 2px 4px; font-size: 11px; border-radius: 3px; text-decoration: none; text-align: center; display: inline-block; max-width: 80px;">Dar de baja</a>
+                        </div>
+                    </strong>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="17" class="text-center">No hay productos.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% elif filtro_por_presentacion %}
+    
+    {% include 'filtros_tablas/filtro_por_presentacion.html' %}
+
+{% elif filtro_por_color %}
+    
+    {% include 'filtros_tablas/filtro_por_color.html' %}
+
+{% elif filtro_por_modelo %}
+
+    {% include 'filtros_tablas/filtro_por_modelo.html' %}
+
+{% elif filtro_por_marca %}
+
+    {% include 'filtros_tablas/filtro_por_marca.html' %}
+
+{% elif filtro_por_codigo %}
+
+    {% include 'filtros_tablas/filtro_por_codigo.html' %}
+
+{% elif filtro_por_num_serie %}
+
+    {% include 'filtros_tablas/filtro_por_numeroserie.html' %}
+
+{% elif filtro_por_num_cat %}
+    
+    {% include 'filtros_tablas/filtro_por_numcat.html' %}
+
+{% else %}
+    <!-- Tabla de Inventario General que carga por defecto-->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle rounded-table" style="width: 100%;">
+        <thead class="table-primary">
+            <tr>
+                <th>#</th>
+                <th style="min-width: 180px;">Producto</th>     <!-- Para formato de ancho de esa columna de nombre-->
                 <th>Categoría</th>
                 <th>Subcategoría</th>
                 <th>Cantidad</th>
-                <th>Medida</th>
-                <th>Estado</th>
+                <th style="min-width: 130px;">Estado</th>                
                 <th>Ubicación</th>
+                <th>Marca</th>
+                <th>Lote</th>
+                <th style="min-width: 230px;">Observaciones</th>                
                 <th>Vence</th>
                 <th>Agregado</th>
                 <th>Opciones</th>
@@ -307,18 +432,22 @@
             {% for producto in productos %}
             <tr>
                 <td>{{ forloop.counter0|add:productos.start_index }}</td>
-                <td style="width: 20%; text-align: justify; white-space: normal; word-break: break-word;">
-    {{ producto.nombre }}
-</td>
+                <td style="width: 100%; text-align: left; white-space: normal; word-break: break-word;">
+                {{ producto.nombre }}
+                </td>
                 <td>{{ producto.categoria.nombre }}</td>
                 <td>{{ producto.subcategoria.nombre }}</td>
-                <td>{{ producto.cantidad_disponible }}</td>
-                <td>{{ producto.unidad_medida }}</td>
+                <td>{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
                 <td style="max-width: 120px; white-space: normal; word-wrap: break-word;">
-    {{ producto.estado.get_estado_display }}
-</td>
+                {{ producto.estado.get_estado_display }}
+                </td>
     <!--Este enfoque mantiene auto, pero limita cuánto puede crecer la celda.-->
                 <td>{{ producto.ubicacion.nombre }}</td>
+                <td>{{ producto.marca.nombre }}</td>
+                <td>{{ producto.lote.nombre }}</td>
+                <td style="width: 100%; text-align: justify; white-space: normal; word-break: break-word;">
+                {{ producto.observacion }}
+                </td>                
                 <td>{{ producto.vencimiento|date:"d/m/Y" }}</td>
                 <td>{{ producto.fecha_agregado|date:"d/m/Y" }}</td>
                 <td>
@@ -344,10 +473,6 @@
     </table>
 </div>
 {% endif %}
-
- <a href="{% url 'reporte_pdf_inventario' %}?{{ request.GET.urlencode }}" class="btn btn-danger" target="_blank">
-    <i class="fas fa-file-pdf"></i> Exportar PDF
-</a>
 
     <nav class="mt-3">
     <ul class="pagination justify-content-center">
@@ -387,6 +512,7 @@
             color: white !important;
             font-weight: bold !important;
         }
+
         .rounded-table {     
             border-collapse: separate;
             border-spacing: 0;

@@ -1,0 +1,65 @@
+{% block content_wrapper %}
+
+<!-- Mensajes -->
+{% if messages %}
+<div class="alert alert-dismissible alert-success mt-2">
+    {% for message in messages %}
+    <strong class="text-dark">{{ message }}</strong>
+    {% endfor %}
+</div>
+{% endif %}
+
+    <!-- TABLA PARA FILTRO POR PRESENTACIÓN -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle rounded-table" style="width: 100%;">
+        <thead class="table-primary">
+            <tr>
+                <th>#</th>
+                <th style="min-width: 175px;">Producto</th>                 
+                <th>Categoría</th>
+                <th>Subcategoría</th>
+                <th>Presentación</th>
+                <th>Marca</th>
+                <th>Cantidad</th>
+                <th>Estado</th>
+                <th>Ubicación</th>
+                <th style="min-width: 200px;">Observaciones</th>                
+                <th>Opciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+                <tr>
+                    <td>{{ forloop.counter0|add:productos.start_index }}</td>
+                    <td style="width: 100%; text-align: justify; white-space: normal; word-break: break-word;">
+                    {{ producto.nombre }}
+                    </td>                    
+                    <td>{{ producto.categoria.nombre }}</td>
+                    <td>{{ producto.subcategoria.nombre }}</td>
+                    <td><strong>{{ producto.presentacion.nombre }}</strong></td>
+                    <td>{{ producto.marca.nombre }}</td>                   
+                    <td>{{ producto.cantidad_disponible }} {{ producto.unidad_medida }}</td>
+                    <td>{{ producto.estado.get_estado_display }}</td>
+                    <td>{{ producto.ubicacion.nombre }}</td>
+                    <td style="width: 100%; text-align: justify; white-space: normal; word-break: break-word;">
+                    {{ producto.observacion }}
+                    </td>                      
+                    <td>
+    <strong><div class="d-flex flex-column gap-1">
+        <a href="{% url 'editar_producto' producto.id %}"
+           style="background-color: #102165; color: white; padding: 4px 6px; font-size: 12px; border-radius: 3px; text-decoration: none; text-align: center;">
+            Ver más
+        </a>
+        <a href="{% url 'dar_baja_producto' producto.id %}"
+   style="background-color: #e30613; color: white; padding: 2px 4px; font-size: 11px; border-radius: 3px;
+          text-decoration: none; text-align: center; display: inline-block; max-width: 80px;">
+    Dar de baja
+</a>
+    </div></strong>
+</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+{% endblock %}

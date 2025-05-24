@@ -1,7 +1,7 @@
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 from .models import UnidadMedida
-from .models import EstadoRecurso
+from .models import EstadoRecurso, Producto
 from django.utils import timezone
 from .models import Categoria, Subcategoria
 from django.db.models.signals import post_save
@@ -42,9 +42,9 @@ def cargar_unidades_predeterminadas(sender, **kwargs):
 def crear_estados_recurso(sender, **kwargs):
     if sender.name == 'inventario_nuevo':  
         ESTADOS_PREDEFINIDOS = [
-        ('disponible', 'Disponible'),
-        ('mantenimiento', 'Mantenimiento (No disponible)'),
-        ('baja', 'Dado de baja'),
+            ('disponible', 'Disponible'),
+            ('no_disponible', 'No disponible'),
+            ('baja', 'Dado de baja'),
         ]
         for cod, nombre in ESTADOS_PREDEFINIDOS:
             EstadoRecurso.objects.get_or_create(estado=cod)
@@ -54,9 +54,9 @@ def crear_estados_recurso(sender, **kwargs):
 def crear_ubicaciones_por_defecto(sender, **kwargs):
     if sender.name == 'inventario_nuevo':  
         UBICACIONES_PREDEFINIDAS = [
-            'Laboratorio Planta Alta',
-            'Laboratorio Planta Baja',
-            'Laboratorio Microbiana',
+            'Laboratorio Biotecnología Planta Alta',
+            'Laboratorio Biotecnología Planta Baja',
+            'Laboratorio Biotecnología Microbiana',
         ]
         for nombre in UBICACIONES_PREDEFINIDAS:
             Ubicacion.objects.get_or_create(nombre=nombre)

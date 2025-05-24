@@ -3,6 +3,22 @@
 {% load widget_tweaks %}
 
 {% block body %}
+
+{% if form.errors %}
+  <div class="alert alert-danger">
+    <ul>
+      {% for field in form %}
+        {% for error in field.errors %}
+          <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
 <div class="container mt-4">
     <!-- Mensajes -->
     {% for message in messages %}
@@ -53,9 +69,11 @@
                 <div class="row">
                     <div class="col-md-3">
                         <div class="mb-3">
-                            <label class="form-label"><strong>Cantidad Disponible</strong></label>
+                            <strong>{{ form.cantidad_disponible.label_tag }}</strong>
                             {{ form.cantidad_disponible }}
-                            {{ form.cantidad_disponible.errors }}
+                            <div class="invalid-feedback">
+                                {{ form.cantidad_disponible.errors }}
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-3">

@@ -13,7 +13,6 @@ from inventario_nuevo.forms import PresentacionForm, CapacidadForm, AccesoriosFo
 from inventario_nuevo.forms import MarcaForm, ModeloForm, ColorForm, UbicacionForm, LoteForm, MedidaForm
 from django.utils import timezone
 from django.utils.timezone import localtime
-from inventario_nuevo.models import HistorialInventario
 from django.core.paginator import Paginator
 from django.db.models import Q
 from reportlab.pdfgen import canvas
@@ -24,6 +23,21 @@ from django.template.loader import get_template
 from django.http import HttpResponse
 from xhtml2pdf import pisa
 from inventario_nuevo.utils import obtener_productos_filtrados
+from datetime import datetime, date
+from weasyprint import HTML
+from django.templatetags.static import static
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+import datetime as dt
+from openpyxl import Workbook
+from django.http import HttpResponse
+from weasyprint import HTML
+import tempfile
+from decimal import Decimal
+from django.http import HttpResponse
+from django.template.loader import get_template
+from weasyprint import HTML
+from django.utils import timezone
 from datetime import datetime
 
 # Decorador para verificar si el usuario es administrador
@@ -227,6 +241,10 @@ def agregar_producto(request):
         if form.is_valid():
             producto = form.save(commit=False)
 
+            # Asignar el estado 'disponible' automáticamente
+            estado_disponible = EstadoRecurso.objects.filter(estado='disponible').first()
+            producto.estado = estado_disponible
+
             # Asignar usuario actual
             producto.agregado_por = request.user
 
@@ -273,21 +291,6 @@ def agregar_producto(request):
             producto.fecha_agregado = localtime(timezone.now()).date()
             producto.save()
 
-            # CREAR EL HISTORIAL (PENDIENTEEEEEEE O SE ELIMINARÁ)
-            HistorialInventario.objects.create(
-                producto=producto,
-                nombre_producto=producto.nombre,
-                categoria=producto.categoria,
-                subcategoria=producto.subcategoria,
-                cantidad_inicial=producto.cantidad_disponible,
-                unidad_medida=producto.unidad_medida,
-                ubicacion_inicial=producto.ubicacion,
-                estado_inicial=producto.estado,
-                fecha_agregado=producto.fecha_agregado,
-                agregado_por=producto.agregado_por,
-                tipo_movimiento='ingreso_inicial'
-            )
-
             messages.success(request, "Producto agregado correctamente.")
             return redirect('listar_productos')
         else:
@@ -312,120 +315,130 @@ def agregar_producto(request):
 
 @admin_required
 def listar_productos(request):
-    productos = Producto.objects.all().select_related(
-        'categoria', 'subcategoria', 'marca', 'modelo', 'color', 'estado', 'ubicacion', 'lote', 'baja'
-    ).order_by('-fecha_agregado','-id')  # Primero por fecha agregado DESCENDENTE, luego por id DESCENDENTE
-    
-    # Si no se está filtrando por estado "baja", los excluimos de la vista por defecto del Inventario
     estado = request.GET.get('estado')
-    if not estado or estado != 'baja':
-        productos = productos.exclude(estado__estado='baja')
-
-    nombre = request.GET.get('nombre')
-    codigo = request.GET.get('codigo')
-    categoria = request.GET.get('categoria')
-    subcategoria = request.GET.get('subcategoria')
-    marca = request.GET.get('marca')
-    modelo = request.GET.get('modelo')
-    color = request.GET.get('color')
-    estado = request.GET.get('estado')
-    ubicacion = request.GET.get('ubicacion')
-    lote = request.GET.get('lote')
-    num_serie = request.GET.get('num_serie')
-    fecha_agregado_desde = request.GET.get('fecha_agregado_desde')
-    fecha_agregado_hasta = request.GET.get('fecha_agregado_hasta')
-    vencimiento_desde = request.GET.get('vencimiento_desde')
-    vencimiento_hasta = request.GET.get('vencimiento_hasta')
+    mostrar_bajas = estado == 'baja'
 
     filtros_aplicados = {}
+    filtros_booleans = {}
+    filtros_activos = 0
+    advertencia_bajas = None
 
-    if nombre:
-        productos = productos.filter(nombre__icontains=nombre)
-        filtros_aplicados['Nombre'] = nombre
-    if codigo:
-        productos = productos.filter(codigo__icontains=codigo)
-        filtros_aplicados['Código'] = codigo
-    if categoria:
-        try:
-            cat = Categoria.objects.get(id=categoria)
-            productos = productos.filter(categoria_id=categoria)
-            filtros_aplicados['Categoría'] = cat.nombre
-        except Categoria.DoesNotExist:
-            pass
-    if subcategoria:
-        try:
-            subcat = Subcategoria.objects.get(id=subcategoria)
-            productos = productos.filter(subcategoria_id=subcategoria)
-            filtros_aplicados['Subcategoría'] = subcat.nombre
-        except Subcategoria.DoesNotExist:
-            pass
-    if marca:
-        try:
-            mar = Marca.objects.get(id=marca)
-            productos = productos.filter(marca_id=marca)
-            filtros_aplicados['Marca'] = mar.nombre
-        except Marca.DoesNotExist:
-            pass
-    if modelo:
-        try:
-            mod = Modelo.objects.get(id=modelo)
-            productos = productos.filter(modelo_id=modelo)
-            filtros_aplicados['Modelo'] = mod.nombre
-        except Modelo.DoesNotExist:
-            pass
-    if color:
-        try:
-            col = Color.objects.get(id=color)
-            productos = productos.filter(color_id=color)
-            filtros_aplicados['Color'] = col.nombre
-        except Color.DoesNotExist:
-            pass
-    if estado:
+    if mostrar_bajas:
+        filtros_aplicados['Estado'] = 'Dado de baja'
+        filtros_booleans['filtro_por_estado'] = True
+        filtros_activos += 1
+
+    if mostrar_bajas:
+        queryset = BajaProducto.objects.select_related(
+            'producto__categoria', 'producto__subcategoria', 'producto__marca',
+            'producto__modelo', 'producto__color', 'producto__ubicacion',
+            'producto__lote', 'producto__presentacion', 'producto__estado',
+            'usuario', 'producto__unidad_medida'
+        ).order_by('-fecha_baja')
+    else:
+        queryset = Producto.objects.select_related(
+            'categoria', 'subcategoria', 'marca', 'modelo', 'color', 'estado',
+            'ubicacion', 'lote', 'presentacion', 'unidad_medida'
+        ).exclude(estado__estado='baja').order_by('-fecha_agregado', '-id')
+
+    filtros_usados_modo_baja = set()
+    filtros_permitidos_modo_baja = {'nombre', 'categoria', 'subcategoria'}
+
+    def aplicar_filtro_texto(campo, lookup):
+        nonlocal queryset, filtros_activos, filtros_usados_modo_baja
+        valor = request.GET.get(campo)
+        if valor:
+            if mostrar_bajas:
+                filtros_usados_modo_baja.add(campo)
+            lookup_dict = {lookup: valor}
+            queryset = queryset.filter(**lookup_dict)
+            filtros_aplicados[campo.replace('_', ' ').capitalize()] = valor
+            filtros_booleans[f'filtro_por_{campo}'] = True
+            filtros_activos += 1
+        else:
+            filtros_booleans[f'filtro_por_{campo}'] = False
+
+    def aplicar_filtro_relacion(campo, modelo, path=None):
+        nonlocal queryset, filtros_activos, filtros_usados_modo_baja
+        valor = request.GET.get(campo)
+        if valor:
+            try:
+                obj = modelo.objects.get(id=valor)
+                if mostrar_bajas:
+                    filtros_usados_modo_baja.add(campo)
+                lookup = f'{path}_id'
+                queryset = queryset.filter(**{lookup: valor})
+                filtros_aplicados[campo.capitalize()] = obj.nombre
+                filtros_booleans[f'filtro_por_{campo}'] = True
+                filtros_activos += 1
+            except modelo.DoesNotExist:
+                filtros_booleans[f'filtro_por_{campo}'] = False
+        else:
+            filtros_booleans[f'filtro_por_{campo}'] = False
+
+    def aplicar_filtro_fecha(nombre_display, campo_db):
+        nonlocal queryset, filtros_activos
+        if mostrar_bajas:
+            return  # No aplicar filtros por fecha en modo baja
+        desde = request.GET.get(f'{campo_db}_desde')
+        hasta = request.GET.get(f'{campo_db}_hasta')
+        if desde and hasta:
+            queryset = queryset.filter(**{f'{campo_db}__range': [desde, hasta]})
+            filtros_aplicados[nombre_display] = f"{desde} a {hasta}"
+            filtros_activos += 1
+        elif desde:
+            queryset = queryset.filter(**{f'{campo_db}__gte': desde})
+            filtros_aplicados[f'{nombre_display} desde'] = desde
+            filtros_activos += 1
+        elif hasta:
+            queryset = queryset.filter(**{f'{campo_db}__lte': hasta})
+            filtros_aplicados[f'{nombre_display} hasta'] = hasta
+            filtros_activos += 1
+
+    # Filtros de texto
+    for campo in ['nombre', 'codigo', 'num_cat', 'num_serie']:
+        path = f'producto__{campo}' if mostrar_bajas else campo
+        aplicar_filtro_texto(campo, f'{path}__icontains')
+
+    # Filtros de relaciones
+    relaciones = {
+        'categoria': Categoria,
+        'subcategoria': Subcategoria,
+        'marca': Marca,
+        'modelo': Modelo,
+        'color': Color,
+        'presentacion': Presentacion,
+        'ubicacion': Ubicacion,
+        'lote': Lote,
+        'unidad_medida': UnidadMedida,
+    }
+    for campo, modelo in relaciones.items():
+        path = f'producto__{campo}' if mostrar_bajas else campo
+        aplicar_filtro_relacion(campo, modelo, path)
+
+    # Filtro de estado (solo para productos activos)
+    if not mostrar_bajas and estado in ['disponible', 'no_disponible']:
         estado_obj = EstadoRecurso.objects.filter(estado=estado).first()
         if estado_obj:
-            productos = productos.filter(estado=estado_obj)
+            queryset = queryset.filter(estado=estado_obj)
             filtros_aplicados['Estado'] = estado_obj.get_estado_display()
-    if ubicacion:
-        try:
-            ubi = Ubicacion.objects.get(id=ubicacion)
-            productos = productos.filter(ubicacion_id=ubicacion)
-            filtros_aplicados['Ubicación'] = ubi.nombre
-        except Ubicacion.DoesNotExist:
-            pass
-    if lote:
-        try:
-            lot = Lote.objects.get(id=lote)
-            productos = productos.filter(lote_id=lote)
-            filtros_aplicados['Lote'] = lot.nombre
-        except Lote.DoesNotExist:
-            pass
-    if num_serie:
-        productos = productos.filter(numero_serie__icontains=num_serie)
-        filtros_aplicados['N° de serie'] = num_serie
-    
-    # Rango fechas agregado
-    if fecha_agregado_desde and fecha_agregado_hasta:
-        productos = productos.filter(fecha_agregado__range=[fecha_agregado_desde, fecha_agregado_hasta])
-        filtros_aplicados['Fecha de agregado'] = f"{fecha_agregado_desde} a {fecha_agregado_hasta}"
-    elif fecha_agregado_desde:
-        productos = productos.filter(fecha_agregado__gte=fecha_agregado_desde)
-        filtros_aplicados['Fecha de agregado desde'] = fecha_agregado_desde
-    elif fecha_agregado_hasta:
-        productos = productos.filter(fecha_agregado__lte=fecha_agregado_hasta)
-        filtros_aplicados['Fecha de agregado hasta'] = fecha_agregado_hasta
+            filtros_booleans['filtro_por_estado'] = True
+            filtros_activos += 1
 
-    # Rango fechas vencimiento
-    if vencimiento_desde and vencimiento_hasta:
-        productos = productos.filter(vencimiento__range=[vencimiento_desde, vencimiento_hasta])
-        filtros_aplicados['Fecha de vencimiento'] = f"{vencimiento_desde} a {vencimiento_hasta}"
-    elif vencimiento_desde:
-        productos = productos.filter(vencimiento__gte=vencimiento_desde)
-        filtros_aplicados['Vencimiento desde'] = vencimiento_desde
-    elif vencimiento_hasta:
-        productos = productos.filter(vencimiento__lte=vencimiento_hasta)
-        filtros_aplicados['Vencimiento hasta'] = vencimiento_hasta
+    # Filtros por fechas (solo en productos activos)
+    aplicar_filtro_fecha('Fecha agregado', 'producto__fecha_agregado' if mostrar_bajas else 'fecha_agregado')
+    aplicar_filtro_fecha('Vencimiento', 'producto__vencimiento' if mostrar_bajas else 'vencimiento')
 
-    paginator = Paginator(productos, 10)
+    if mostrar_bajas:
+        filtros_no_permitidos = filtros_usados_modo_baja - filtros_permitidos_modo_baja
+        if filtros_no_permitidos:
+            advertencia_bajas = (
+                "⚠️ Solo se permite filtrar por nombre, categoría y subcategoría cuando se consultan productos dados de baja. "
+                "Los filtros adicionales han sido ignorados."
+            )
+
+    # Paginación
+    paginator = Paginator(queryset, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -435,27 +448,35 @@ def listar_productos(request):
 
     context = {
         'productos': page_obj,
+        'bajas': page_obj if mostrar_bajas else None,
+        'mostrando_bajas': mostrar_bajas,
+        'modo_baja': mostrar_bajas,
+        'total_resultados': queryset.count(),
+        'filtros_aplicados': filtros_aplicados,
+        'filtros_combinados': filtros_activos > 1,
+        'mensaje_advertencia': advertencia_bajas,
+        'params': params,
         'categorias': Categoria.objects.all(),
         'subcategorias': Subcategoria.objects.all(),
         'marcas': Marca.objects.all(),
         'modelos': Modelo.objects.all(),
         'colores': Color.objects.all(),
-        'estados': EstadoRecurso.objects.exclude(estado='prestado'), #Se Excluye el estado prestado de los filtros
+        'presentaciones': Presentacion.objects.all(),
+        'estados': EstadoRecurso.objects.exclude(estado='prestado'),
         'ubicaciones': Ubicacion.objects.all(),
         'lotes': Lote.objects.all(),
-        'total_resultados': productos.count(),
-        'filtros_aplicados': filtros_aplicados,
-        'params': params,  # Para usar en la paginación sin duplicar page
+        'unidades_medida': UnidadMedida.objects.all(),
     }
-
-    context['modo_baja'] = estado == 'baja'
+    context.update(filtros_booleans)
 
     return render(request, 'inventario_nuevo/listar_productos.html', context)
 
-#Vista para Editar_Producto, usando el ProductoEditForm
 @admin_required
 def editar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
+    bajas_previas = BajaProducto.objects.filter(producto=producto).exists()
+    estado_no_disponible = EstadoRecurso.objects.filter(estado='no disponible').first()
+    estado_baja = EstadoRecurso.objects.filter(estado='baja').first()
 
     if request.method == 'POST':
         form = ProductoEditForm(request.POST, instance=producto)
@@ -466,7 +487,21 @@ def editar_producto(request, producto_id):
             form.fields['subcategoria'].queryset = Subcategoria.objects.filter(categoria_id=categoria_id)
 
         if form.is_valid():
-            form.save()
+            producto_editado = form.save(commit=False)
+            nueva_cantidad = producto_editado.cantidad_disponible
+
+            # Lógica de protección contra baja automática
+            if nueva_cantidad == 0:
+                if bajas_previas:
+                    # No permitir baja automática si ya hubo bajas previas
+                    if estado_no_disponible:
+                        producto_editado.estado = estado_no_disponible
+                else:
+                    # Si nunca ha tenido bajas, puede quedar en "baja" si se decide
+                    # Aquí no hacemos nada, el estado permanece según selección del usuario
+                    pass
+
+            producto_editado.save()
             messages.success(request, f"El producto '{producto.nombre}' ha sido actualizado correctamente.")
             return redirect('listar_productos')
         else:
@@ -481,67 +516,366 @@ def editar_producto(request, producto_id):
     return render(request, 'inventario_nuevo/editar_producto.html', {
         'form': form,
         'producto': producto,
-        'cantidad': producto.cantidad_disponible,  # La mostramos sin editar la cantidad
+        'cantidad': producto.cantidad_disponible,
     })
 
+#Dar de baja al producto
 @login_required
 @admin_required
 def dar_baja_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
-
-    # Verificar si ya fue dado de baja
-    if BajaProducto.objects.filter(producto=producto).exists():
-        messages.warning(request, "Este producto ya ha sido dado de baja.")
-        return redirect('listar_productos')
 
     if request.method == 'POST':
         motivo = request.POST.get('motivo', '').strip()
         observaciones = request.POST.get('observaciones', '').strip()
         foto = request.FILES.get('foto')
 
-        if not motivo:
-            messages.error(request, "Debe ingresar un motivo para la baja.")
+        # Caso 1: Hay unidades disponibles
+        if producto.cantidad_disponible > 0:
+            cantidad_str = request.POST.get('cantidad', '').strip()
+
+            try:
+                cantidad = Decimal(cantidad_str)
+            except:
+                messages.error(request, "La cantidad ingresada no es válida.")
+                return redirect('dar_baja_producto', producto_id=producto.id)
+
+            if cantidad <= 0:
+                messages.error(request, "La cantidad debe ser mayor a 0.")
+            elif cantidad > producto.cantidad_disponible:
+                messages.error(request, f"No puedes dar de baja más de {producto.cantidad_disponible} unidades.")
+            elif not motivo:
+                messages.error(request, "Debe ingresar un motivo para la baja.")
+            else:
+                # Registrar baja parcial
+                BajaProducto.objects.create(
+                    producto=producto,
+                    cantidad=cantidad,
+                    motivo=motivo,
+                    observaciones=observaciones,
+                    usuario=request.user,
+                    foto=foto
+                )
+
+                producto.cantidad_disponible -= cantidad
+                # Determinar estado según la nueva cantidad
+                if producto.cantidad_disponible == 0:
+                    estado_no_disp = EstadoRecurso.objects.filter(estado='no_disponible').first()
+                    if estado_no_disp:
+                        producto.estado = estado_no_disp
+                producto.save()
+
+                messages.success(request, f"{cantidad} unidades del producto {producto.nombre} han sido dadas de baja.")
+                return redirect('listar_productos')
+
         else:
-            # Cambiar estado del producto a "baja"
-            estado_baja = EstadoRecurso.objects.get(estado='baja')
-            producto.estado = estado_baja
-            producto.save()
+            # Producto ya sin unidades -> Baja definitiva
+            if not motivo:
+                messages.error(request, "Debe ingresar un motivo para la baja.")
+            else:
+                BajaProducto.objects.create(
+                    producto=producto,
+                    cantidad=0,
+                    motivo=motivo,
+                    observaciones=observaciones,
+                    usuario=request.user,
+                    foto=foto
+                )
 
-            # Registrar la baja
-            BajaProducto.objects.create(
-                producto=producto,
-                motivo=motivo,
-                observaciones=observaciones,
-                usuario=request.user,
-                foto=foto
-            )
+                estado_baja = EstadoRecurso.objects.filter(estado='baja').first()
+                if estado_baja:
+                    producto.estado = estado_baja
+                producto.save()
 
-            messages.success(request, f"El producto {producto.nombre} ha sido dado de baja correctamente.")
-            return redirect('listar_productos')
+                messages.success(request, f"El producto {producto.nombre} ha sido dado de baja definitivamente.")
+                return redirect('listar_productos')
 
-    return render(request, 'inventario_nuevo/dar_baja_producto.html', {'producto': producto})
-
+    return render(request, 'inventario_nuevo/dar_baja_producto.html', {
+        'producto': producto
+    })
+# REPORTES
 @login_required
 @admin_required
-def reporte_pdf_inventario(request):
-    productos, filtros_aplicados = obtener_productos_filtrados(request)
+def vista_reporte_inventario(request):
+    # Lista de posibles campos de filtro
+    campos_filtro = [
+        'categoria', 'subcategoria', 'marca', 'modelo', 'color',
+        'estado', 'presentacion', 'ubicacion', 'lote',
+        'nombre', 'codigo', 'num_cat', 'num_serie',
+    ]
 
-    template_path = 'reportes/reporte_pdf_inventario.html'  # Desde la carpeta templates
+    # Banderas por cada filtro específico
+    context = {
+        'categorias': Categoria.objects.all(),
+        'subcategorias': Subcategoria.objects.all(),
+        'marcas': Marca.objects.all(),
+        'modelos': Modelo.objects.all(),
+        'colores': Color.objects.all(),
+        'presentaciones': Presentacion.objects.all(),
+        'estados': EstadoRecurso.objects.exclude(estado='prestado'),
+        'ubicaciones': Ubicacion.objects.all(),
+        'lotes': Lote.objects.all(),
+
+        'filtro_por_presentacion': 'presentacion' in request.GET and request.GET['presentacion'],
+        'filtro_por_color': 'color' in request.GET and request.GET['color'],
+        'filtro_por_modelo': 'modelo' in request.GET and request.GET['modelo'],
+        'filtro_por_marca': bool(request.GET.get('marca')),
+        'filtro_por_codigo': bool(request.GET.get('codigo')),
+        'filtro_por_num_cat': bool(request.GET.get('num_cat')),
+        'filtro_por_num_serie': bool(request.GET.get('num_serie')),
+    }
+
+    # Contar cuántos filtros están siendo aplicados
+    filtros_activos = sum(1 for campo in campos_filtro if request.GET.get(campo))
+    context['filtros_combinados'] = filtros_activos > 1
+
+    return render(request, 'reportes/vista_reporte_inventario.html', context)
+
+@admin_required
+def reporte_pdf_inventario(request):
+    # Obtener productos filtrados y filtros aplicados
+    productos, filtros_aplicados, es_modo_baja = obtener_productos_filtrados(request)
+
+    # Construcción de URL absoluta para el logo
+    logo_url = request.build_absolute_uri(static('img/logoUNP1.png'))
+
+    # Definición de campos posibles de filtro
+    campos_filtro = [
+        'categoria', 'subcategoria', 'marca', 'modelo', 'color',
+        'estado', 'presentacion', 'ubicacion', 'lote',
+        'nombre', 'codigo', 'num_cat', 'num_serie',
+        'fecha_agregado_desde', 'fecha_agregado_hasta',
+        'vencimiento_desde', 'vencimiento_hasta'
+    ]
+    filtros_activos = sum(bool(request.GET.get(campo)) for campo in campos_filtro)
+
+    # Contexto del template
     context = {
         'productos': productos,
         'filtros_aplicados': filtros_aplicados,
-        'fecha_generacion': datetime.now(),
+        'fecha_generacion': timezone.now(),
         'usuario': request.user,
-        'total': productos.count()
+        'total': productos.count(),
+        'logo_url': logo_url,
+
+        # Indicadores de columnas a mostrar (según filtros activos)
+        'filtro_por_presentacion': bool(request.GET.get('presentacion')),
+        'filtro_por_color': bool(request.GET.get('color')),
+        'filtro_por_modelo': bool(request.GET.get('modelo')),
+        'filtro_por_marca': bool(request.GET.get('marca')),
+        'filtro_por_codigo': bool(request.GET.get('codigo')),
+        'filtro_por_num_cat': bool(request.GET.get('num_cat')),
+        'filtro_por_num_serie': bool(request.GET.get('num_serie')),
+        'filtro_por_lote': bool(request.GET.get('lote')),
+        'filtro_por_fecha_agregado': bool(request.GET.get('fecha_agregado_desde') or request.GET.get('fecha_agregado_hasta')),
+        'filtro_por_vencimiento': bool(request.GET.get('vencimiento_desde') or request.GET.get('vencimiento_hasta')),
+        'filtros_combinados': filtros_activos > 1
     }
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="reporte_inventario.pdf"'
+    # Renderizado del PDF
+    template = get_template('reportes/reporte_pdf_inventario.html')
+    html_string = template.render(context)
+    pdf_file = HTML(string=html_string).write_pdf()
 
-    template = get_template(template_path)
-    html = template.render(context)
+    # Preparar respuesta HTTP con PDF
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    fecha_actual = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    nombre_archivo = f'reporte_inventario_{fecha_actual}.pdf'
+    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
 
-    pisa_status = pisa.CreatePDF(html, dest=response)
-    if pisa_status.err:
-        return HttpResponse('Error al generar el PDF', status=500)
+    return response
+
+#Para el reporte Excel, que se genera gracias a la librería openpyxl
+
+from openpyxl.utils import get_column_letter
+
+@admin_required
+def reporte_excel_inventario(request):
+    productos = Producto.objects.select_related(
+        'unidad_medida', 'categoria', 'subcategoria', 'marca', 'modelo',
+        'color', 'presentacion', 'ubicacion', 'lote', 'estado', 'agregado_por'
+    )
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Inventario"
+
+    # --- ESTILOS ---
+    encabezado_font = Font(bold=True, color="FFFFFF")
+    encabezado_fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+    alineacion_centro = Alignment(horizontal='center', vertical='center')
+    alineacion_izquierda = Alignment(horizontal='left', vertical='top', wrapText=True)
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+
+    # --- HOJA 1: INVENTARIO ACTIVO ---
+    columnas = [
+        ('Productos', 'nombre'),
+        ('Cantidad', 'cantidad_disponible'),
+        ('Unidad', 'unidad_medida.nombre'),
+        ('Código', 'codigo'),
+        ('N° Catálogo', 'num_cat'),
+        ('N° Serie', 'num_serie'),
+        ('Categoría', 'categoria.nombre'),
+        ('Subcategoría', 'subcategoria.nombre'),
+        ('Marca', 'marca.nombre'),
+        ('Modelo', 'modelo.nombre'),
+        ('Color', 'color.nombre'),
+        ('Presentación', 'presentacion.nombre'),
+        ('Ubicación', 'ubicacion.nombre'),
+        ('Lote', 'lote.nombre'),
+        ('Estado', 'estado.estado'),
+        ('Fecha agregado', 'fecha_agregado'),
+        ('Vencimiento', 'vencimiento'),
+        ('Descripción', 'descripcion'),
+        ('Accesorios', 'accesorios'),
+        ('Capacidad', 'capacidad'),
+        ('Medida', 'medida'),
+        ('Observaciones', 'observacion'),
+        ('Usuario que agrega', 'agregado_por.username'),
+    ]
+
+    # Título principal
+    ws.insert_rows(1)
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(columnas))
+    titulo_cell = ws.cell(row=1, column=1, value="REPORTE DE INVENTARIO GENERAL")
+    titulo_cell.font = Font(bold=True, size=14)
+    titulo_cell.alignment = Alignment(horizontal='center')
+
+    # Encabezados
+    for col_idx, (titulo, _) in enumerate(columnas, start=1):
+        cell = ws.cell(row=2, column=col_idx, value=titulo)
+        cell.font = encabezado_font
+        cell.fill = encabezado_fill
+        cell.alignment = alineacion_centro
+        cell.border = thin_border
+
+    # Filas de datos
+    for fila, producto in enumerate(productos, start=3):
+        for col_idx, (titulo, atributo) in enumerate(columnas, start=1):
+            partes = atributo.split('.')
+            valor = producto
+            try:
+                for parte in partes:
+                    if valor is None:
+                        break
+                    valor = getattr(valor, parte, None)
+            except AttributeError:
+                valor = ''
+            if isinstance(valor, (datetime, date)):
+                valor = valor.strftime('%d/%m/%Y')
+            elif valor is None:
+                valor = ''
+            elif not isinstance(valor, (str, int, float, bool)):
+                valor = str(valor)
+
+            cell = ws.cell(row=fila, column=col_idx, value=valor)
+
+            if titulo in ['Productos', 'Presentación', 'Observaciones', 'Descripción']:
+                cell.alignment = alineacion_izquierda
+            else:
+                cell.alignment = alineacion_centro
+
+            cell.border = thin_border
+
+    # Ajuste de anchos
+    for i, column_cells in enumerate(ws.columns, start=1):
+        col_letter = get_column_letter(i)
+        encabezado = ws.cell(row=2, column=i).value
+        if encabezado in ['Productos', 'Presentación', 'Observaciones', 'Descripción']:
+            ws.column_dimensions[col_letter].width = 30
+        else:
+            max_length = max((len(str(cell.value)) if cell.value else 0) for cell in column_cells)
+            ws.column_dimensions[col_letter].width = max(15, max_length + 2)
+
+    # --- HOJA 2: DADOS DE BAJA ---
+    ws_baja = wb.create_sheet(title="Dados de baja")
+
+    columnas_baja = [
+        ('Productos', 'producto.nombre'),
+        ('Categoría', 'producto.categoria.nombre'),
+        ('Subcategoría', 'producto.subcategoria.nombre'),
+        ('Cantidad', 'producto.cantidad_disponible'),
+        ('Unidad', 'producto.unidad_medida.nombre'),
+        ('Fecha baja', 'fecha_baja'),
+        ('Motivo', 'motivo'),
+        ('Observaciones', 'observaciones'),
+        ('Usuario dió baja', 'usuario.username'),
+    ]
+
+    # Título principal
+    ws_baja.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(columnas_baja))
+    titulo_baja = ws_baja.cell(row=1, column=1)
+    titulo_baja.value = "REPORTE DE PRODUCTOS DADOS DE BAJA"
+    titulo_baja.font = Font(size=14,bold=True, color="FFFFFF")
+    titulo_baja.alignment = Alignment(horizontal='center', vertical='center')
+    titulo_baja.fill = encabezado_fill
+
+    # Encabezados fila 2
+    for col_idx, (titulo, _) in enumerate(columnas_baja, start=1):
+        cell = ws_baja.cell(row=2, column=col_idx, value=titulo)
+        cell.font = encabezado_font
+        cell.fill = encabezado_fill
+        cell.alignment = alineacion_centro
+        cell.border = thin_border
+
+    # Datos desde fila 3
+    productos_baja = BajaProducto.objects.select_related(
+        'producto__categoria', 'producto__subcategoria',
+        'producto__unidad_medida', 'usuario'
+    )
+
+    for fila, baja in enumerate(productos_baja, start=3):
+        for col_idx, (_, atributo) in enumerate(columnas_baja, start=1):
+            partes = atributo.split('.')
+            valor = baja
+            try:
+                for parte in partes:
+                    if valor is None:
+                        break
+                    valor = getattr(valor, parte, None)
+            except AttributeError:
+                valor = ''
+            if isinstance(valor, (datetime, date)):
+                valor = valor.strftime('%d/%m/%Y')
+            elif valor is None:
+                valor = ''
+            elif not isinstance(valor, (str, int, float, bool)):
+                valor = str(valor)
+
+            cell = ws_baja.cell(row=fila, column=col_idx, value=valor)
+
+            if columnas_baja[col_idx - 1][0] in ['Productos', 'Motivo', 'Observaciones']:
+                cell.alignment = alineacion_izquierda
+            else:
+                cell.alignment = alineacion_centro
+
+            cell.border = thin_border
+
+    # Ajuste de anchos hoja 2
+    # Ajuste de anchos hoja 2
+    for i, column_cells in enumerate(ws_baja.columns, start=1):
+        col_letter = get_column_letter(i)
+        encabezado = ws_baja.cell(row=2, column=i).value
+        if encabezado in ['Productos', 'Motivo', 'Observaciones']:
+            ws_baja.column_dimensions[col_letter].width = 30
+    else:
+        # Protege contra columnas sin datos
+        try:
+            max_length = max(
+                (len(str(cell.value)) if cell.value else 0 for cell in column_cells[2:]),
+                default=0
+            )
+        except ValueError:
+            max_length = 0
+        ws_baja.column_dimensions[col_letter].width = max(15, max_length + 2)
+
+    # --- RESPUESTA HTTP ---
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    fecha_actual = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    nombre_archivo = f'reporte_inventario_y_bajas_{fecha_actual}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+    wb.save(response)
     return response
