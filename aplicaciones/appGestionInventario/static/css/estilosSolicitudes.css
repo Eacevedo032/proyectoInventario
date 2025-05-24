@@ -1,9 +1,4 @@
-/* ========== ESTILOS GENERALES ========== */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
+
 
 #resultados_busqueda {
     max-height: 300px;

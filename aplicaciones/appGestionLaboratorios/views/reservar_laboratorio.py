@@ -89,6 +89,7 @@ def reservar_laboratorio(request):
     fecha_actual = datetime.now().date()
     fecha_limite = fecha_actual - timedelta(days=30)
 
+
     # Query base - inicialmente solo pendientes si no hay filtros
     solicitudes = SolicitudLaboratorio.objects.filter(usuario=request.user)
     

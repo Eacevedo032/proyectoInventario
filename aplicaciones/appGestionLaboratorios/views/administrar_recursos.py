@@ -28,25 +28,34 @@ def administracionRecursos(request):
     producto = request.GET.get('producto')
     usuario = request.GET.get('usuario')
 
+    # Base queryset: solicitudes distintas de "rechazada"
     solicitudes = SolicitudProductosInventario.objects.select_related(
         'usuario', 'producto'
-    ).order_by('-fecha_uso')
+    ).exclude(estado='rechazada')
 
+    # Filtro por estado: si no hay filtro, solo "en_revision"
     if estado:
         solicitudes = solicitudes.filter(estado=estado)
+    else:
+        solicitudes = solicitudes.filter(estado='en_revision')
+
+    # Filtro por nombre del producto (búsqueda parcial, insensible a mayúsculas)
     if producto:
         solicitudes = solicitudes.filter(producto__nombre__icontains=producto)
+
+    # Filtro por nombre de usuario (búsqueda parcial, insensible a mayúsculas)
     if usuario:
         solicitudes = solicitudes.filter(usuario__username__icontains=usuario)
 
-    # Agrupar por usuario
+    # Ordenar por fecha de uso
+    solicitudes = solicitudes.order_by('fecha_uso')
+
+    # Agrupar solicitudes por usuario
     solicitudes_por_usuario = {}
     for solicitud in solicitudes:
-        if solicitud.usuario not in solicitudes_por_usuario:
-            solicitudes_por_usuario[solicitud.usuario] = []
-        solicitudes_por_usuario[solicitud.usuario].append(solicitud)
+        solicitudes_por_usuario.setdefault(solicitud.usuario, []).append(solicitud)
 
-    # Paginación
+    # Paginación (10 elementos por página)
     paginator = Paginator(solicitudes, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -59,81 +68,73 @@ def administracionRecursos(request):
 @admin_required #Verifica si el usuario es administrador
 @csrf_exempt
 @login_required
+@admin_required
+@login_required
 def aprobar_solicitud_producto(request, solicitud_id):
+    if request.method != 'POST':
+        messages.error(request, 'Método no permitido.')
+        return redirect('administracion_recursos')
+
     solicitud = get_object_or_404(SolicitudProductosInventario, id=solicitud_id)
 
     if solicitud.estado == 'aprobada':
-        return JsonResponse({'success': False, 'message': 'Esta solicitud ya fue aprobada.'})
+        messages.error(request, 'Esta solicitud ya fue aprobada.')
+        return redirect('administracion_recursos')
 
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        descripcion = data.get('descripcion')
+    try:
+        solicitud.full_clean()
+    except ValidationError as e:
+        messages.error(request, 'Errores de validación: ' + ', '.join(e.messages))
+        return redirect('administracion_recursos')
 
-        if not descripcion:
-            return JsonResponse({'success': False, 'message': 'La descripción es requerida.'})
+    producto = solicitud.producto
+    unidad_producto = producto.unidad_medida
+    unidad_solicitada = UnidadMedida.objects.get(abreviatura=solicitud.unidad_medida)
+    cantidad_anterior = Decimal(str(producto.cantidad_disponible))
 
-        try:
-            solicitud.full_clean()
-        except ValidationError as e:
-            errores = []
-            for field, error_list in e.message_dict.items():
-                for error in error_list:
-                    errores.append(error)
-            return JsonResponse({
-                'success': False,
-                'message': 'Errores de validación: ' + ', '.join(errores)
-            })
-
-        producto = solicitud.producto
-        unidad_producto = producto.unidad_medida
-        unidad_solicitada = UnidadMedida.objects.get(abreviatura=solicitud.unidad_medida)
-        cantidad_anterior = Decimal(str(producto.cantidad_disponible))
-
-        if unidad_producto != unidad_solicitada:
-            try:
+    try:
+        with transaction.atomic():
+            # Convertir unidades si es necesario
+            if unidad_producto != unidad_solicitada:
                 cantidad_convertida = convertir_unidades(
                     Decimal(str(solicitud.cantidad_utilizada)),
                     unidad_origen=unidad_solicitada.abreviatura,
                     unidad_destino=unidad_producto.abreviatura,
                 )
-            except ValueError as e:
-                return JsonResponse({
-                    'success': False,
-                    'message': f"Error al convertir unidades: {str(e)}"
-                })
-        else:
-            cantidad_convertida = Decimal(str(solicitud.cantidad_utilizada))
+            else:
+                cantidad_convertida = Decimal(str(solicitud.cantidad_utilizada))
 
-        if cantidad_anterior >= cantidad_convertida:
-            try:
-                with transaction.atomic():
-                    producto.cantidad_disponible = cantidad_anterior - cantidad_convertida
-                    producto.save()
+            # Verificar disponibilidad
+            if cantidad_anterior < cantidad_convertida:
+                messages.error(request, f"No hay suficiente cantidad de {producto.nombre} en inventario.")
+                return redirect('administracion_recursos')
 
-                    HistorialInventario.objects.create(
-                        producto=producto,
-                        cantidad_cambiada=cantidad_convertida,
-                        unidad_medida=unidad_solicitada,
-                        cantidad_anterior=cantidad_anterior,
-                        fecha_cambio=timezone.now(),
-                        tipo_cambio='salida',
-                        modificado_por=request.user,
-                        descripcion=descripcion
-                    )
+            # Actualizar producto
+            producto.cantidad_disponible = cantidad_anterior - cantidad_convertida
+            producto.save()
 
-                    solicitud.estado = 'aprobada'
-                    solicitud.save()
+            # Crear historial usando el motivo de la solicitud
+            HistorialInventario.objects.create(
+                producto=producto,
+                cantidad_cambiada=cantidad_convertida,
+                unidad_medida=solicitud.unidad_medida,
+                cantidad_anterior=cantidad_anterior,
+                fecha_cambio=timezone.now(),
+                tipo_cambio='salida',
+                modificado_por=request.user,
+                descripcion=f"Solicitud #{solicitud.id}: {solicitud.motivo or 'Sin motivo especificado'}"
+            )
 
-                    messages.success(request, 'La solicitud ha sido aprobada exitosamente.')
+            # Actualizar estado de la solicitud
+            solicitud.estado = 'aprobada'
+            solicitud.save()
 
-                    return JsonResponse({'success': True, 'message': 'La solicitud ha sido aprobada exitosamente.'})
+            messages.success(request, 'Solicitud aprobada exitosamente.')
+            return redirect('administracion_recursos')
 
-            except Exception as e:
-                return JsonResponse({'success': False, 'message': f"Error al aprobar solicitud: {str(e)}"})
-        else:
-            return JsonResponse({'success': False, 'message': f"No hay suficiente cantidad de {producto.nombre} en inventario."})
-
-    return JsonResponse({'success': False, 'message': 'Método no permitido.'})
+    except Exception as e:
+        messages.error(request, f'Error al aprobar solicitud: {str(e)}')
+        return redirect('administracion_recursos')
 
 from aplicaciones.appGestionLaboratorios.models import SolicitudProductosInventario
 

@@ -31,10 +31,14 @@ def administracionLaboratorios(request):
 
     # Por defecto solo solicitudes en revisión
     if estado:
-        solicitudes = SolicitudLaboratorio.objects.select_related('usuario').exclude(estado='rechazada').filter(estado=estado)
+        solicitudes = SolicitudLaboratorio.objects.select_related('usuario')\
+                        .exclude(estado='rechazada')\
+                        .filter(estado=estado)
     else:
-        solicitudes = SolicitudLaboratorio.objects.select_related('usuario').exclude(estado='rechazada').filter(estado='en_revision')
-
+        solicitudes = SolicitudLaboratorio.objects.select_related('usuario')\
+                        .exclude(estado='rechazada')\
+                        .filter(estado='en_revision')
+        
     # Filtros adicionales
     if laboratorio:
         solicitudes = solicitudes.filter(laboratorio__icontains=laboratorio)

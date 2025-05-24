@@ -99,16 +99,16 @@
                         </td>
                         <td>
                             <div class="btn-group" role="group">
-                                <a href="javascript:abrirModal('{{ solicitud.id }}');" 
-                                   class="btn btn-primary btn-sm me-2 
-                                          {% if solicitud.estado != 'en_revision' %} btn-disabled {% endif %}">
-                                    Aprobar
-                                </a>
-                                <a href="{% url 'rechazar_solicitud' solicitud.id %}" 
-                                   class="btn btn-danger btn-sm me-2 
-                                          {% if solicitud.estado != 'en_revision' %} btn-disabled {% endif %}">
-                                    Rechazar
-                                </a>
+                                {% if solicitud.estado == 'en_revision' %}
+                                    <form action="{% url 'aprobar_solicitud_producto' solicitud.id %}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-primary btn-sm me-2">Aprobar</button>
+                                    </form>
+                                    <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm me-2">Rechazar</a>
+                                {% else %}
+                                    <button class="btn btn-primary btn-sm me-2" disabled>Aprobar</button>
+                                    <button class="btn btn-danger btn-sm me-2" disabled>Rechazar</button>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
@@ -144,63 +144,4 @@
         </ul>
     </nav>
 </div>
-
-<!-- Modal para Descripción -->
-<div class="modal fade" id="descripcionModal" tabindex="-1" role="dialog" aria-labelledby="descripcionModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="descripcionModalLabel">Agregar Descripción</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="descripcionForm">
-                    <div class="form-group">
-                        <label for="descripcion">Descripción de la aprobación:</label>
-                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required></textarea>
-                    </div>
-                    <button type="button" class="btn btn-primary" id="guardarDescripcion">Guardar Descripción</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    function abrirModal(solicitud_id) {
-        solicitudId = solicitud_id;
-        $('#descripcionModal').modal('show');
-    }
-
-    document.getElementById('guardarDescripcion').addEventListener('click', function() {
-        let descripcion = document.getElementById('descripcion').value;
-        if (descripcion) {
-            fetch("{% url 'aprobar_solicitud_producto' 0 %}".replace('0', solicitudId), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}',
-                },
-                body: JSON.stringify({ descripcion: descripcion }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.href = '{% url "administracion_recursos" %}';
-                } else {
-                    alert(data.message || 'Error al aprobar la solicitud');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error de conexión');
-            });
-        } else {
-            alert('Por favor, ingrese una descripción.');
-        }
-    });
-</script>
-
 {% endblock %}
