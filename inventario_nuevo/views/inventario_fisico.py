@@ -48,6 +48,8 @@ def registrar_inventario_fisico(request):
 
         for producto in productos:
             cantidad_final_str = request.POST.get(f'cantidad_{producto.id}')
+            motivo_modificacion = request.POST.get(f'motivo_{producto.id}', '')  # Obtener el motivo del formulario
+            
             if cantidad_final_str is None:
                 continue
 
@@ -64,13 +66,18 @@ def registrar_inventario_fisico(request):
             diferencia = cantidad_final - cantidad_inicial
 
             if diferencia != 0:
+                # Solo creamos el detalle del inventario aquí
                 InventarioFisicoDetalle.objects.create(
                     inventario=inventario,
                     producto=producto,
                     cantidad_inicial=cantidad_inicial,
                     cantidad_final=cantidad_final,
-                    diferencia=diferencia
+                    diferencia=diferencia,
+                    motivo_modificacion=motivo_modificacion  # Guardamos el motivo en el detalle
                 )
+                
+                # NO creamos el registro en el historial aquí todavía
+                # El historial se creará solo al ejecutar el inventario
 
         messages.success(request, "Inventario físico registrado y pendiente de aprobación.")
         return redirect('lista_inventarios_pendientes')
@@ -89,6 +96,8 @@ def lista_inventarios_pendientes(request):
             'detalles__producto__categoria',
             'detalles__producto__subcategoria'
         )
+    
+    # Elimina el bucle que busca en el historial, ya no es necesario
     return render(request, 'inventario_nuevo/lista_inventarios_pendientes.html', {'inventarios': inventarios})
 
 def ver_detalle_inventario(request, inventario_id):
@@ -97,12 +106,20 @@ def ver_detalle_inventario(request, inventario_id):
     return render(request, 'inventario_nuevo/detalle_inventario.html', {'inventario': inventario, 'detalles': detalles})
 
 @solo_administrador
-def ejecutar_todo_inventario_fisico(request):
+def ejecutar_inventario_fisico(request, inventario_id):
+    inventario = get_object_or_404(InventarioFisico, id=inventario_id, estado='pendiente')
+
     if request.method == 'POST':
-        inventarios_pendientes = InventarioFisico.objects.filter(estado='pendiente')
-        for inventario in inventarios_pendientes:
-            detalles = inventario.detalles.all()
-            for detalle in detalles:
+        detalles = inventario.detalles.all()
+        for detalle in detalles:
+            # Verificar si ya existe un registro en el historial para este detalle
+            historial_existente = HistorialInventarioFisico.objects.filter(
+                inventario=inventario,
+                producto=detalle.producto,
+                fecha_aprobacion__isnull=True
+            ).exists()
+            
+            if not historial_existente:
                 producto = detalle.producto
                 producto.cantidad_disponible = detalle.cantidad_final
                 producto.save()
@@ -114,36 +131,9 @@ def ejecutar_todo_inventario_fisico(request):
                     cantidad_final=detalle.cantidad_final,
                     diferencia=detalle.diferencia,
                     usuario=request.user,
-                    fecha_registro=inventario.fecha,
                     fecha_aprobacion=timezone.now(),
-                    motivo_modificacion='Inventario ejecutado en lote'
+                    motivo_modificacion=detalle.motivo_modificacion
                 )
-            inventario.estado = 'ejecutado'
-            inventario.save()
-        messages.success(request, "Todos los inventarios pendientes se ejecutaron correctamente.")
-    return redirect('lista_inventarios_pendientes')
-
-@solo_administrador
-def ejecutar_inventario_fisico(request, inventario_id):
-    inventario = get_object_or_404(InventarioFisico, id=inventario_id, estado='pendiente')
-
-    if request.method == 'POST':
-        detalles = inventario.detalles.all()
-        for detalle in detalles:
-            producto = detalle.producto
-            producto.cantidad_disponible = detalle.cantidad_final
-            producto.save()
-
-            HistorialInventarioFisico.objects.create(
-                inventario=inventario,
-                producto=producto,
-                cantidad_inicial=detalle.cantidad_inicial,
-                cantidad_final=detalle.cantidad_final,
-                diferencia=detalle.diferencia,
-                usuario=request.user,
-                fecha_aprobacion=timezone.now(),
-                motivo_modificacion='Inventario ejecutado'
-            )
 
         inventario.estado = 'ejecutado'
         inventario.save()
@@ -151,6 +141,40 @@ def ejecutar_inventario_fisico(request, inventario_id):
         return redirect('lista_inventarios_pendientes')
 
     return render(request, 'inventario_nuevo/confirmar_ejecucion.html', {'inventario': inventario})
+
+@solo_administrador
+def ejecutar_todo_inventario_fisico(request):
+    if request.method == 'POST':
+        inventarios_pendientes = InventarioFisico.objects.filter(estado='pendiente')
+        for inventario in inventarios_pendientes:
+            detalles = inventario.detalles.all()
+            for detalle in detalles:
+                # Verificar si ya existe un registro en el historial para este detalle
+                historial_existente = HistorialInventarioFisico.objects.filter(
+                    inventario=inventario,
+                    producto=detalle.producto,
+                    fecha_aprobacion__isnull=True
+                ).exists()
+                
+                if not historial_existente:
+                    producto = detalle.producto
+                    producto.cantidad_disponible = detalle.cantidad_final
+                    producto.save()
+
+                    HistorialInventarioFisico.objects.create(
+                        inventario=inventario,
+                        producto=detalle.producto,
+                        cantidad_inicial=detalle.cantidad_inicial,
+                        cantidad_final=detalle.cantidad_final,
+                        diferencia=detalle.diferencia,
+                        usuario=request.user,
+                        fecha_aprobacion=timezone.now(),
+                        motivo_modificacion=detalle.motivo_modificacion
+                    )
+            inventario.estado = 'ejecutado'
+            inventario.save()
+        messages.success(request, "Todos los inventarios pendientes se ejecutaron correctamente.")
+    return redirect('lista_inventarios_pendientes')
 
 @solo_administrador
 def editar_inventario_pendiente(request, inventario_id):
@@ -161,13 +185,18 @@ def editar_inventario_pendiente(request, inventario_id):
         cambios_realizados = False
 
         for detalle in detalles:
-            key = f'cantidad_final_{detalle.id}'
-            if key in request.POST:
+            key_cantidad = f'cantidad_final_{detalle.id}'
+            key_motivo = f'motivo_{detalle.id}'
+            
+            if key_cantidad in request.POST:
                 try:
-                    cantidad_final_nueva = Decimal(request.POST[key])
+                    cantidad_final_nueva = Decimal(request.POST[key_cantidad])
+                    motivo = request.POST.get(key_motivo, detalle.motivo_modificacion or '')  # Mantiene el motivo existente si no se proporciona uno nuevo
+                    
                     if cantidad_final_nueva != detalle.cantidad_final:
                         diferencia = cantidad_final_nueva - detalle.cantidad_inicial
 
+                        # Solo crear historial si hay cambio en cantidad
                         HistorialInventarioFisico.objects.create(
                             inventario=inventario,
                             producto=detalle.producto,
@@ -176,13 +205,16 @@ def editar_inventario_pendiente(request, inventario_id):
                             diferencia=diferencia,
                             usuario=request.user,
                             fecha_registro=timezone.now(),
-                            motivo_modificacion="Edición manual del inventario pendiente"
+                            motivo_modificacion=motivo
                         )
 
+                        # Actualizar detalle
                         detalle.cantidad_final = cantidad_final_nueva
                         detalle.diferencia = diferencia
+                        detalle.motivo_modificacion = motivo  # Actualizar motivo siempre
                         detalle.save()
                         cambios_realizados = True
+                        
                 except (InvalidOperation, ValueError):
                     pass
 
@@ -222,31 +254,53 @@ def eliminar_inventario_pendiente(request, detalle_id):
     return redirect('lista_inventarios_pendientes')
 
 def historial_inventario_fisico(request):
-    historial = HistorialInventarioFisico.objects.select_related('producto', 'usuario', 'inventario').all().order_by('-fecha_registro')
+    # Filtramos solo registros ejecutados (con fecha_aprobacion)
+    historial = HistorialInventarioFisico.objects.filter(
+        fecha_aprobacion__isnull=False
+    ).select_related(
+        'producto', 
+        'usuario', 
+        'inventario',
+        'producto__categoria',
+        'producto__subcategoria',
+        'producto__unidad_medida'
+    ).order_by('-fecha_aprobacion')  # Ordenamos por fecha de ejecución
 
+    # Filtros
     usuario = request.GET.get('usuario')
     producto = request.GET.get('producto')
-    solo_ejecutados = request.GET.get('solo_ejecutados')
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
+    tipo_movimiento = request.GET.get('tipo_movimiento')
 
     if usuario:
         historial = historial.filter(usuario_id=usuario)
     if producto:
         historial = historial.filter(producto_id=producto)
-    if solo_ejecutados in ['on', 'true', '1']:
-        historial = historial.filter(motivo_modificacion__icontains='ejecutado')
     if fecha_inicio:
-        historial = historial.filter(fecha_registro__gte=fecha_inicio)
+        historial = historial.filter(fecha_aprobacion__gte=fecha_inicio)
     if fecha_fin:
-        historial = historial.filter(fecha_registro__lte=fecha_fin)
+        historial = historial.filter(fecha_aprobacion__lte=fecha_fin)
+    if tipo_movimiento:
+        if tipo_movimiento == 'positivo':
+            historial = historial.filter(diferencia__gt=0)
+        elif tipo_movimiento == 'negativo':
+            historial = historial.filter(diferencia__lt=0)
+        elif tipo_movimiento == 'cero':
+            historial = historial.filter(diferencia=0)
 
-    paginator = Paginator(historial, 10)
+    # Paginación
+    paginator = Paginator(historial, 10)  # 20 registros por página
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    usuarios = User.objects.all()
-    productos = Producto.objects.all()
+    # Datos para filtros
+    usuarios = User.objects.filter(
+        id__in=historial.values_list('usuario_id', flat=True).distinct()
+    )
+    productos = Producto.objects.filter(
+        id__in=historial.values_list('producto_id', flat=True).distinct()
+    )
 
     context = {
         'page_obj': page_obj,
@@ -255,7 +309,6 @@ def historial_inventario_fisico(request):
         'filtros': request.GET,
     }
     return render(request, 'inventario_nuevo/historial_inventario_fisico.html', context)
-
 
 def exportar_historial_pdf(request):
     filtros = {

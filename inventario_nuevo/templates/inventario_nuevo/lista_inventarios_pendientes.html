@@ -134,64 +134,68 @@
   <!-- Tabla de inventarios -->
   {% if inventarios %}
   <div class="table-responsive shadow rounded border border-2" style="border-color: #010D42;">
-    <table class="table table-hover table-striped table-bordered align-middle mb-0">
-      <thead style="background-color: #010D42; color: white; font-weight: 600;">
+  <table class="table table-hover table-striped table-bordered align-middle mb-0">
+    <thead style="background-color: #010D42; color: white; font-weight: 600;">
+      <tr>
+        <th>Fecha</th>
+        <th>Usuario</th>
+        <th>Categoría</th>
+        <th>Subcategoría</th>
+        <th>Producto</th>
+        <th>Unidad Medida</th>
+        <th>Cantidad Inicial</th>
+        <th>Cantidad Física</th>
+        <th>Diferencias</th>
+        <th>Ubicación</th>
+        <th>Motivo</th> <!-- ✅ NUEVA COLUMNA -->
+        <th class="text-center">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inventario in inventarios %}
+        {% for detalle in inventario.detalles.all %}
         <tr>
-          <th>Fecha</th>
-          <th>Usuario</th>
-          <th>Categoría</th>
-          <th>Subcategoría</th>
-          <th>Producto</th>
-          <th>Unidad Medida</th>
-          <th>Cantidad Inicial</th>
-          <th>Cantidad Física</th>
-          <th>Diferencias</th>
-          <th>Ubicación</th>
-          <th class="text-center">Acciones</th>
+          <td>{{ inventario.fecha|date:"d/m/Y" }}</td>
+          <td>
+            <span class="badge bg-primary px-2 py-1 fw-semibold" style="font-size: 0.9rem;">
+              {{ inventario.creado_por.username }}
+            </span>
+          </td>
+          <td>{{ detalle.producto.subcategoria.categoria.nombre }}</td>
+          <td>{{ detalle.producto.subcategoria.nombre }}</td>
+          <td>{{ detalle.producto.nombre }}</td>
+          <td>{{ detalle.producto.unidad_medida }}</td>
+          <td>{{ detalle.cantidad_inicial }}</td>
+          <td>{{ detalle.cantidad_final }}</td>
+          <td>
+            {% if detalle.diferencia > 0 %}
+              <span class="cantidad-positiva">{{ detalle.diferencia }}</span>
+            {% elif detalle.diferencia < 0 %}
+              <span class="cantidad-negativa">{{ detalle.diferencia }}</span>
+            {% else %}
+              <span class="cantidad-cero">{{ detalle.diferencia }}</span>
+            {% endif %}
+          </td>
+          <td>{{ detalle.producto.ubicacion.nombre }}</td>
+          <td>
+              {{ detalle.motivo_modificacion|default:"-" }}
+          </td>
+          <td class="text-center">
+            <form method="post" action="{% url 'eliminar_inventario_pendiente' detalle.id %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger btn-tabla"
+                      title="Eliminar fila"
+                      onclick="return confirm('¿Seguro que quieres eliminar este producto del inventario?');">
+                <i class="bi bi-trash3-fill"></i>
+              </button>
+            </form>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        {% for inventario in inventarios %}
-          {% for detalle in inventario.detalles.all %}
-          <tr>
-            <td>{{ inventario.fecha|date:"d/m/Y" }}</td>
-            <td>
-              <span class="badge bg-primary px-2 py-1 fw-semibold" style="font-size: 0.9rem;">
-                {{ inventario.creado_por.username }}
-              </span>
-            </td>
-            <td>{{ detalle.producto.subcategoria.categoria.nombre }}</td>
-            <td>{{ detalle.producto.subcategoria.nombre }}</td>
-            <td>{{ detalle.producto.nombre }}</td>
-            <td>{{ detalle.producto.unidad_medida }}</td>
-            <td>{{ detalle.cantidad_inicial }}</td>
-            <td>{{ detalle.cantidad_final }}</td>
-            <td>
-              {% if detalle.diferencia > 0 %}
-                <span class="cantidad-positiva">{{ detalle.diferencia }}</span>
-              {% elif detalle.diferencia < 0 %}
-                <span class="cantidad-negativa">{{ detalle.diferencia }}</span>
-              {% else %}
-                <span class="cantidad-cero">{{ detalle.diferencia }}</span>
-              {% endif %}
-            </td>
-            <td>{{ detalle.producto.ubicacion.nombre }}</td>
-            <td class="text-center">
-              <form method="post" action="{% url 'eliminar_inventario_pendiente' detalle.id %}" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-danger btn-tabla"
-                        title="Eliminar fila"
-                        onclick="return confirm('¿Seguro que quieres eliminar este producto del inventario?');">
-                  <i class="bi bi-trash3-fill"></i>
-                </button>
-              </form>
-            </td>
-          </tr>
-          {% endfor %}
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
   {% else %}
   <div class="alert alert-info text-center fw-semibold">
     No hay inventarios pendientes en este momento.

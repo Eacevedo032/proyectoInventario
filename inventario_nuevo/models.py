@@ -161,6 +161,7 @@ class InventarioFisicoDetalle(models.Model):
     cantidad_inicial = models.DecimalField(max_digits=12, decimal_places=2)
     cantidad_final = models.DecimalField(max_digits=12, decimal_places=2)
     diferencia = models.DecimalField(max_digits=12, decimal_places=2)
+    motivo_modificacion = models.TextField(blank=True, null=True)  # Añade este campo
 
     def __str__(self):
         return f"{self.producto.nombre} - Inv #{self.inventario.id}"
@@ -172,7 +173,7 @@ class HistorialInventarioFisico(models.Model):
     cantidad_final = models.DecimalField(max_digits=8, decimal_places=2)
     diferencia = models.DecimalField(max_digits=8, decimal_places=2)
     usuario = models.ForeignKey(User, on_delete=models.PROTECT)
-    fecha_registro = models.DateTimeField(auto_now_add=True)  # fecha de creación automática
+    fecha_registro = models.DateTimeField(auto_now_add=True)
     fecha_aprobacion = models.DateTimeField(null=True, blank=True)
     motivo_modificacion = models.TextField(blank=True, null=True)
 

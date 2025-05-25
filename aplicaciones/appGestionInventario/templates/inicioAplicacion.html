@@ -120,8 +120,8 @@
             <li><a class="dropdown-item fw-bold" href="{% url 'agregar_producto' %}">➕ Agregar Producto</a></li>
             <li><a class="dropdown-item fw-bold" href="{% url 'menu_catalogos' %}">📚 Gestionar Catálogos</a></li>
             <li><a class="dropdown-item fw-bold" href="{% url 'listar_productos' %}">📋 Inventario</a></li>
-            <li><a class="dropdown-item fw-bold" href="#">📥📤 Entradas y Salidas</a></li>
-            <li><a class="dropdown-item fw-bold" href="#">📦➡️ Movimientos</a></li>
+            <li><a class="dropdown-item fw-bold" href="{% url 'lista_inventarios_pendientes' %}">📜 Autorizar Inventario Fisico</a></li>
+            <li><a class="dropdown-item fw-bold" href="{% url 'registrar_inventario' %}">📦 Inventario Físico</a></li>
           </ul>
         </li>
         <li class="nav-item dropdown fw-bold">
@@ -143,10 +143,7 @@
           </a>
           <ul class="dropdown-menu">
             <li><a class="dropdown-item fw-bold" href="{% url 'vista_reporte_inventario' %}">📦 Inventario General</a></li>
-            <li><a class="dropdown-item fw-bold" href="#">📋 Inventario Físico</a></li>
-            <li><a class="dropdown-item fw-bold" href="#">🔁 Transferencias</a></li>
-            <li><a class="dropdown-item fw-bold" href="#">📥📤 Entradas y Salidas del Inventario</a></li>
-            <li><a class="dropdown-item fw-bold" href="#">🔄 Movimientos del Inventario</a></li>
+            <li><a class="dropdown-item fw-bold" href="{% url 'historial_inventario_fisico' %}">📋 Inventario Físico</a></li>
             <li><a class="dropdown-item fw-bold" href="{% url 'listar_reportes' %}">📊 Actividad Lab y Recursos</a></li>
           </ul>
         </li>

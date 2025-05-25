@@ -597,11 +597,14 @@ def dar_baja_producto(request, producto_id):
 @login_required
 @admin_required
 def vista_reporte_inventario(request):
+    estado = request.GET.get('estado')
+    mostrar_bajas = estado == 'baja'
+    
     # Lista de posibles campos de filtro
     campos_filtro = [
         'categoria', 'subcategoria', 'marca', 'modelo', 'color',
         'estado', 'presentacion', 'ubicacion', 'lote',
-        'nombre', 'codigo', 'num_cat', 'num_serie',
+        'nombre', 'codigo', 'num_cat', 'num_serie', 'bajas',
     ]
 
     # Banderas por cada filtro específico
@@ -879,3 +882,4 @@ def reporte_excel_inventario(request):
     response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
     wb.save(response)
     return response
+
