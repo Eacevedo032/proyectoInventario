@@ -192,3 +192,21 @@ class BajaProducto(models.Model):
 
     def __str__(self):
         return f"Baja de {self.producto.nombre} - {self.cantidad} u."
+
+class TransferenciaProducto(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, default=1)  # Usuario que hizo la transferencia
+    fecha_transferencia = models.DateField(auto_now_add=True)  # Fecha automática
+    estado_destino = models.CharField(max_length=50, choices=[
+        ("Dado de baja", "Dado de baja"),
+        ("Mantenimiento", "Mantenimiento"),
+        ("No Disponible", "No Disponible"),
+        ("Prestado", "Prestado"),
+        ("Ingreso", "Ingreso"),
+    ])
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Cantidad transferida
+    motivo = models.TextField(blank=True, null=True)  #Explicación de la transferencia
+    observacion = models.TextField(blank=True, null=True)  #Nota adicional sobre el movimiento
+
+    def __str__(self):
+        return f"{self.usuario.username} transfirió {self.cantidad} de {self.producto.nombre} a {self.estado_destino} ({self.fecha_transferencia})"

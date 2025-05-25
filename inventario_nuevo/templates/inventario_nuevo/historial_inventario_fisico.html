@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<style>
+  #historial-container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.08);
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  #historial-container h2 {
+    font-size: 1.8rem;
+    color: #010D42;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .top-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-primary {
+    background-color: #010D42;
+    border-color: #010D42;
+    color: white;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 8px 18px;
+    transition: 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .btn-primary:hover {
+    background-color: #00308f;
+  }
+
+  .btn-danger {
+    background-color: #e60000;
+    border-color: #d43f3a;
+    color: white;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 8px 18px;
+    transition: 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .btn-danger:hover {
+    background-color: rgba(255, 115, 0, 0.37);
+  }
+
+  .filtros-collapse {
+    display: none;
+    margin-bottom: 1.5rem;
+    border: 1px solid #ccc;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+
+  .filtros-collapse.show {
+    display: block;
+  }
+
+  form.filtros-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: start;
+  }
+
+  form.filtros-form > div {
+    flex: 1 1 200px;
+  }
+
+  form.filtros-form label {
+    font-weight: bold;
+    color: #010D42;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .form-select,
+  input[type="date"] {
+    width: 100%;
+    padding: 6px 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+
+  .table-responsive {
+    margin-top: 1rem;
+    border-radius: 10px;
+    overflow-x: auto;
+    box-shadow: 0 2px 10px rgba(1, 13, 66, 0.1);
+  }
+
+  table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    background: white;
+    font-size: 0.95rem;
+  }
+
+  thead {
+    background-color: #010D42;
+    color: white;
+  }
+
+  thead th {
+    padding: 12px 8px;
+    text-align: center;
+    border-right: 1px solid #1a1a1a3b;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #e3e3e3;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  tbody tr:nth-child(even) {
+    background-color: #f5f8ff;
+  }
+
+  tbody tr:hover {
+    background-color: #eaf0ff;
+  }
+
+  .text-success {
+    color: green;
+    font-weight: bold;
+  }
+
+  .text-danger {
+    color: red;
+    font-weight: bold;
+  }
+
+  .text-secondary {
+    color: gray;
+    font-weight: bold;
+  }
+
+  .inventario-header {
+    margin-top: 2.5rem;
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #010D42;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    user-select: none;
+    border: 1.5px solid #010D42;
+    padding: 8px 15px;
+    border-radius: 10px;
+    background: #f0f4ff;
+    max-width: fit-content;
+  }
+
+  .inventario-header i {
+    font-size: 1.2rem;
+    color: #010D42;
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div id="historial-container">
+  <h2><i class="bi bi-clock-history me-2"></i>Historial de Cambios de Inventario</h2>
+
+  <div class="top-buttons">
+    <button class="btn btn-primary" onclick="toggleFiltros()">
+      <i class="bi bi-sliders"></i> Mostrar/Ocultar Filtros
+    </button>
+    <a href="{% url 'exportar_historial_pdf' %}?{{ request.GET.urlencode }}" target="_blank" class="btn btn-primary">
+      <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+    </a>
+  </div>
+
+  <div id="filtros" class="filtros-collapse">
+    <form method="GET" class="filtros-form">
+      <div>
+        <label for="usuario">Usuario</label>
+        <select id="usuario" name="usuario" class="form-select">
+          <option value="">-- Todos --</option>
+          {% for usuario in usuarios %}
+            <option value="{{ usuario.id }}" {% if filtros.usuario == usuario.id|stringformat:"s" %}selected{% endif %}>{{ usuario.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label for="producto">Producto</label>
+        <select id="producto" name="producto" class="form-select">
+          <option value="">-- Todos --</option>
+          {% for producto in productos %}
+            <option value="{{ producto.id }}" {% if filtros.producto == producto.id|stringformat:"s" %}selected{% endif %}>{{ producto.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label for="fecha_registro_inicio">Fecha registro inicio</label>
+        <input type="date" id="fecha_registro_inicio" name="fecha_registro_inicio" value="{{ filtros.fecha_registro_inicio }}">
+      </div>
+      <div>
+        <label for="fecha_registro_fin">Fecha registro fin</label>
+        <input type="date" id="fecha_registro_fin" name="fecha_registro_fin" value="{{ filtros.fecha_registro_fin }}">
+      </div>
+
+      <!-- Aquí QUITAMOS los filtros de fecha_aprobacion_inicio y fecha_aprobacion_fin -->
+
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-search"></i> Filtrar
+        </button>
+        <a href="{% url request.resolver_match.url_name %}" class="btn btn-danger">
+          <i class="bi bi-x-circle"></i> Limpiar filtros
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-responsive">
+    {% regroup page_obj by fecha_registro|date:"d/m/Y" as grupos_por_fecha %}
+
+    {% if page_obj %}
+      {% for grupo_fecha in grupos_por_fecha %}
+        {% regroup grupo_fecha.list by inventario.id as grupos_por_inventario %}
+        {% for grupo_inv in grupos_por_inventario %}
+          {% with primer=grupo_inv.list.0 %}
+          <div class="inventario-header" role="region" aria-label="Inventario #{{ primer.inventario.id }}">
+            <i class="bi bi-folder2-open"></i> Inventario #{{ primer.inventario.id }} |
+            Registrado por <strong>{{ primer.usuario.username }}</strong> |
+            Fecha: {{ primer.fecha_registro|date:"j \\d\\e F \\d\\e Y" }}
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Categoría</th>
+                <th>Subcategoría</th>
+                <th>Producto</th>
+                <th>Unidad Medida</th>
+                <th>Inicial</th>
+                <th>Final</th>
+                <th>Diferencia</th>
+                <th>Usuario</th>
+                <th>Fecha Ejecución</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in grupo_inv.list %}
+              <tr>
+                <td>{{ item.producto.categoria.nombre }}</td>
+                <td>{{ item.producto.subcategoria.nombre }}</td>
+                <td>{{ item.producto.nombre }}</td>
+                <td>{{ item.producto.unidad_medida }}</td>
+                <td>{{ item.cantidad_inicial }}</td>
+                <td>{{ item.cantidad_final }}</td>
+                <td class="{% if item.diferencia > 0 %}text-success{% elif item.diferencia < 0 %}text-danger{% else %}text-secondary{% endif %}">
+                  {{ item.diferencia }}
+                </td>
+                <td>{{ item.usuario.username }}</td>
+                <td>{{ item.fecha_aprobacion|date:"d/m/Y H:i" }}</td>
+                <td title="{{ item.motivo_modificacion }}">{{ item.motivo_modificacion|truncatechars:30 }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% endwith %}
+        {% endfor %}
+      {% endfor %}
+    {% else %}
+      <p>No hay registros para mostrar.</p>
+    {% endif %}
+  </div>
+
+  <nav aria-label="Paginación historial inventario">
+    <ul class="pagination justify-content-center mt-4">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+            <span aria-hidden="true">&laquo;</span>
+            <span class="sr-only">Anterior</span>
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+      {% endif %}
+
+      <li class="page-item disabled"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+            <span aria-hidden="true">&raquo;</span>
+            <span class="sr-only">Siguiente</span>
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+
+<script>
+  function toggleFiltros() {
+    const filtros = document.getElementById('filtros');
+    filtros.classList.toggle('show');
+  }
+</script>
+{% endblock %}

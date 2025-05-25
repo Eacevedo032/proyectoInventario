@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Confirmar Ejecución del Inventario #{{ inventario.id }}</h2>
+
+<p>¿Estás seguro que deseas ejecutar este inventario? Esta acción actualizará las cantidades disponibles y no podrá revertirse fácilmente.</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Confirmar Ejecución</button>
+    <a href="{% url 'ver_detalle_inventario' inventario.id %}">Cancelar</a>
+</form>
+{% endblock %}

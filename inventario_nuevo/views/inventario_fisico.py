@@ -3,16 +3,23 @@ from django.utils import timezone
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from decimal import Decimal, InvalidOperation
-from datetime import datetime
 from django.core.paginator import Paginator
 from django.contrib.auth.models import User
 from django.template.loader import get_template
 from xhtml2pdf import pisa
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from datetime import datetime
+import os
+from django.conf import settings
+from weasyprint import HTML
+from django.templatetags.static import static
 from django.urls import reverse
 
 from inventario_nuevo.models import (
     InventarioFisicoDetalle, InventarioFisico,
-    HistorialInventarioFisico, Producto
+    HistorialInventarioFisico, Producto, TransferenciaProducto
 )
 
 # Decorador para restringir acceso solo a "administrador"
@@ -20,13 +27,12 @@ def solo_administrador(view_func):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated or request.user.username != "administrador":
             messages.error(request, "No tienes permisos para realizar esta acción.")
-            return redirect('home')  # o donde quieras redirigir
+            return redirect('lista_inventarios_pendientes')  # o donde quieras redirigir
         return view_func(request, *args, **kwargs)
     return wrapper
 
-from inventario_nuevo.models import BajaProducto
 def registrar_inventario_fisico(request):
-    productos = Producto.objects.exclude(id__in=BajaProducto.objects.values_list('producto_id', flat=True))
+    productos = Producto.objects.exclude(estado__estado='baja')  # Excluir productos dados de baja
     hay_inventario_pendiente = InventarioFisico.objects.filter(estado='pendiente').exists()
 
     if request.method == 'POST':
@@ -250,6 +256,7 @@ def historial_inventario_fisico(request):
     }
     return render(request, 'inventario_nuevo/historial_inventario_fisico.html', context)
 
+
 def exportar_historial_pdf(request):
     filtros = {
         "usuario": request.GET.get("usuario", ""),
@@ -258,7 +265,9 @@ def exportar_historial_pdf(request):
         "fecha_fin": request.GET.get("fecha_fin", ""),
     }
 
-    historial = HistorialInventarioFisico.objects.select_related('producto', 'usuario', 'inventario').all().order_by('-fecha_registro')
+    historial = HistorialInventarioFisico.objects.select_related(
+        'producto', 'usuario', 'inventario'
+    ).all().order_by('-fecha_registro')
 
     if filtros["usuario"]:
         historial = historial.filter(usuario_id=filtros["usuario"])
@@ -269,28 +278,92 @@ def exportar_historial_pdf(request):
     if filtros["fecha_fin"]:
         historial = historial.filter(fecha_modificacion__date__lte=filtros["fecha_fin"])
 
-    # Define la ruta absoluta del logo para que xhtml2pdf lo pueda cargar con file://
-    import os
-    from django.conf import settings
-    logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'logoUNP1.png')
+    filtros_aplicados = {}
+    if filtros["usuario"]:
+        try:
+            usuario = User.objects.get(id=filtros["usuario"])
+            filtros_aplicados["Usuario"] = usuario.username
+        except User.DoesNotExist:
+            filtros_aplicados["Usuario"] = "Desconocido"
+    if filtros["producto"]:
+        try:
+            producto = Producto.objects.get(id=filtros["producto"])
+            filtros_aplicados["Producto"] = producto.nombre
+        except Producto.DoesNotExist:
+            filtros_aplicados["Producto"] = "Desconocido"
+    if filtros["fecha_inicio"]:
+        filtros_aplicados["Fecha desde"] = filtros["fecha_inicio"]
+    if filtros["fecha_fin"]:
+        filtros_aplicados["Fecha hasta"] = filtros["fecha_fin"]
 
-    template = get_template('inventario_nuevo/historial_inventario_pdf.html')
+    # Genera URL completa para la imagen del logo, para que WeasyPrint la pueda cargar
+    logo_url = request.build_absolute_uri(static('img/logoUNP1.png'))
+
     context = {
         'historial': historial,
         'usuario_generador': request.user.username,
-        'fecha_actual': datetime.now(),
-        'logo_path': logo_path,
+        'fecha_actual': timezone.now(),
+        'logo_url': logo_url,
+        'filtros_aplicados': filtros_aplicados,
     }
-    html = template.render(context)
 
-    response = HttpResponse(content_type='application/pdf')
-    # Mostrar PDF en navegador (no descarga automática)
-    response['Content-Disposition'] = 'inline; filename="historial_inventario.pdf"'
+    template = get_template('inventario_nuevo/historial_inventario_pdf.html')
+    html_string = template.render(context)
 
-    pisa_status = pisa.CreatePDF(html, dest=response)
+    # Generar PDF con WeasyPrint
+    pdf_file = HTML(string=html_string).write_pdf(stylesheets=None)  # Puedes añadir estilos aquí
 
-    if pisa_status.err:
-        return HttpResponse('Error al generar PDF')
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    fecha_actual = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    nombre_archivo = f'historial_inventario_{fecha_actual}.pdf'
+    response['Content-Disposition'] = f'inline; filename="{nombre_archivo}"'
 
     return response
+
+
+
+
+
+
+
+#TRANSFERENCIA REGISTRA Y ACTUALIZA
+def transferencia_producto(request):
+    productos = Producto.objects.all()
+    estados = ["Dado de baja", "Mantenimiento", "No Disponible", "Prestado", "Ingreso"]
+
+    if request.method == 'POST':
+        producto = Producto.objects.get(id=request.POST.get('producto_id'))
+        estado_destino = request.POST.get('estado')
+        cantidad_transferida = Decimal(request.POST.get('cantidad', 0))  #Convierte a Decimal
+        usuario = request.user  #Captura el usuario autenticado
+        motivo = request.POST.get('motivo', '')
+
+        #Ajuste automático del inventario
+        inventario, created = InventarioFisico.objects.get_or_create(producto=producto, fecha=timezone.now().date())
+
+        if estado_destino == "Ingreso":
+            inventario.cantidad_final += cantidad_transferida  #Aumenta cantidad
+        else:
+            inventario.cantidad_final -= cantidad_transferida  #Reduce cantidad
+        
+        inventario.calcular_diferencia()  #Calcula la diferencia correctamente
+        inventario.save()
+
+        #egistrar la transferencia en el historial
+        TransferenciaProducto.objects.create(
+            producto=producto,
+            usuario=usuario, 
+            estado_destino=estado_destino,
+            cantidad=cantidad_transferida,
+            motivo=motivo,
+            fecha_transferencia=timezone.now().date()
+        )
+
+        return redirect(reverse('historial_transferencias'))  #Redirige al historial
+
+    return render(request, 'inventario_nuevo/transferencia_producto.html', {'productos': productos, 'estados': estados})
+
+def historial_transferencias(request):
+    transferencias = TransferenciaProducto.objects.all().order_by('-fecha_transferencia')
+    return render(request, 'inventario_nuevo/historial_transferencias.html', {'transferencias': transferencias})
 

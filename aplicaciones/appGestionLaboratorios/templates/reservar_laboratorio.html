@@ -211,6 +211,7 @@
                                 <span class="badge 
                                     {% if solicitud.estado == 'aprobada' %}bg-success
                                     {% elif solicitud.estado == 'rechazada' %}bg-danger
+                                    {% elif solicitud.estado == 'completado' %}bg-success
                                     {% elif solicitud.estado == 'pendiente' %}bg-warning
                                     {% elif solicitud.estado == 'en_revision' %}bg-info
                                     {% endif %}">

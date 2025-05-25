@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block head %}
+<style>
+  .estado-pendiente {
+    background-color: #ffc107;
+    color: black;
+    font-weight: bold;
+    padding: 0.3rem 0.7rem;
+    border-radius: 0.4rem;
+    font-size: 0.95rem;
+  }
+  .tabla-detalle {
+    border: 2px solid #010D42;
+  }
+  .tabla-detalle thead {
+    background-color: #010D42;
+    color: white;
+    font-weight: 600;
+  }
+  .tabla-detalle td, .tabla-detalle th {
+    vertical-align: middle;
+  }
+  /* Botones un poco más pequeños */
+  .btn-sm {
+    font-size: 0.9rem;
+    padding: 0.3rem 0.7rem;
+    border-width: 2px;
+    transition: all 0.3s ease;
+  }
+  .btn-outline-warning {
+    border-color: #ffc107;
+    color: #ffc107;
+  }
+  .btn-outline-warning:hover {
+    background-color: #ffc107;
+    color: black;
+  }
+  .btn-outline-success {
+    border-color: #198754;
+    color: #198754;
+  }
+  .btn-outline-success:hover {
+    background-color: #198754;
+    color: white;
+  }
+  .btn-outline-danger {
+    border-color: #dc3545;
+    color: #dc3545;
+  }
+  .btn-outline-danger:hover {
+    background-color: #dc3545;
+    color: white;
+  }
+  .btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
+  }
+  .btn-outline-secondary:hover {
+    background-color: #6c757d;
+    color: white;
+  }
+  /* Botón editar resaltado */
+  .btn-editar {
+    background-color: #010D42;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(1, 13, 66, 0.7);
+  }
+  .btn-editar:hover {
+    background-color: #00308f;
+    color: white;
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+
+  <!-- Título -->
+  <div class="text-center mb-4">
+    <h2 class="fw-bold text-uppercase" style="color: #010D42;">
+      Detalle del Inventario #{{ inventario.id }}
+    </h2>
+  </div>
+
+  <!-- Información del inventario -->
+  <div class="mb-3 d-flex justify-content-between flex-wrap">
+    <div>
+      <strong>Estado:</strong>
+      <span class="estado-pendiente">{{ inventario.estado }}</span>
+    </div>
+    <div>
+      <strong>Fecha:</strong> {{ inventario.fecha|date:"d/m/Y" }}
+    </div>
+    <div>
+      <strong>Usuario que registró:</strong>
+      <span class="badge bg-primary px-2 py-1 fw-semibold">{{ inventario.creado_por.username }}</span>
+    </div>
+  </div>
+
+  <!-- Botones de acción arriba -->
+  <div class="mb-4 d-flex flex-wrap gap-2 justify-content-end">
+    <a href="{% url 'editar_inventario_pendiente' inventario.id %}" class="btn btn-editar btn-sm">
+      <i class="bi bi-pencil-square me-1"></i> Editar Inventario Físico Completo
+    </a>
+    <a href="{% url 'lista_inventarios_pendientes' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Volver a Lista
+    </a>
+  </div>
+
+  <!-- Tabla de productos -->
+  <div class="table-responsive shadow rounded tabla-detalle">
+    <table class="table table-hover table-striped table-bordered align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Cantidad Inicial</th>
+          <th>Cantidad Física</th>
+          <th>Diferencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for detalle in detalles %}
+        <tr>
+          <td>{{ detalle.producto.nombre }}</td>
+          <td>{{ detalle.cantidad_inicial }}</td>
+          <td>{{ detalle.cantidad_final }}</td>
+          <td>
+            {% if detalle.diferencia > 0 %}
+              <span class="text-success fw-bold">{{ detalle.diferencia }}</span>
+            {% elif detalle.diferencia < 0 %}
+              <span class="text-danger fw-bold">{{ detalle.diferencia }}</span>
+            {% else %}
+              <span class="text-secondary fw-bold">{{ detalle.diferencia }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

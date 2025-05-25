@@ -1,69 +1,98 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load tz %}
 
 {% block head %}
-    <style>
-        h2 {
-            color: #007BFF;
-            font-weight: bold;
-        }
-        .table th {
-            background: #007BFF;
-            color: white;
-        }
-        .btn-save {
-            background: #007BFF;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            width: 100%;
-            font-size: 16px;
-        }
-    </style>
+<style>
+  /* Azul oscuro personalizado para título y botones */
+  .text-primary {
+    color: #010D42 !important;
+  }
+  .btn-primary {
+    background-color: #010D42;
+    border-color: #010D42;
+    color: white;
+  }
+  .btn-primary:hover {
+    background-color: #00358a;
+    border-color: #002d77;
+    color: white;
+  }
+</style>
 {% endblock %}
 
 {% block body %}
 <div class="container py-4">
-    <h2 class="text-center mb-3"><i class="bi bi-box-seam"></i> Inventario Diario</h2>
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="text-center text-uppercase fw-bold text-primary mb-4">
+      <i class="bi bi-clipboard-data"></i> Control de Inventario Físico
+    </h2>
 
-    <form method="POST">
+    {% if not inventario_ejecutado %}
+      <div class="alert alert-warning text-center fw-semibold">
+        ⚠️ No puedes registrar un nuevo inventario físico hasta ejecutar el inventario pendiente.
+      </div>
+    {% else %}
+      <form method="POST">
         {% csrf_token %}
-        <div class="mb-3 text-center">
-            <label for="fecha" class="fw-bold">Seleccionar Fecha:</label> <!-- "Seleccionar Fecha" -->
-            <input type="date" name="fecha" class="form-control form-control-lg w-50 mx-auto text-center" value="{{ fecha_actual }}" required> <!--Fecha más grande y centrada -->
+
+        <div class="d-flex justify-content-between align-items-end mb-3">
+          <div class="me-3 fecha-contenedor">
+            <label for="fecha" class="form-label fw-bold">📅 Fecha de Inventario:</label>
+            <input type="date" name="fecha" class="form-control border border-primary" value="{{ fecha_actual|date:'Y-m-d' }}" readonly>
+          </div>
+          <button type="submit" class="btn btn-primary fw-semibold shadow">
+            <i class="bi bi-check-circle-fill"></i> Guardar Inventario
+          </button>
         </div>
 
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Categoría</th>
-                    <th>Subcategoría</th>
-                    <th>Unidad de Medida</th>
-                    <th>Presentación</th>
-                    <th>Cantidad Inicial</th>
-                    <th>Cantidad Final</th>
-                </tr>
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered align-middle mb-0">
+            <thead class="text-white" style="background-color: #010D42;">
+              <tr>
+                <th>Categoría</th>
+                <th>Subcategoría</th>
+                <th>Producto</th>
+                <th>Unidad</th>
+                <th>Cantidad Inicial</th>
+                <th>Cantidad Física</th>
+                <th>Diferencia</th>
+              </tr>
             </thead>
             <tbody>
-                {% for producto in productos %}
-                <tr>
-                    <td>{{ producto.nombre }}</td>
-                    <td>{{ producto.categoria.nombre }}</td>
-                    <td>{{ producto.subcategoria.nombre }}</td>
-                    <td>{{ producto.unidad_medida.nombre }}</td>
-                    <td>{{ producto.presentacion.nombre }}</td>
-                    <td>{{ producto.cantidad_disponible }}</td>
-                    <td>
-                        <input type="number" name="cantidad_{{ producto.id }}" class="form-control" required>
-                    </td>
+              {% for producto in productos %}
+              <tr>
+                <td>{{ producto.categoria.nombre }}</td>
+                <td>{{ producto.subcategoria.nombre }}</td>
+                <td>{{ producto.nombre }}</td>
+                <td>{{ producto.unidad_medida.nombre }}</td>
+                <td class="cantidad-inicial">{{ producto.cantidad_disponible|floatformat:2 }}</td>
+                <td>
+                    <input type="number" name="cantidad_{{ producto.id }}" class="form-control cantidad-final" step="0.01" min="0"
+                        value="{{ producto.cantidad_disponible|floatformat:2 }}" oninput="actualizarDiferencia('{{ producto.id }}')">
+                </td>
+                <td id="diferencia_{{ producto.id }}" class="fw-bold">0.00</td>
                 </tr>
-                {% endfor %}
+              {% endfor %}
             </tbody>
-        </table>
-
-        <button type="submit" class="btn-save mt-3">
-            <i class="bi bi-check-circle-fill"></i> Guardar Inventario
-        </button>
-    </form>
+          </table>
+        </div>
+      </form>
+    {% endif %}
+  </div>
 </div>
+
+<script>
+  function actualizarDiferencia(productoId) {
+    const fila = document.querySelector(`input[name="cantidad_${productoId}"]`).closest('tr');
+    const cantidadInicial = parseFloat(fila.querySelector('.cantidad-inicial').innerText.replace(",", "."));
+    const input = document.querySelector(`input[name="cantidad_${productoId}"]`);
+    const cantidadFinal = input.value !== "" ? parseFloat(input.value.replace(",", ".")) : cantidadInicial;
+    const diferencia = cantidadFinal - cantidadInicial;
+
+    const celda = document.getElementById(`diferencia_${productoId}`);
+    celda.textContent = diferencia.toFixed(2);
+    celda.style.color = diferencia < 0 ? "red" : diferencia > 0 ? "green" : "black";
+  }
+</script>
 {% endblock %}

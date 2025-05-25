@@ -29,5 +29,21 @@ urlpatterns = [
     #Exporte del inventario general en Excel
     path('reporte_excel_inventario/', views.reporte_excel_inventario, name='reporte_excel_inventario'),
     #Para el acta de bajas
+
+
+    path('transferencia_producto/', views.transferencia_producto, name='transferencia_producto'),
+    path('historial-transferencias/', views.historial_transferencias, name='historial_transferencias'),
+
+    path('registrar-inventario/', views.registrar_inventario_fisico, name='registrar_inventario'),
+    path('inventarios-pendientes/', views.lista_inventarios_pendientes, name='lista_inventarios_pendientes'),
+    path('inventario/<int:inventario_id>/', views.ver_detalle_inventario, name='ver_detalle_inventario'),  # Sólo si la tienes definida
+    path('inventario/<int:inventario_id>/editar/', views.editar_inventario_pendiente, name='editar_inventario_pendiente'),  
+    path('inventario/<int:inventario_id>/ejecutar/', views.ejecutar_inventario_fisico, name='ejecutar_inventario'),
+    path('cancelar-conteo/', views.cancelar_conteo, name='cancelar_conteo'),
+    path('inventarioNuevo/ejecutar-todo/', views.ejecutar_todo_inventario_fisico, name='ejecutar_todo_inventario'),
+    path('eliminar-detalle/<int:detalle_id>/', views.eliminar_inventario_pendiente, name='eliminar_inventario_pendiente'),
+
+    path('historial-inventario-fisico/', views.historial_inventario_fisico, name='historial_inventario_fisico'),
+    path('exportar-historial-pdf/', views.exportar_historial_pdf, name='exportar_historial_pdf'),
    
 ]

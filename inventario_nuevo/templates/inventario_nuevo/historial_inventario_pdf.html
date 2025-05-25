@@ -1,0 +1,184 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 2cm;
+      @bottom-center {
+        content: "Página " counter(page) " de " counter(pages);
+        font-size: 9px;
+        color: #555;
+      }
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      margin: 0;
+      padding: 0;
+      color: #000;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .logo {
+      height: 50px;
+      margin-bottom: 10px;
+    }
+
+    .title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #010D42;
+      margin: 4px 0;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      font-weight: bold;
+      color: #010D42;
+      margin: 2px 0 10px 0;
+    }
+
+    .info {
+      text-align: right;
+      font-size: 10px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .filtros {
+      font-size: 10px;
+      margin-bottom: 15px;
+    }
+
+    .filtros table {
+      border-collapse: collapse;
+      width: auto;
+      margin: 0 auto;
+    }
+
+    .filtros th {
+      text-align: left;
+      padding-right: 5px;
+      font-weight: bold;
+      color: #010D42;
+      white-space: nowrap;
+    }
+
+    .filtros td {
+      padding-left: 5px;
+    }
+
+    table.table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 10px;
+    }
+
+    table.table th, table.table td {
+      border: 1px solid #000;
+      padding: 5px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    table.table th {
+      background-color: #010D42;
+      color: #fff;
+    }
+
+    .footer {
+      font-size: 9px;
+      color: #555;
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Encabezado Institucional -->
+  <div class="header">
+    <img src="{{ logo_url }}" alt="Logo UNP" class="logo" />
+    <div class="title">UNIVERSIDAD NACIONAL POLITÉCNICA (UNP)</div>
+    <div class="subtitle">INGENIERÍA EN BIOTECNOLOGÍA INDUSTRIAL</div>
+    <div class="title">REPORTE DE HISTORIAL DE MOVIMIENTOS DE INVENTARIO AUTORIZADOS</div>
+  </div>
+
+  <!-- Información del usuario y fecha -->
+  <div class="info">
+    <p><strong>Generado por:</strong> {{ usuario_generador }}</p>
+    <p><strong>Fecha:</strong> {{ fecha_actual|date:"d/m/Y h:i A" }}</p>
+  </div>
+
+  <!-- Filtros aplicados -->
+  {% if filtros_aplicados %}
+    <div class="filtros">
+      <p><strong>Filtros aplicados:</strong></p>
+      <table>
+        <tbody>
+          {% for nombre, valor in filtros_aplicados.items %}
+          <tr>
+            <th>{{ nombre }}:</th>
+            <td>{{ valor }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="filtros">
+      <p><strong>Este reporte muestra todos los movimientos registrados autorizados.</strong></p>
+    </div>
+  {% endif %}
+
+  <!-- Tabla historial -->
+  <table class="table" role="table" aria-label="Historial de auditoría">
+    <thead>
+      <tr>
+        <th>Inventario</th>
+        <th>Producto</th>
+        <th>Inicial</th>
+        <th>Final</th>
+        <th>Diferencia</th>
+        <th>Usuario</th>
+        <th>Fecha Aprobación</th>
+        <th>Motivo</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in historial %}
+      <tr>
+        <td>{{ h.inventario.id }}</td>
+        <td>{{ h.producto.nombre }}</td>
+        <td>{{ h.cantidad_inicial }}</td>
+        <td>{{ h.cantidad_final }}</td>
+        <td>{{ h.diferencia }}</td>
+        <td>{{ h.usuario.username }}</td>
+        <td>{{ h.fecha_aprobacion|date:"d/m/Y H:i" }}</td>
+        <td>{{ h.motivo_modificacion|default:"-" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8">No hay registros para los filtros seleccionados.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Pie de página -->
+  <div class="footer">
+    Generado por {{ usuario_generador }} el {{ fecha_actual|date:"d/m/Y H:i:s" }}
+  </div>
+
+</body>
+</html>
